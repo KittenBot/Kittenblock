@@ -44,12 +44,8 @@ module.exports = {
             filename: 'lib.min.js'
         }),
         new HtmlWebpackPlugin({
-            title: 'Scratch 3.0 GUI'
-        }),
-        new CopyWebpackPlugin([{
-            from: 'node_modules/scratch-blocks/media',
-            to: 'static/blocks-media'
-        }])
+            title: 'KittenBlock'
+        })
     ].concat(process.env.NODE_ENV === 'production' ? [
         new webpack.optimize.UglifyJsPlugin({
             include: /\.min\.js$/,
