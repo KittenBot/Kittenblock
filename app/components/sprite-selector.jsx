@@ -15,7 +15,7 @@ const SpriteSelectorComponent = function (props) {
             style={{
                 position: 'absolute',
                 top: 380,
-                right: 10
+                left: 10
             }}
             {...componentProps}
         >

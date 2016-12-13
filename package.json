@@ -54,5 +54,8 @@
     "webpack": "1.13.2",
     "webpack-dev-server": "1.15.2",
     "xhr": "2.2.2"
+  },
+  "dependencies": {
+    "react-bootstrap": "^0.30.7"
   }
 }

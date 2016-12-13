@@ -14,8 +14,8 @@ const StopAllComponent = function (props) {
             src={stopAllIcon}
             style={{
                 position: 'absolute',
-                top: 380,
-                right: 380,
+                top: 450,
+                left: 380,
                 width: 50,
                 // @todo Get real design here
                 filter: active ? 'saturate(200%) brightness(150%)' : 'none'
