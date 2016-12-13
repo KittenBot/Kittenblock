@@ -6,7 +6,7 @@ var webpack = require('webpack');
 module.exports = {
     entry: {
         lib: ['react', 'react-dom'],
-        gui: './src/index.jsx'
+        gui: './app/index.jsx'
     },
     output: {
         path: path.resolve(__dirname, 'build'),
@@ -20,7 +20,7 @@ module.exports = {
         loaders: [{
             test: /\.jsx?$/,
             loader: 'babel-loader',
-            include: path.resolve(__dirname, 'src'),
+            include: path.resolve(__dirname, 'app'),
             query: {
                 plugins: ['transform-object-rest-spread'],
                 presets: ['es2015', 'react']
@@ -44,8 +44,12 @@ module.exports = {
             filename: 'lib.min.js'
         }),
         new HtmlWebpackPlugin({
-            title: 'KittenBlock'
-        })
+            title: 'Scratch 3.0 GUI'
+        }),
+        new CopyWebpackPlugin([{
+            from: 'app/scratch-blocks/media',
+            to: 'static/blocks-media'
+        }])
     ].concat(process.env.NODE_ENV === 'production' ? [
         new webpack.optimize.UglifyJsPlugin({
             include: /\.min\.js$/,

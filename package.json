@@ -2,10 +2,18 @@
   "name": "kittenbotgui",
   "version": "1.0.0",
   "description": "",
-  "main": "./src/index.js",
+  "main": "./app/index.js",
   "scripts": {
-    "start": "webpack-dev-server --port 1025 --content-base=./build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run clean && webpack --progress --colors --bail",
+    "clean": "rm -rf ./build && mkdir -p build",
+    "deploy": "touch build/.nojekyll && gh-pages -t -d build -m \"Build for $(git log --pretty=format:%H -n1)\"",
+    "lint": "eslint . --ext .js,.jsx",
+    "postmerge": "opt --in postmerge --exec 'npm install'",
+    "postrewrite": "opt --in postrewrite --exec 'npm install'",
+    "precommit": "opt --in precommit --exec 'npm run lint'",
+    "prepush": "opt --in prepush --exec 'npm run test'",
+    "start": "webpack-dev-server --port 9233 --content-base=./build",
+    "test": "npm run lint && npm run build"
   },
   "repository": {
     "type": "git",

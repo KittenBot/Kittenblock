@@ -1,0 +1,1079 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="c1a8eace-2cd5-498d-898d-efd2780fe5f1" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/1x1.gif" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/click.wav" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/delete.wav" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/handclosed.cur" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/handdelete.cur" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/handopen.cur" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/sprites.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/turnleft_arrow.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/turnright_arrow.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/assets/stage.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/assets/stage.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/1x1.gif" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/click.wav" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/delete.wav" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/handclosed.cur" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/handdelete.cur" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/handopen.cur" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/sprites.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/turnleft_arrow.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/turnright_arrow.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.editorconfig" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.eslintignore" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.eslintrc.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.gitattributes" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.gitignore" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/KittenbotGui.iml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.travis.yml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/LICENSE" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/TRADEMARK" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/.eslintrc.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/blocks.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/costume-canvas.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/green-flag/green-flag.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/green-flag/green-flag.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/gui.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/library-item.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/library.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/modal.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/sprite-selector.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/stage.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/stop-all/stop-all.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/components/stop-all/stop-all.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/containers/backdrop-library.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/containers/blocks.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/containers/costume-library.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/containers/green-flag.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/containers/gui.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/containers/sprite-library.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/containers/sprite-selector.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/containers/stage.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/containers/stop-all.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/index.jsx" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/lib/empty-project.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/lib/log.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/lib/media-library.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/lib/project-loader.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/lib/shape-from-prop-types.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/lib/vm-manager.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/cat.log" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/.editorconfig" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/.eslintignore" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/.eslintrc" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/.npmignore" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/.travis.yml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/CONTRIBUTING.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/LICENSE" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/README.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/TRADEMARK" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blockly_compressed_horizontal.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blockly_compressed_vertical.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blockly_uncompressed_horizontal.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blockly_uncompressed_vertical.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_common/colour.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_common/math.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_common/text.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_compressed.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_compressed_horizontal.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_compressed_vertical.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_horizontal/control.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_horizontal/default_toolbox.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_horizontal/event.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_horizontal/wedo.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/control.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/data.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/default_toolbox.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/event.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/looks.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/motion.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/operators.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/pen.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/procedures.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/sensing.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/blocks_vertical/sound.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/build.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/cleanup.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/block.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/block_render_svg_horizontal.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/block_render_svg_vertical.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/block_svg.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/blockly.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/blocks.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/bubble.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/colours.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/comment.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/connection.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/connection_db.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/constants.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/contextmenu.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/css.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/dragsurface_svg.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/dropdowndiv.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/events.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_angle.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_checkbox.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_colour.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_date.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_dropdown.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_iconmenu.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_image.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_label.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_number.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_numberdropdown.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_textdropdown.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_textinput.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/field_variable.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/flyout_base.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/flyout_button.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/flyout_horizontal.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/flyout_vertical.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/generator.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/icon.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/inject.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/input.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/msg.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/mutator.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/names.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/options.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/procedures.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/rendered_connection.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/scrollbar.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/toolbox.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/tooltip.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/touch.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/trashcan.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/utils.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/variables.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/warning.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/widgetdiv.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/workspace.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/workspace_svg.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/xml.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/core/zoom_controls.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/dist/horizontal.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/dist/vertical.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/i18n/common.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/i18n/create_messages.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/i18n/dedup_json.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/i18n/js_to_json.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/i18n/json_to_js.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/i18n/tests.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/i18n/xliff_to_json.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/c_arrow.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/dropdown-arrow-dark.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/dropdown-arrow.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/control_forever.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/control_repeat.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/control_stop.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/control_wait.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_broadcast_blue.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_broadcast_coral.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_broadcast_green.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_broadcast_magenta.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_broadcast_orange.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_broadcast_purple.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_when-broadcast-received_blue.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_when-broadcast-received_coral.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_when-broadcast-received_green.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_when-broadcast-received_magenta.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_when-broadcast-received_orange.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_when-broadcast-received_purple.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/event_whenflagclicked.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/set-led_blue.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/set-led_coral.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/set-led_green.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/set-led_magenta.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/set-led_mystery.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/set-led_orange.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/set-led_purple.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/set-led_white.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/set-led_yellow.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_motor-clockwise.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_motor-counterclockwise.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_motor-speed_fast.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_motor-speed_med.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_motor-speed_slow.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_when-distance_close.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_when-tilt-backward.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_when-tilt-forward.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_when-tilt-left.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_when-tilt-right.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/icons/wedo_when-tilt.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/media/sprites.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/msg/js/en.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/msg/json/en.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/msg/json/qqq.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/msg/json/synonyms.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/msg/messages.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/package.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blockly_compressed_horizontal-blocks_compressed.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blockly_compressed_horizontal.Blockly.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blockly_compressed_horizontal.goog.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blockly_compressed_horizontal.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blockly_compressed_vertical-blocks_compressed.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blockly_compressed_vertical.Blockly.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blockly_compressed_vertical.goog.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blockly_compressed_vertical.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blocks_compressed_horizontal.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/blocks_compressed_vertical.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/horizontal.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/index.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/shim/vertical.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/horizontal_playground.html" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/block_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/blockly_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/connection_db_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/connection_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/db_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/generator_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/horizontal_tests.html" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/index.html" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/names_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/svg_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/vertical_tests.html" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/workspace_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/jsunit/xml_test.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/multi_playground.html" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/vertical_playground.html" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/tests/vertical_playground_compressed.html" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-blocks/webpack.config.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/.editorconfig" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/.eslintignore" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/.eslintrc" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/.gitattributes" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/.travis.yml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/LICENSE" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/README.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/TRADEMARK" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/dist.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/package.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/playground/index.html" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/playground/render.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/render.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/render.min.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/src/Drawable.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/src/Rectangle.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/src/RenderWebGL.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/src/ShaderManager.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/src/index-web.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/src/index.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/src/shaders/sprite.frag" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/src/shaders/sprite.vert" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/src/svg-quirks-mode/svg-renderer.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-render/webpack.config.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/.editorconfig" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/.eslintignore" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/.eslintrc.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/.gitattributes" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/.github/ISSUE_TEMPLATE.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/.github/PULL_REQUEST_TEMPLATE.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/.npmignore" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/.travis.yml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/CONTRIBUTING.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/LICENSE" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/README.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/TRADEMARK" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/assets/scratch_cat.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/dist.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/package.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/assets/scratch_cat.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/index.html" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/c_arrow.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/dropdown-arrow-dark.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/dropdown-arrow.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/control_forever.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/control_repeat.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/control_stop.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/control_wait.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_broadcast_blue.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_broadcast_coral.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_broadcast_green.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_broadcast_magenta.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_broadcast_orange.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_broadcast_purple.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_when-broadcast-received_blue.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_when-broadcast-received_coral.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_when-broadcast-received_green.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_when-broadcast-received_magenta.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_when-broadcast-received_orange.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_when-broadcast-received_purple.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/event_whenflagclicked.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/set-led_blue.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/set-led_coral.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/set-led_green.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/set-led_magenta.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/set-led_mystery.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/set-led_orange.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/set-led_purple.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/set-led_white.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/set-led_yellow.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_motor-clockwise.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_motor-counterclockwise.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_motor-speed_fast.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_motor-speed_med.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_motor-speed_slow.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_when-distance_close.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_when-tilt-backward.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_when-tilt-forward.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_when-tilt-left.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_when-tilt-right.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/icons/wedo_when-tilt.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/media/sprites.svg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/playground.css" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/playground.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/vendor.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/vm.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/playground/zenburn.css" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/.eslintrc.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/blocks/scratch3_control.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/blocks/scratch3_data.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/blocks/scratch3_event.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/blocks/scratch3_looks.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/blocks/scratch3_motion.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/blocks/scratch3_operators.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/blocks/scratch3_procedures.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/blocks/scratch3_sensing.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/adapter.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/blocks.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/execute.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/list.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/mutation-adapter.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/runtime.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/sequencer.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/target.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/thread.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/engine/variable.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/import/sb2import.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/import/sb2specmap.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/index.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/io/clock.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/io/keyboard.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/io/mouse.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/sprites/rendered-target.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/sprites/sprite.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/util/cast.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/util/color.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/util/log.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/util/math-util.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/util/timer.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/util/uid.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/src/util/xml-escape.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/.eslintrc.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/fixtures/default.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/fixtures/demo.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/fixtures/events.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/integration/index.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/blocks_control.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/blocks_operators.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/engine_adapter.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/engine_blocks.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/engine_runtime.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/engine_sequencer.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/engine_thread.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/import_sb2.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/io_clock.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/io_keyboard.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/io_mouse.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/sprites_rendered-target.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/util_cast.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/util_color.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/util_math.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/util_timer.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/test/unit/util_xml.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/vm.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/vm.min.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scratch-vm/webpack.config.js" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/src/index.jsx" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/package.json" afterPath="$PROJECT_DIR$/package.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/webpack.config.js" afterPath="$PROJECT_DIR$/webpack.config.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/containers/gui.jsx" afterPath="$PROJECT_DIR$/scratch-render/.npmignore" />
+    </list>
+    <ignored path="$PROJECT_DIR$/.tmp/" />
+    <ignored path="$PROJECT_DIR$/temp/" />
+    <ignored path="$PROJECT_DIR$/tmp/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CreatePatchCommitExecutor">
+    <option name="PATCH_PATH" value="" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
+  <component name="FavoritesManager">
+    <favorites_list name="KittenbotGui" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="backdrop-library.jsx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/containers/backdrop-library.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="38">
+              <caret line="2" column="39" lean-forward="true" selection-start-line="2" selection-start-column="39" selection-end-line="2" selection-end-column="39" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="blocks.jsx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/containers/blocks.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="285">
+              <caret line="15" column="30" lean-forward="true" selection-start-line="15" selection-start-column="30" selection-end-line="15" selection-end-column="30" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name=".gitignore" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/.gitignore">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="costume-library.jsx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/containers/costume-library.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="38">
+              <caret line="2" column="23" lean-forward="false" selection-start-line="2" selection-start-column="23" selection-end-line="2" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="green-flag.jsx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/containers/green-flag.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="19">
+              <caret line="3" column="23" lean-forward="false" selection-start-line="3" selection-start-column="23" selection-end-line="3" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="gui.jsx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/containers/gui.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="57">
+              <caret line="3" column="23" lean-forward="false" selection-start-line="3" selection-start-column="23" selection-end-line="3" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sprite-library.jsx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/containers/sprite-library.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="38">
+              <caret line="2" column="23" lean-forward="false" selection-start-line="2" selection-start-column="23" selection-end-line="2" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sprite-selector.jsx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/containers/sprite-selector.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="38">
+              <caret line="2" column="23" lean-forward="false" selection-start-line="2" selection-start-column="23" selection-end-line="2" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="stage.jsx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/containers/stage.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="57">
+              <caret line="3" column="23" lean-forward="false" selection-start-line="3" selection-start-column="23" selection-end-line="3" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="stop-all.jsx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/containers/stop-all.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="38">
+              <caret line="2" column="23" lean-forward="false" selection-start-line="2" selection-start-column="23" selection-end-line="2" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>scratch</find>
+      <find>scratch-vm</find>
+      <find>node</find>
+      <find>TYPED_ARRAY_SUPPORT</find>
+      <find>global</find>
+      <find>src</find>
+      <find>src/</find>
+      <find>global.TYPED_ARRAY_SUPPORT</find>
+      <find>compa</find>
+      <find>babel</find>
+    </findStrings>
+    <dirStrings>
+      <dir>F:\KittenbotGui\src</dir>
+      <dir>F:\KittenbotGui</dir>
+      <dir>F:\KittenbotGui\app</dir>
+    </dirStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/index.jsx" />
+        <option value="$PROJECT_DIR$/package.json" />
+        <option value="$PROJECT_DIR$/webpack.config.js" />
+        <option value="$PROJECT_DIR$/app/containers/backdrop-library.jsx" />
+        <option value="$PROJECT_DIR$/app/containers/costume-library.jsx" />
+        <option value="$PROJECT_DIR$/app/containers/green-flag.jsx" />
+        <option value="$PROJECT_DIR$/app/containers/gui.jsx" />
+        <option value="$PROJECT_DIR$/app/containers/sprite-library.jsx" />
+        <option value="$PROJECT_DIR$/app/containers/sprite-selector.jsx" />
+        <option value="$PROJECT_DIR$/app/containers/stage.jsx" />
+        <option value="$PROJECT_DIR$/app/containers/stop-all.jsx" />
+        <option value="$PROJECT_DIR$/app/containers/blocks.jsx" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="NodeModulesDirectoryManager">
+    <handled-path value="$PROJECT_DIR$/node_modules" />
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
+    <option name="width" value="1936" />
+    <option name="height" value="1056" />
+  </component>
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+      <manualOrder />
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="Scratches" />
+      <pane id="ProjectPane">
+        <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="KittenbotGui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="KittenbotGui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="KittenbotGui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="KittenbotGui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="KittenbotGui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="KittenbotGui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="containers" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_interpreter_path" value="E:/nodejs/node" />
+    <property name="js.eslint.eslintPackage" value="F:\KittenbotGui\node_modules\eslint" />
+    <property name="js-jscs-nodeInterpreter" value="E:\nodejs\node.exe" />
+    <property name="HbShouldOpenHtmlAsHb" value="" />
+    <property name="editor.config.accepted" value="true" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="F:\KittenbotGui" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="F:\KittenbotGui\app" />
+      <recent name="F:\KittenbotGui" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
+      <method />
+    </configuration>
+    <configuration default="true" type="DartTestRunConfigurationType" factoryName="Dart Test">
+      <method />
+    </configuration>
+    <configuration default="true" type="JavaScriptTestRunnerKarma" factoryName="Karma">
+      <config-file value="" />
+      <node-interpreter value="project" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="JavaScriptTestRunnerProtractor" factoryName="Protractor">
+      <config-file value="" />
+      <node-interpreter value="project" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
+      <method />
+    </configuration>
+    <configuration default="true" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="project" working-dir="">
+      <method />
+    </configuration>
+    <configuration default="true" type="cucumber.js" factoryName="Cucumber.js">
+      <option name="cucumberJsArguments" value="" />
+      <option name="executablePath" />
+      <option name="filePath" />
+      <method />
+    </configuration>
+    <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <gulpfile />
+      <tasks />
+      <arguments />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="js.build_tools.npm" factoryName="npm">
+      <command value="run-script" />
+      <scripts />
+      <node-interpreter value="project" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="mocha-javascript-test-runner" factoryName="Mocha">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <working-directory />
+      <pass-parent-env>true</pass-parent-env>
+      <envs />
+      <ui />
+      <extra-mocha-options />
+      <test-kind>DIRECTORY</test-kind>
+      <test-directory />
+      <recursive>false</recursive>
+      <method />
+    </configuration>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false">
+    <option name="remove_strategy" value="false" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c1a8eace-2cd5-498d-898d-efd2780fe5f1" name="Default" comment="" />
+      <created>1481578359542</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1481578359542</updated>
+      <workItem from="1481578361017" duration="2186000" />
+      <workItem from="1481615474065" duration="8632000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="10818000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="false" />
+    <layout>
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32910052" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="processedProjectFiles" value="true" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager />
+    <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="17" column="25" lean-forward="false" selection-start-line="17" selection-start-column="25" selection-end-line="17" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/webpack.config.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="247">
+          <caret line="13" column="6" lean-forward="false" selection-start-line="13" selection-start-column="6" selection-end-line="13" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/index.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/containers/gui.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/containers/gui.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/index.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="133">
+          <caret line="7" column="25" lean-forward="true" selection-start-line="7" selection-start-column="25" selection-end-line="7" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/containers/backdrop-library.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="399">
+          <caret line="21" column="5" lean-forward="true" selection-start-line="21" selection-start-column="5" selection-end-line="21" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/components/costume-canvas.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="101" column="5" lean-forward="true" selection-start-line="101" selection-start-column="5" selection-end-line="101" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/stage.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/sprite-selector.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/modal.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/library-item.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/library.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/gui.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/costume-canvas.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/blocks.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/stop-all/stop-all.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/green-flag/green-flag.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/index.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="361">
+          <caret line="19" column="5" lean-forward="true" selection-start-line="19" selection-start-column="5" selection-end-line="19" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scratch-blocks/dist/vertical.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-63811">
+          <caret line="16" column="27" lean-forward="true" selection-start-line="16" selection-start-column="27" selection-end-line="16" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/.eslintrc.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="10" column="0" lean-forward="true" selection-start-line="10" selection-start-column="0" selection-end-line="10" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.eslintrc.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/lib/empty-project.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="8" column="24" lean-forward="true" selection-start-line="8" selection-start-column="24" selection-end-line="8" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scratch-blocks/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="15" column="51" lean-forward="false" selection-start-line="15" selection-start-column="44" selection-end-line="15" selection-end-column="51" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scratch-render/dist.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="515">
+          <caret line="806" column="0" lean-forward="true" selection-start-line="806" selection-start-column="0" selection-end-line="806" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scratch-render/webpack.config.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="380">
+          <caret line="20" column="18" lean-forward="true" selection-start-line="20" selection-start-column="18" selection-end-line="20" selection-end-column="18" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="114">
+          <caret line="6" column="38" lean-forward="false" selection-start-line="6" selection-start-column="31" selection-end-line="6" selection-end-column="38" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/webpack.config.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="17" column="33" lean-forward="true" selection-start-line="17" selection-start-column="33" selection-end-line="17" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/containers/backdrop-library.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="38">
+          <caret line="2" column="39" lean-forward="true" selection-start-line="2" selection-start-column="39" selection-end-line="2" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/containers/costume-library.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="38">
+          <caret line="2" column="23" lean-forward="false" selection-start-line="2" selection-start-column="23" selection-end-line="2" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/containers/green-flag.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="19">
+          <caret line="3" column="23" lean-forward="false" selection-start-line="3" selection-start-column="23" selection-end-line="3" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/containers/gui.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="57">
+          <caret line="3" column="23" lean-forward="false" selection-start-line="3" selection-start-column="23" selection-end-line="3" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/containers/sprite-library.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="38">
+          <caret line="2" column="23" lean-forward="false" selection-start-line="2" selection-start-column="23" selection-end-line="2" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/containers/sprite-selector.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="38">
+          <caret line="2" column="23" lean-forward="false" selection-start-line="2" selection-start-column="23" selection-end-line="2" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/containers/stop-all.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="38">
+          <caret line="2" column="23" lean-forward="false" selection-start-line="2" selection-start-column="23" selection-end-line="2" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/containers/stage.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="57">
+          <caret line="3" column="23" lean-forward="false" selection-start-line="3" selection-start-column="23" selection-end-line="3" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/containers/blocks.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="15" column="30" lean-forward="true" selection-start-line="15" selection-start-column="30" selection-end-line="15" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

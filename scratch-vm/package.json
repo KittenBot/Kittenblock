@@ -1,0 +1,121 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "scratch-vm@latest",
+        "scope": null,
+        "escapedName": "scratch-vm",
+        "name": "scratch-vm",
+        "rawSpec": "latest",
+        "spec": "latest",
+        "type": "tag"
+      },
+      "G:\\blockly\\scratch-gui"
+    ]
+  ],
+  "_cnpm_publish_time": 1478717009087,
+  "_from": "scratch-vm@latest",
+  "_id": "scratch-vm@0.1.0-prerelease.1478716997",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/scratch-vm",
+  "_nodeVersion": "4.6.2",
+  "_npmOperationalInternal": {
+    "host": "packages-18-east.internal.npmjs.com",
+    "tmp": "tmp/scratch-vm-0.1.0-prerelease.1478716997.tgz_1478717008519_0.4979830849915743"
+  },
+  "_npmUser": {
+    "name": "scratch",
+    "email": "scratchr-sysadmin@media.mit.edu"
+  },
+  "_npmVersion": "2.15.11",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "scratch-vm@latest",
+    "scope": null,
+    "escapedName": "scratch-vm",
+    "name": "scratch-vm",
+    "rawSpec": "latest",
+    "spec": "latest",
+    "type": "tag"
+  },
+  "_requiredBy": [
+    "#DEV:/"
+  ],
+  "_resolved": "https://registry.npm.taobao.org/scratch-vm/download/scratch-vm-0.1.0-prerelease.1478716997.tgz",
+  "_shasum": "9781ab803a2687b7416f526a39f64254805b8ba6",
+  "_shrinkwrap": null,
+  "_spec": "scratch-vm@latest",
+  "_where": "G:\\blockly\\scratch-gui",
+  "author": {
+    "name": "Massachusetts Institute of Technology"
+  },
+  "bugs": {
+    "url": "https://github.com/LLK/scratch-vm/issues"
+  },
+  "dependencies": {},
+  "description": "Virtual Machine for Scratch 3.0",
+  "devDependencies": {
+    "babel-eslint": "7.0.0",
+    "copy-webpack-plugin": "3.0.1",
+    "eslint": "3.8.1",
+    "eslint-config-scratch": "^2.0.0",
+    "expose-loader": "0.7.1",
+    "gh-pages": "0.11.0",
+    "highlightjs": "8.7.0",
+    "htmlparser2": "3.9.0",
+    "json": "9.0.4",
+    "json-loader": "0.5.4",
+    "lodash.defaultsdeep": "4.6.0",
+    "minilog": "3.0.1",
+    "promise": "7.1.1",
+    "scratch-blocks": "latest",
+    "scratch-render": "latest",
+    "script-loader": "0.7.0",
+    "stats.js": "0.16.0",
+    "tap": "5.7.1",
+    "travis-after-all": "1.4.4",
+    "webpack": "1.13.0",
+    "webpack-dev-server": "1.14.1"
+  },
+  "directories": {},
+  "dist": {
+    "shasum": "9781ab803a2687b7416f526a39f64254805b8ba6",
+    "size": 1209131,
+    "noattachment": false,
+    "tarball": "http://registry.npm.taobao.org/scratch-vm/download/scratch-vm-0.1.0-prerelease.1478716997.tgz"
+  },
+  "gitHead": "084148e353637d13a128efaea28788259e3d0061",
+  "homepage": "https://github.com/LLK/scratch-vm#readme",
+  "license": "BSD-3-Clause",
+  "main": "./dist.js",
+  "maintainers": [
+    {
+      "name": "scratch",
+      "email": "scratchr-sysadmin@media.mit.edu"
+    }
+  ],
+  "name": "scratch-vm",
+  "optionalDependencies": {},
+  "publish_time": 1478717009087,
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/LLK/scratch-vm.git",
+    "sha": "084148e353637d13a128efaea28788259e3d0061"
+  },
+  "scripts": {
+    "build": "webpack --progress --colors --bail",
+    "coverage": "tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
+    "deploy": "touch playground/.nojekyll && ./node_modules/.bin/gh-pages -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
+    "lint": "eslint .",
+    "prepublish": "npm run build",
+    "prepublish-watch": "npm run watch",
+    "start": "webpack-dev-server",
+    "tap": "tap ./test/{unit,integration}/*.js",
+    "test": "npm run lint && npm run tap",
+    "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\"",
+    "watch": "webpack --progress --colors --watch"
+  },
+  "version": "0.1.0-prerelease.1478716997"
+}
