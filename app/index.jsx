@@ -5,6 +5,7 @@ const log = require('./lib/log');
 const ProjectLoader = require('./lib/project-loader');
 import "./css/bootstrap.min.css"
 import "./css/bootstrap-theme.min.css"
+import "./css/kittenblock.css"
 
 class App extends React.Component {
     constructor (props) {
