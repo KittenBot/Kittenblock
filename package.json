@@ -48,6 +48,7 @@
     "opt-cli": "1.5.1",
     "react": "15.3.2",
     "react-dom": "15.3.2",
+    "react-fa": "^4.1.2",
     "react-modal": "1.5.2",
     "react-style-proptype": "1.2.0",
     "style-loader": "^0.13.1",
@@ -59,6 +60,7 @@
     "xhr": "2.2.2"
   },
   "dependencies": {
-    "react-bootstrap": "^0.30.7"
+    "react-bootstrap": "^0.30.7",
+    "react-fa": "^4.1.2"
   }
 }

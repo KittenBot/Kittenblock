@@ -1,6 +1,7 @@
 const React = require('react');
 const logo = require('../media/logo.png');
-import { Navbar,Nav,NavItem,ButtonGroup,Button,DropdownButton,FormControl } from 'react-bootstrap';
+import { Navbar,Nav,NavItem,ButtonGroup,Button,DropdownButton,FormControl,MenuItem  } from 'react-bootstrap';
+import {Icon} from 'react-fa';
 
 const HeaderBarComponent = function (props) {
     const {
@@ -53,6 +54,31 @@ const HeaderBarComponent = function (props) {
                 }}
             />
             </NavItem>
+            </Nav>
+            <Nav pullRight>
+                <NavItem>
+                    <Button  bsStyle="warning">Examples</Button>
+                </NavItem>
+                <NavItem>
+                    <Button  bsStyle="warning">Stage</Button>
+                </NavItem>
+                <NavItem>
+                    <ButtonGroup>
+                        <DropdownButton title="Project" bsStyle="warning" id="projDropdown">
+                            <MenuItem eventKey="1">New</MenuItem>
+                            <MenuItem eventKey="2">Save</MenuItem>
+                            <MenuItem eventKey="3">Load</MenuItem>
+                        </DropdownButton>
+                    </ButtonGroup>
+                </NavItem>
+                <NavItem>
+                    <Button  bsStyle="warning">Arduino</Button>
+                </NavItem>
+                <NavItem>
+                    <Button  bsStyle="warning">
+                        <Icon gear name="gear" />
+                    </Button>
+                </NavItem>
             </Nav>
         </Navbar>
     );
