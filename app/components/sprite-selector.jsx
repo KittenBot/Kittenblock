@@ -14,25 +14,24 @@ const SpriteSelectorComponent = function (props) {
         <div
             style={{
                 position: 'absolute',
-                top: 380,
-                left: 10
+                top: 450,
+                left: 10,
+                width:480,
+                height: 600,
+                backgroundColor:"#F9F9F9",
+                borderRadius: 10
             }}
             {...componentProps}
         >
-            <select
-                multiple
-                value={value}
-                onChange={onChange}
-            >
+            <div>
                 {sprites.map(sprite => (
-                    <option
-                        key={sprite.id}
-                        value={sprite.id}
-                    >
-                        {sprite.name}
-                    </option>
+                    <img className="sprite img-thumbnail"
+                        alt={sprite.name}
+                        value={sprite.name}
+                         key={sprite.id}
+                    />
                 ))}
-            </select>
+            </div>
             <p>
                 <button onClick={openNewSprite}>New sprite</button>
                 <button onClick={openNewCostume}>New costume</button>
