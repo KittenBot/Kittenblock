@@ -76,7 +76,7 @@ const HeaderBarComponent = function (props) {
                 </NavItem>
                 <NavItem>
                     <Button  bsStyle="warning">
-                        <Icon gear name="gear" />
+                        <Icon name="gear" />
                     </Button>
                 </NavItem>
             </Nav>

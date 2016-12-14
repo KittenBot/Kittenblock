@@ -1,5 +1,5 @@
 const React = require('react');
-const greenFlagIcon = require('./green-flag.svg');
+const greenFlagIcon = require('./greenflag.png');
 
 const GreenFlagComponent = function (props) {
     const {
@@ -14,9 +14,11 @@ const GreenFlagComponent = function (props) {
             src={greenFlagIcon}
             style={{
                 position: 'absolute',
-                top: 450,
+                top: 50,
                 left: 440,
                 width: 50,
+                height:25,
+                width:25,
                 // @todo Get real design here
                 filter: active ? 'saturate(200%) brightness(150%)' : 'none'
             }}

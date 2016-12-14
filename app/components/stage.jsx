@@ -15,9 +15,10 @@ class StageComponent extends React.Component {
                 style={{
                     position: 'absolute',
                     top: 80,
-                    left: 0,
+                    left: 10,
                     width: width,
-                    height: height
+                    height: height,
+                    borderRadius: 10
                 }}
                 {...props}
             />

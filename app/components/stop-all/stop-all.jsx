@@ -1,5 +1,5 @@
 const React = require('react');
-const stopAllIcon = require('./stop-all.svg');
+const stopAllIcon = require('./stop.png');
 
 const StopAllComponent = function (props) {
     const {
@@ -14,9 +14,11 @@ const StopAllComponent = function (props) {
             src={stopAllIcon}
             style={{
                 position: 'absolute',
-                top: 450,
-                left: 380,
+                top: 50,
+                left: 470,
                 width: 50,
+                height:25,
+                width:25,
                 // @todo Get real design here
                 filter: active ? 'saturate(200%) brightness(150%)' : 'none'
             }}

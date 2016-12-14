@@ -12,7 +12,7 @@ class BlocksComponent extends React.Component {
                 ref={componentRef}
                 style={{
                     position: 'absolute',
-                    top: 50,
+                    top: 80,
                     right: 0,
                     bottom: 0,
                     left: 500

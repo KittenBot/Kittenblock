@@ -14,6 +14,7 @@ const SpriteSelector = require('./sprite-selector.jsx');
 const Stage = require('./stage.jsx');
 const StopAll = require('./stop-all.jsx');
 const HeaderBar = require('./header-bar.jsx');
+const EditorTabs = require('./editor-tabs.jsx');
 
 const SpriteLibrary = require('./sprite-library.jsx');
 const CostumeLibrary = require('./costume-library.jsx');
@@ -60,6 +61,7 @@ class GUI extends React.Component {
             stageProps,
             stopAllProps,
             headerBarProps,
+            editorTabsProps,
             vm,
             ...guiProps
         } = this.props;
@@ -107,6 +109,7 @@ class GUI extends React.Component {
                 <CostumeLibrary vm={vm} {...costumeLibraryProps} />
                 <BackdropLibrary vm={vm} {...backdropLibraryProps} />
                 <HeaderBar vm={vm} {...headerBarProps} />
+                <EditorTabs vm={vm} {...editorTabsProps} />
             </GUIComponent>
         );
         /* eslint-enable react/jsx-max-props-per-line, lines-around-comment */

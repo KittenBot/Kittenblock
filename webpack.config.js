@@ -51,10 +51,10 @@ module.exports = {
             filename: 'lib.min.js'
         }),
         new HtmlWebpackPlugin({
-            title: 'Scratch 3.0 GUI'
+            title: 'KittenBlock'
         }),
         new CopyWebpackPlugin([{
-            from: 'app/scratch-blocks/media',
+            from: 'scratch-blocks/media',
             to: 'static/blocks-media'
         }])
     ].concat(process.env.NODE_ENV === 'production' ? [

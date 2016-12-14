@@ -7,3 +7,18 @@
 {
     padding: 5px 5px;
 }
+
+body{
+    background-color: #E9EEF2;
+}
+
+.editor-tabs>li>a
+{
+    border: none!important;
+    background-color: #F6F8FA;
+}
+
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover
+{
+    color: #25AFF4;
+}
