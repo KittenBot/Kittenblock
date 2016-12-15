@@ -9,8 +9,12 @@ module.exports = {
         gui: './app/index.jsx'
     },
     output: {
-        path: path.resolve(__dirname, 'build'),
+        path: path.resolve(__dirname, 'nwjs/app'),
         filename: '[name].js'
+    },
+    devServer: {
+        contentBase: path.resolve(__dirname, 'nwjs/app'),
+        host: '0.0.0.0'
     },
     target: 'node-webkit',
     module: {
@@ -56,7 +60,7 @@ module.exports = {
         }),
         new CopyWebpackPlugin([{
             from: 'scratch-blocks/media',
-            to: 'static/blocks-media'
+            to: 'media'
         }])
     ].concat(process.env.NODE_ENV === 'production' ? [
         new webpack.optimize.UglifyJsPlugin({

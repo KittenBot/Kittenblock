@@ -114,6 +114,7 @@ Blocks.propTypes = {
 };
 
 Blocks.defaultOptions = {
+    media: './media/',
     zoom: {
         controls: true,
         wheel: true,

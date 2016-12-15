@@ -1,6 +1,6 @@
 # Mac OS
 .DS_Store
-.idea
+/.idea
 
 # NPM
 /node_modules

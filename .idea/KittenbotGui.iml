@@ -3,6 +3,10 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/build" />
+      <excludeFolder url="file://$MODULE_DIR$/kittenblock-pc/nwjs-sdk-v0.15.3-win-x64" />
+      <excludeFolder url="file://$MODULE_DIR$/nwjs" />
+      <excludeFolder url="file://$MODULE_DIR$/nwjs-sdk-v0.15.3-win-x64" />
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
     </content>
