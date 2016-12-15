@@ -27,10 +27,7 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
-        this.kittenblock = new KittenBlock();
-        this.kittenblock.serial.enumSerial(function (devices) {
-            console.log("serial devs "+devices);
-        })
+
         this.state = {currentModal: null};
     }
     componentDidMount () {
@@ -68,6 +65,7 @@ class GUI extends React.Component {
             headerBarProps,
             editorTabsProps,
             vm,
+            kb,
             ...guiProps
         } = this.props;
         backdropLibraryProps = defaultsDeep({}, backdropLibraryProps, {
@@ -113,7 +111,7 @@ class GUI extends React.Component {
                 <SpriteLibrary vm={vm} {...spriteLibraryProps} />
                 <CostumeLibrary vm={vm} {...costumeLibraryProps} />
                 <BackdropLibrary vm={vm} {...backdropLibraryProps} />
-                <HeaderBar vm={vm} {...headerBarProps} />
+                <HeaderBar kb={kb} {...headerBarProps} />
                 <EditorTabs vm={vm} {...editorTabsProps} />
             </GUIComponent>
         );
@@ -133,7 +131,8 @@ GUI.propTypes = {
     spriteSelectorProps: shapeFromPropTypes(SpriteSelector.propTypes, {omit: ['vm']}),
     stageProps: shapeFromPropTypes(Stage.propTypes, {omit: ['vm']}),
     stopAllProps: shapeFromPropTypes(StopAll.propTypes, {omit: ['vm']}),
-    vm: React.PropTypes.instanceOf(VM)
+    vm: React.PropTypes.instanceOf(VM),
+    kb: React.PropTypes.instanceOf(KittenBlock),
 };
 
 GUI.defaultProps = {
@@ -146,7 +145,8 @@ GUI.defaultProps = {
     spriteLibraryProps: {},
     stageProps: {},
     stopAllProps: {},
-    vm: new VM()
+    vm: new VM(),
+    kb: new  KittenBlock()
 };
 
 module.exports = GUI;
