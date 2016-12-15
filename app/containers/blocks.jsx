@@ -22,6 +22,7 @@ class Blocks extends React.Component {
         ]);
     }
     componentDidMount () {
+        ScratchBlocks.Msg = Blockly.Msg;
         var toolboxconfig = {toolbox:this.props.kb.toolbox.getDefalutToolBox(ScratchBlocks.Msg)};
         const workspaceConfig = defaultsDeep({}, Blocks.defaultOptions, this.props.options,toolboxconfig);
         this.workspace = ScratchBlocks.inject(this.blocks, workspaceConfig);
