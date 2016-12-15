@@ -130,7 +130,7 @@ class GUI extends React.Component {
                 <StopAll vm={vm} {...stopAllProps} />
                 <Stage vm={vm} {...stageProps} />
                 <SpriteSelector vm={vm} {... spriteSelectorProps} />
-                <Blocks vm={vm} {... blocksProps} />
+                <Blocks vm={vm} kb={kb} {... blocksProps} />
                 <SpriteLibrary vm={vm} {...spriteLibraryProps} />
                 <CostumeLibrary vm={vm} {...costumeLibraryProps} />
                 <BackdropLibrary vm={vm} {...backdropLibraryProps} />

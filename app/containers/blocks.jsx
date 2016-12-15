@@ -22,7 +22,8 @@ class Blocks extends React.Component {
         ]);
     }
     componentDidMount () {
-        const workspaceConfig = defaultsDeep({}, Blocks.defaultOptions, this.props.options);
+        var toolboxconfig = {toolbox:this.props.kb.toolbox.getDefalutToolBox(ScratchBlocks.Msg)};
+        const workspaceConfig = defaultsDeep({}, Blocks.defaultOptions, this.props.options,toolboxconfig);
         this.workspace = ScratchBlocks.inject(this.blocks, workspaceConfig);
         this.attachVM();
     }
@@ -80,6 +81,7 @@ class Blocks extends React.Component {
         const {
             options, // eslint-disable-line no-unused-vars
             vm, // eslint-disable-line no-unused-vars
+            kb,
             ...props
         } = this.props;
 
