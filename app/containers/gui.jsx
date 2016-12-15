@@ -25,11 +25,15 @@ const BackdropLibrary = require('./backdrop-library.jsx');
 class GUI extends React.Component {
     constructor (props) {
         super(props);
-        bindAll(this, ['closeModal']);
+        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
 
-        this.state = {currentModal: null};
+        this.state = {
+            currentModal: null,
+            showArduinoPanel: false,
+            showStage: true
+        };
     }
     componentDidMount () {
         this.vmManager.attachKeyboardEvents();
@@ -50,6 +54,12 @@ class GUI extends React.Component {
     }
     closeModal () {
         this.setState({currentModal: null});
+    }
+    toggleArduinoPanel(){
+        this.setState({showArduinoPanel: !this.state.showArduinoPanel});
+    }
+    toggelStage(){
+        this.setState({showStage: !this.state.showStage})
     }
     render () {
         let {
@@ -94,6 +104,12 @@ class GUI extends React.Component {
             openNewBackdrop: () => this.openModal('backdrop-library'),
             openNewCostume: () => this.openModal('costume-library'),
             openNewSprite: () => this.openModal('sprite-library')
+        });
+        headerBarProps = defaultsDeep({},headerBarProps,{
+            toggleArduinoPanel: ()=>this.toggleArduinoPanel()
+        });
+        arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
+            visible: this.state.showArduinoPanel
         });
         if (this.props.children) {
             return (
@@ -148,6 +164,8 @@ GUI.defaultProps = {
     spriteLibraryProps: {},
     stageProps: {},
     stopAllProps: {},
+    arduinoPanelProps: {},
+    headerBarProps: {},
     vm: new VM(),
     kb: new  KittenBlock()
 };

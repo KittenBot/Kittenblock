@@ -7,7 +7,7 @@ const HeaderBarComponent = require('../components/header-bar.jsx');
 class HeaderBar extends React.Component {
     constructor (props) {
         super(props);
-        bindAll(this, ['serialDevUpdate','refreshPort']);
+        bindAll(this, ['serialDevUpdate','refreshPort','selectPort']);
         this.state = {
             serialDev: [],
             networkDev: []
@@ -25,9 +25,11 @@ class HeaderBar extends React.Component {
     componentDidMount () {
         this.refreshPort();
     }
+
     render () {
         const {
             kb,
+            toggleArduinoPanel,
             ...props
         } = this.props;
         return (
@@ -35,6 +37,7 @@ class HeaderBar extends React.Component {
                 serialDev={this.state.serialDev}
                 refreshPort={this.refreshPort}
                 selectPort={this.selectPort}
+                toggleArduinoPanel={this.props.toggleArduinoPanel}
                 {...props}
             />
         );
