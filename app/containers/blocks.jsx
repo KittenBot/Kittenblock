@@ -4,11 +4,11 @@ const React = require('react');
 const ScratchBlocks = require('../../scratch-blocks');
 const VM = require('../../scratch-vm');
 const BlocksComponent = require('../components/blocks.jsx');
-require("../language/en.js");
 
 class Blocks extends React.Component {
     constructor (props) {
         super(props);
+        require("../language/"+this.props.kb.config.config.language);
         bindAll(this, [
             'attachVM',
             'detachVM',
