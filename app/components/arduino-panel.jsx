@@ -1,5 +1,5 @@
 const React = require('react');
-import {Button} from 'react-bootstrap';
+import {Button,FormControl} from 'react-bootstrap';
 import brace from 'brace';
 import AceEditor from 'react-ace';
 import 'brace/mode/java';
@@ -17,6 +17,7 @@ class ArduinoPanelComponent extends React.Component {
                     display: visible,
                     right: 0,
                     width: 500,
+                    height: 806,
                     top: 80,
                     bottom: 8,
                     backgroundColor: '#0097a7'
@@ -29,12 +30,48 @@ class ArduinoPanelComponent extends React.Component {
                 <Button style={{float:'right'}}>Open with arduino</Button>
             </div>
             <AceEditor
-                style={{top:45,left:2,height:450}}
+                style={{top:45,left:2,height:450,width:495}}
                 mode="c_cpp"
                 theme="eclipse"
                 name="arduino-code"
                 editorProps={{$blockScrolling: true}}
-            />,
+            />
+            <div id="console-log"
+            style={{
+                position: 'absolute',
+                left:2,
+                width:495,
+                height:256,
+                top:500,
+                overflowY: 'scroll',
+                backgroundColor: '#000000',
+                color: '#008000',
+                fontSize:18
+            }}
+            >
+            </div>
+            <form className="form-inline" id="console-input"
+                 style={{
+                     position:'absolute',
+                     top:754,
+                     width:500,
+                     marginLeft:4,
+                     marginTop:8
+                 }}
+            >
+                <FormControl
+                    type="text"
+                    style={{
+                        width: '70%',
+                        backgroundColor: '#FFFFFF',
+                        border: '0px',
+                        color: '#000000'
+                    }}
+                />
+                <Button style={{marginLeft:3}}>Send</Button>
+                <Button style={{marginLeft:2}}>C</Button>
+            </form>
+
             </div>
         );
     }

@@ -17,7 +17,7 @@ const SpriteSelectorComponent = function (props) {
                 top: 450,
                 left: 10,
                 width:480,
-                height: 600,
+                height: 450,
                 backgroundColor:"#F9F9F9",
                 borderRadius: 10
             }}
