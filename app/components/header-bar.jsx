@@ -9,6 +9,7 @@ class HeaderBarComponent extends React.Component {
         const {
             serialDev,
             refreshPort,
+            selectPort,
             ...componentProps
         } = this.props;
         return (
@@ -44,6 +45,7 @@ class HeaderBarComponent extends React.Component {
                         <ButtonGroup>
                             <DropdownButton title={"Not Connected"} bsStyle="success"
                                             onClick={refreshPort}
+                                            onSelect={selectPort}
                                             id="portDropdown"
                                             style={{width: '150px'}}>
                                 {serialDev.map(dev => (

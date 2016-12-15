@@ -19,6 +19,9 @@ class HeaderBar extends React.Component {
     refreshPort(){
         this.props.kb.serial.getDevices(this.serialDevUpdate);
     }
+    selectPort(eventKey){
+        console.log("selectPort "+eventKey);
+    }
     componentDidMount () {
         this.refreshPort();
     }
@@ -31,6 +34,7 @@ class HeaderBar extends React.Component {
             <HeaderBarComponent
                 serialDev={this.state.serialDev}
                 refreshPort={this.refreshPort}
+                selectPort={this.selectPort}
                 {...props}
             />
         );
