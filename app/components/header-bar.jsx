@@ -11,6 +11,7 @@ class HeaderBarComponent extends React.Component {
             refreshPort,
             selectPort,
             toggleArduinoPanel,
+            toggleStage,
             ...componentProps
         } = this.props;
         return (
@@ -73,7 +74,9 @@ class HeaderBarComponent extends React.Component {
                         <Button bsStyle="warning">Examples</Button>
                     </NavItem>
                     <NavItem>
-                        <Button bsStyle="warning">Stage</Button>
+                        <Button bsStyle="warning"
+                                onClick={toggleStage}
+                        >Stage</Button>
                     </NavItem>
                     <NavItem>
                         <ButtonGroup>

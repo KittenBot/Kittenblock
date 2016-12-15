@@ -6,16 +6,21 @@ import { Navbar,Nav,NavItem } from 'react-bootstrap';
 
 class EditorTabsComponent extends React.Component {
     handleSelect (eventKey) {
-
+        console.log("Editory tab:"+eventKey);
     }
     render()
     {
+        const {
+            showStage,
+            ...props
+        } = this.props;
+        var leftPos=showStage?500:0;
         return (
             <Nav bsStyle="tabs" activeKey="1"
                  style={{
                      position: 'absolute',
                      top: 50,
-                     left: 500
+                     left: leftPos
                  }}
                  onSelect={this.handleSelect}
                  className="editor-tabs"

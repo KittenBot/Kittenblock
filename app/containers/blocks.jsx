@@ -82,12 +82,18 @@ class Blocks extends React.Component {
             vm, // eslint-disable-line no-unused-vars
             ...props
         } = this.props;
+
         return (
             <BlocksComponent
+                showStage={this.props.showStage}
                 componentRef={this.setBlocks}
                 {...props}
             />
         );
+    }
+    componentDidUpdate(){
+        console.log("resize workspace");
+        ScratchBlocks.svgResize(this.workspace);
     }
 }
 

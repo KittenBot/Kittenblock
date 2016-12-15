@@ -88,7 +88,8 @@ class GUI extends React.Component {
         blocksProps = defaultsDeep({}, blocksProps, {
             options: {
                 media: `${basePath}static/blocks-media/`
-            }
+            },
+            showStage: this.state.showStage
         });
         costumeLibraryProps = defaultsDeep({}, costumeLibraryProps, {
             mediaLibrary: this.mediaLibrary,
@@ -106,10 +107,14 @@ class GUI extends React.Component {
             openNewSprite: () => this.openModal('sprite-library')
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
-            toggleArduinoPanel: ()=>this.toggleArduinoPanel()
+            toggleArduinoPanel: ()=>this.toggleArduinoPanel(),
+            toggleStage: ()=>this.toggelStage()
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
             visible: this.state.showArduinoPanel
+        });
+        editorTabsProps = defaultsDeep({},editorTabsProps,{
+            showStage: this.state.showStage
         });
         if (this.props.children) {
             return (
@@ -166,6 +171,7 @@ GUI.defaultProps = {
     stopAllProps: {},
     arduinoPanelProps: {},
     headerBarProps: {},
+    editorTabsProps: {},
     vm: new VM(),
     kb: new  KittenBlock()
 };

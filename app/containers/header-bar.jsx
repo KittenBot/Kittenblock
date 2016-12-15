@@ -29,7 +29,6 @@ class HeaderBar extends React.Component {
     render () {
         const {
             kb,
-            toggleArduinoPanel,
             ...props
         } = this.props;
         return (
@@ -38,6 +37,7 @@ class HeaderBar extends React.Component {
                 refreshPort={this.refreshPort}
                 selectPort={this.selectPort}
                 toggleArduinoPanel={this.props.toggleArduinoPanel}
+                toggleStage={this.props.toggleStage}
                 {...props}
             />
         );

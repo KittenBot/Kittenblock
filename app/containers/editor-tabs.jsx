@@ -19,6 +19,7 @@ class EditorTabs extends React.Component {
         } = this.props;
         return (
             <EditorTabsComponent
+                showStage={this.props.showStage}
                 {...props}
             />
         );
