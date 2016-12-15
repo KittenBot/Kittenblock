@@ -16,6 +16,7 @@ const Stage = require('./stage.jsx');
 const StopAll = require('./stop-all.jsx');
 const HeaderBar = require('./header-bar.jsx');
 const EditorTabs = require('./editor-tabs.jsx');
+const ArduinoPanel = require('./arduino-panel.jsx');
 
 const SpriteLibrary = require('./sprite-library.jsx');
 const CostumeLibrary = require('./costume-library.jsx');
@@ -64,6 +65,7 @@ class GUI extends React.Component {
             stopAllProps,
             headerBarProps,
             editorTabsProps,
+            arduinoPanelProps,
             vm,
             kb,
             ...guiProps
@@ -103,6 +105,7 @@ class GUI extends React.Component {
         /* eslint-disable react/jsx-max-props-per-line, lines-around-comment */
         return (
             <GUIComponent {... guiProps}>
+                <ArduinoPanel vm={vm} {...arduinoPanelProps} />
                 <GreenFlag vm={vm} {...greenFlagProps} />
                 <StopAll vm={vm} {...stopAllProps} />
                 <Stage vm={vm} {...stageProps} />
