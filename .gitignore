@@ -6,6 +6,8 @@
 /node_modules
 npm-*
 
+/nwjs
+
 # Testing
 /.nyc_output
 /coverage
