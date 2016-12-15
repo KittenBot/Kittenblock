@@ -3,8 +3,8 @@ const defaultsDeep = require('lodash.defaultsdeep');
 const React = require('react');
 const ScratchBlocks = require('../../scratch-blocks');
 const VM = require('../../scratch-vm');
-
 const BlocksComponent = require('../components/blocks.jsx');
+require("../language/en.js");
 
 class Blocks extends React.Component {
     constructor (props) {

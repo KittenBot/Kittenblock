@@ -2,6 +2,7 @@ const bindAll = require('lodash.bindall');
 const defaultsDeep = require('lodash.defaultsdeep');
 const React = require('react');
 const VM = require('../../scratch-vm');
+const KittenBlock = require('../../kittenblock-pc');
 
 const VMManager = require('../lib/vm-manager');
 const MediaLibrary = require('../lib/media-library');
@@ -26,6 +27,10 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
+        this.kittenblock = new KittenBlock();
+        this.kittenblock.serial.enumSerial(function (devices) {
+            console.log("serial devs "+devices);
+        })
         this.state = {currentModal: null};
     }
     componentDidMount () {

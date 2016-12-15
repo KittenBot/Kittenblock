@@ -12,6 +12,7 @@ module.exports = {
         path: path.resolve(__dirname, 'build'),
         filename: '[name].js'
     },
+    target: 'node-webkit',
     module: {
         externals: {
             React: 'react',

@@ -21,7 +21,6 @@ class SpriteSelector extends React.Component {
         this.props.vm.setEditingTarget(event.target.value);
     }
     targetsUpdate (data) {
-        console.log("target "+data);
         this.setState({targets: data});
     }
     render () {
