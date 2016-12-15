@@ -126,7 +126,6 @@ class GUI extends React.Component {
         /* eslint-disable react/jsx-max-props-per-line, lines-around-comment */
         return (
             <GUIComponent {... guiProps}>
-                <ArduinoPanel vm={vm} {...arduinoPanelProps} />
                 <GreenFlag vm={vm} {...greenFlagProps} />
                 <StopAll vm={vm} {...stopAllProps} />
                 <Stage vm={vm} {...stageProps} />
@@ -137,6 +136,7 @@ class GUI extends React.Component {
                 <BackdropLibrary vm={vm} {...backdropLibraryProps} />
                 <HeaderBar kb={kb} {...headerBarProps} />
                 <EditorTabs vm={vm} {...editorTabsProps} />
+                <ArduinoPanel vm={vm} {...arduinoPanelProps} />
             </GUIComponent>
         );
         /* eslint-enable react/jsx-max-props-per-line, lines-around-comment */

@@ -13,14 +13,16 @@ class ArduinoPanelComponent extends React.Component {
                     display: visible,
                     right: 0,
                     width: 500,
-                    top: 45,
+                    top: 80,
                     bottom: 8,
                     backgroundColor: '#0097a7'
                 }}
             >
-            <div className="group" id="code-buttons">
-                <Button>Default</Button>
-
+            <div className="group" id="code-buttons" style={{top:4,left:4,width:480,position:'absolute'}}>
+                <Button style={{marginLeft:5,height:34}}><input type="checkbox"/>Translate</Button>
+                <Button style={{marginLeft:5}}>Restore</Button>
+                <Button style={{marginLeft:5}}>Upload</Button>
+                <Button style={{float:'right'}}>Open with arduino</Button>
             </div>
 
             </div>

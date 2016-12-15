@@ -16,7 +16,6 @@ const GreenFlagComponent = function (props) {
                 position: 'absolute',
                 top: 50,
                 right: 50,
-                width: 50,
                 height:25,
                 width:25,
                 // @todo Get real design here

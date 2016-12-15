@@ -48,6 +48,7 @@
     "minilog": "3.0.1",
     "opt-cli": "1.5.1",
     "react": "15.3.2",
+    "react-ace": "^4.1.0",
     "react-dom": "15.3.2",
     "react-fa": "^4.1.2",
     "react-modal": "1.5.2",
