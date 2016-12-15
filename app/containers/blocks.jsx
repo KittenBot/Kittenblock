@@ -92,7 +92,6 @@ class Blocks extends React.Component {
         );
     }
     componentDidUpdate(){
-        console.log("resize workspace");
         ScratchBlocks.svgResize(this.workspace);
     }
 }

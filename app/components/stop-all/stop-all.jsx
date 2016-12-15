@@ -15,8 +15,7 @@ const StopAllComponent = function (props) {
             style={{
                 position: 'absolute',
                 top: 50,
-                left: 470,
-                width: 50,
+                right: 10,
                 height:25,
                 width:25,
                 // @todo Get real design here
