@@ -16,12 +16,15 @@ class HeaderBarComponent extends React.Component {
             ...componentProps
         } = this.props;
         var portMenuItem;
-        if(this.props.connectedPort!=null){
+        var portDropdownTxt;
+
+        if(this.props.connectedPort!=null) {
+            portDropdownTxt = this.props.connectedPort;
             portMenuItem =
                 <MenuItem eventKey={{
                     'path': this.props.connectedPort,
                     'type': 'disconnect'
-                }} key={this.props.connectedPor}>Disconnect</MenuItem>
+                }} key={this.props.connectedPor}>Disconnect</MenuItem>;
 
         }else{
             portMenuItem =
@@ -30,7 +33,8 @@ class HeaderBarComponent extends React.Component {
                         'path': dev.path,
                         'type': dev.type
                     }} key={dev.path}>{dev.path}</MenuItem>
-                ))
+                ));
+            portDropdownTxt = "Not Connected";
         }
         return (
             <Navbar
@@ -63,7 +67,7 @@ class HeaderBarComponent extends React.Component {
                     </NavItem>
                     <NavItem>
                         <ButtonGroup>
-                            <DropdownButton title={"Not Connected"} bsStyle="success"
+                            <DropdownButton title={portDropdownTxt} bsStyle="success"
                                             onClick={refreshPort}
                                             onSelect={selectPort}
                                             id="portDropdown"

@@ -27,11 +27,16 @@ class HeaderBar extends React.Component {
         console.log("port get line "+line);
     }
     portClosed(){
-        console.log("port closed ");
+        this.setState({connectedPort:null});
+
     }
     selectPort(port){
-        console.log("connect to port "+port);
-        this.props.kb.connectPort(port,this.portConnected,this.portOnReadline,this.portClosed);
+        console.log("connect to port "+JSON.stringify(port));
+        if(port.type=='disconnect'){
+            this.props.kb.disonnectPort();
+        }else{
+            this.props.kb.connectPort(port,this.portConnected,this.portOnReadline,this.portClosed);
+        }
     }
     componentDidMount () {
         this.refreshPort();
