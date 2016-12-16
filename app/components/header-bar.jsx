@@ -12,8 +12,26 @@ class HeaderBarComponent extends React.Component {
             selectPort,
             toggleArduinoPanel,
             toggleStage,
+            connectedPort,
             ...componentProps
         } = this.props;
+        var portMenuItem;
+        if(this.props.connectedPort!=null){
+            portMenuItem =
+                <MenuItem eventKey={{
+                    'path': this.props.connectedPort,
+                    'type': 'disconnect'
+                }} key={this.props.connectedPor}>Disconnect</MenuItem>
+
+        }else{
+            portMenuItem =
+                    serialDev.map(dev => (
+                    <MenuItem eventKey={{
+                        'path': dev.path,
+                        'type': dev.type
+                    }} key={dev.path}>{dev.path}</MenuItem>
+                ))
+        }
         return (
             <Navbar
                 style={{
@@ -49,10 +67,9 @@ class HeaderBarComponent extends React.Component {
                                             onClick={refreshPort}
                                             onSelect={selectPort}
                                             id="portDropdown"
-                                            style={{width: '150px'}}>
-                                {serialDev.map(dev => (
-                                    <MenuItem eventKey={dev.path} key={dev.path}>{dev.path}</MenuItem>
-                                ))}
+                                            style={{width: '150px'}}>{
+                                portMenuItem
+                            }
                             </DropdownButton>
                         </ButtonGroup>
                     </NavItem>
