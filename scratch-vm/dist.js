@@ -49,9 +49,7 @@ module.exports =
 	var util = __webpack_require__(2);
 
 	var Runtime = __webpack_require__(6);
-	var sb2import = __webpack_require__(93);
-	var Sprite = __webpack_require__(99);
-	var Blocks = __webpack_require__(24);
+	var sb2import = __webpack_require__(94);
 
 	/**
 	 * Handles connections between blocks, stage, and extensions.
@@ -74,23 +72,29 @@ module.exports =
 	     */
 	    instance.editingTarget = null;
 	    // Runtime emits are passed along as VM emits.
-	    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (id) {
-	        instance.emit(Runtime.SCRIPT_GLOW_ON, {id: id});
+	    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (glowData) {
+	        instance.emit(Runtime.SCRIPT_GLOW_ON, glowData);
 	    });
-	    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (id) {
-	        instance.emit(Runtime.SCRIPT_GLOW_OFF, {id: id});
+	    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (glowData) {
+	        instance.emit(Runtime.SCRIPT_GLOW_OFF, glowData);
 	    });
-	    instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
-	        instance.emit(Runtime.BLOCK_GLOW_ON, {id: id});
+	    instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (glowData) {
+	        instance.emit(Runtime.BLOCK_GLOW_ON, glowData);
 	    });
-	    instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
-	        instance.emit(Runtime.BLOCK_GLOW_OFF, {id: id});
+	    instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (glowData) {
+	        instance.emit(Runtime.BLOCK_GLOW_OFF, glowData);
 	    });
-	    instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
-	        instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
+	    instance.runtime.on(Runtime.PROJECT_RUN_START, function () {
+	        instance.emit(Runtime.PROJECT_RUN_START);
 	    });
-	    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (data) {
-	        instance.emit(Runtime.SPRITE_INFO_REPORT, data);
+	    instance.runtime.on(Runtime.PROJECT_RUN_STOP, function () {
+	        instance.emit(Runtime.PROJECT_RUN_STOP);
+	    });
+	    instance.runtime.on(Runtime.VISUAL_REPORT, function (visualReport) {
+	        instance.emit(Runtime.VISUAL_REPORT, visualReport);
+	    });
+	    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (spriteInfo) {
+	        instance.emit(Runtime.SPRITE_INFO_REPORT, spriteInfo);
 	    });
 
 	    this.blockListener = this.blockListener.bind(this);
@@ -287,53 +291,6 @@ module.exports =
 	};
 
 	/**
-	 * Temporary way to make an empty project, in case the desired project
-	 * cannot be loaded from the online server.
-	 */
-	VirtualMachine.prototype.createEmptyProject = function () {
-	    // Stage.
-	    var blocks2 = new Blocks();
-	    var stage = new Sprite(blocks2, this.runtime);
-	    stage.name = 'Stage';
-	    stage.costumes.push({
-	        skin: './assets/stage.png',
-	        name: 'backdrop1',
-	        bitmapResolution: 2,
-	        rotationCenterX: 480,
-	        rotationCenterY: 360
-	    });
-	    var target2 = stage.createClone();
-	    this.runtime.targets.push(target2);
-	    target2.x = 0;
-	    target2.y = 0;
-	    target2.direction = 90;
-	    target2.size = 200;
-	    target2.visible = true;
-	    target2.isStage = true;
-	    // Sprite1 (cat).
-	    var blocks1 = new Blocks();
-	    var sprite = new Sprite(blocks1, this.runtime);
-	    sprite.name = 'Sprite1';
-	    sprite.costumes.push({
-	        skin: './assets/scratch_cat.svg',
-	        name: 'costume1',
-	        bitmapResolution: 1,
-	        rotationCenterX: 47,
-	        rotationCenterY: 55
-	    });
-	    var target1 = sprite.createClone();
-	    this.runtime.targets.push(target1);
-	    target1.x = 0;
-	    target1.y = 0;
-	    target1.direction = 90;
-	    target1.size = 100;
-	    target1.visible = true;
-	    this.editingTarget = this.runtime.targets[0];
-	    this.emitTargetsUpdate();
-	    this.emitWorkspaceUpdate();
-	};
-
-	/**
 	 * Set the renderer for the VM/runtime
 	 * @param {!RenderWebGL} renderer The renderer to attach
 	 */
@@ -394,7 +351,7 @@ module.exports =
 	            // Don't report clones.
 	            return !target.hasOwnProperty('isOriginal') || target.isOriginal;
 	        }).map(function (target) {
-	            return [target.id, target.getName()];
+	            return target.toJSON();
 	        }),
 	        // Currently editing target id.
 	        editingTarget: this.editingTarget ? this.editingTarget.id : null
@@ -1560,9 +1517,10 @@ module.exports =
 	var util = __webpack_require__(2);
 
 	// Virtual I/O devices.
-	var Clock = __webpack_require__(79);
-	var Keyboard = __webpack_require__(80);
-	var Mouse = __webpack_require__(83);
+	var Clock = __webpack_require__(78);
+	var Keyboard = __webpack_require__(79);
+	var Mouse = __webpack_require__(82);
+	var Serial = __webpack_require__(84);
 
 	var defaultBlockPackages = {
 	    scratch3_control: __webpack_require__(85),
@@ -1572,7 +1530,8 @@ module.exports =
 	    scratch3_operators: __webpack_require__(89),
 	    scratch3_sensing: __webpack_require__(90),
 	    scratch3_data: __webpack_require__(91),
-	    scratch3_procedures: __webpack_require__(92)
+	    scratch3_procedures: __webpack_require__(92),
+	    arduino: __webpack_require__(93)
 	};
 
 	/**
@@ -1639,6 +1598,12 @@ module.exports =
 	    this._scriptGlowsPreviousFrame = [];
 
 	    /**
+	     * Number of threads running during the previous frame
+	     * @type {number}
+	     */
+	    this._threadCount = 0;
+
+	    /**
 	     * Currently known number of clones, used to enforce clone limit.
 	     * @type {number}
 	     */
@@ -1689,7 +1654,8 @@ module.exports =
 	    this.ioDevices = {
 	        clock: new Clock(),
 	        keyboard: new Keyboard(this),
-	        mouse: new Mouse(this)
+	        mouse: new Mouse(this),
+	        serial: new Serial(this)
 	    };
 	};
 
@@ -1714,13 +1680,13 @@ module.exports =
 	 * Event name for glowing a script.
 	 * @const {string}
 	 */
-	Runtime.SCRIPT_GLOW_ON = 'STACK_GLOW_ON';
+	Runtime.SCRIPT_GLOW_ON = 'SCRIPT_GLOW_ON';
 
 	/**
 	 * Event name for unglowing a script.
 	 * @const {string}
 	 */
-	Runtime.SCRIPT_GLOW_OFF = 'STACK_GLOW_OFF';
+	Runtime.SCRIPT_GLOW_OFF = 'SCRIPT_GLOW_OFF';
 
 	/**
 	 * Event name for glowing a block.
@@ -1733,6 +1699,18 @@ module.exports =
 	 * @const {string}
 	 */
 	Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
+
+	/**
+	 * Event name for glowing the green flag
+	 * @const {string}
+	 */
+	Runtime.PROJECT_RUN_START = 'PROJECT_RUN_START';
+
+	/**
+	 * Event name for unglowing the green flag
+	 * @const {string}
+	 */
+	Runtime.PROJECT_RUN_STOP = 'PROJECT_RUN_STOP';
 
 	/**
 	 * Event name for visual value report.
@@ -1885,6 +1863,24 @@ module.exports =
 	};
 
 	/**
+	 * Restart a thread in place, maintaining its position in the list of threads.
+	 * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
+	 * Test project: https://scratch.mit.edu/projects/130183108/
+	 * @param {!Thread} thread Thread object to restart.
+	 */
+	Runtime.prototype._restartThread = function (thread) {
+	    var newThread = new Thread(thread.topBlock);
+	    newThread.target = thread.target;
+	    newThread.pushStack(thread.topBlock);
+	    var i = this.threads.indexOf(thread);
+	    if (i > -1) {
+	        this.threads[i] = newThread;
+	    } else {
+	        this.threads.push(thread);
+	    }
+	};
+
+	/**
 	 * Return whether a thread is currently active/running.
 	 * @param {?Thread} thread Thread object to check.
 	 * @return {Boolean} True if the thread is active/running.
@@ -1977,7 +1973,8 @@ module.exports =
 	            for (var i = 0; i < instance.threads.length; i++) {
 	                if (instance.threads[i].topBlock === topBlockId &&
 	                    instance.threads[i].target === target) {
-	                    instance._removeThread(instance.threads[i]);
+	                    instance._restartThread(instance.threads[i]);
+	                    return;
 	                }
 	            }
 	        } else {
@@ -2086,8 +2083,9 @@ module.exports =
 	        }
 	    }
 	    this.redrawRequested = false;
-	    var inactiveThreads = this.sequencer.stepThreads();
-	    this._updateGlows(inactiveThreads);
+	    var doneThreads = this.sequencer.stepThreads();
+	    this._updateGlows(doneThreads);
+	    this._setThreadCount(this.threads.length + doneThreads.length);
 	    if (this.renderer) {
 	        // @todo: Only render when this.redrawRequested or clones rendered.
 	        this.renderer.draw();
@@ -2176,6 +2174,22 @@ module.exports =
 	};
 
 	/**
+	 * Emit run start/stop after each tick. Emits when `this.threads.length` goes
+	 * between non-zero and zero
+	 *
+	 * @param {number} threadCount The new threadCount
+	 */
+	Runtime.prototype._setThreadCount = function (threadCount) {
+	    if (this._threadCount === 0 && threadCount > 0) {
+	        this.emit(Runtime.PROJECT_RUN_START);
+	    }
+	    if (this._threadCount > 0 && threadCount === 0) {
+	        this.emit(Runtime.PROJECT_RUN_STOP);
+	    }
+	    this._threadCount = threadCount;
+	};
+
+	/**
 	 * "Quiet" a script's glow: stop the VM from generating glow/unglow events
 	 * about that script. Use when a script has just been deleted, but we may
 	 * still be tracking glow data about it.
@@ -2195,9 +2209,9 @@ module.exports =
 	 */
 	Runtime.prototype.glowBlock = function (blockId, isGlowing) {
 	    if (isGlowing) {
-	        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
+	        this.emit(Runtime.BLOCK_GLOW_ON, {id: blockId});
 	    } else {
-	        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+	        this.emit(Runtime.BLOCK_GLOW_OFF, {id: blockId});
 	    }
 	};
 
@@ -2208,9 +2222,9 @@ module.exports =
 	 */
 	Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
 	    if (isGlowing) {
-	        this.emit(Runtime.SCRIPT_GLOW_ON, topBlockId);
+	        this.emit(Runtime.SCRIPT_GLOW_ON, {id: topBlockId});
 	    } else {
-	        this.emit(Runtime.SCRIPT_GLOW_OFF, topBlockId);
+	        this.emit(Runtime.SCRIPT_GLOW_OFF, {id: topBlockId});
 	    }
 	};
 
@@ -2220,24 +2234,17 @@ module.exports =
 	 * @param {string} value Value to show associated with the block.
 	 */
 	Runtime.prototype.visualReport = function (blockId, value) {
-	    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
+	    this.emit(Runtime.VISUAL_REPORT, {id: blockId, value: String(value)});
 	};
 
 	/**
-	 * Emit a sprite info report if the provided target is the editing target.
+	 * Emit a sprite info report if the provided target is the original sprite
 	 * @param {!Target} target Target to report sprite info for.
 	 */
 	Runtime.prototype.spriteInfoReport = function (target) {
-	    if (target !== this._editingTarget) {
-	        return;
-	    }
-	    this.emit(Runtime.SPRITE_INFO_REPORT, {
-	        x: target.x,
-	        y: target.y,
-	        direction: target.direction,
-	        visible: target.visible,
-	        rotationStyle: target.rotationStyle
-	    });
+	    if (!target.isOriginal) return;
+
+	    this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
 	};
 
 	/**
@@ -2363,7 +2370,7 @@ module.exports =
 	    var numActiveThreads = Infinity;
 	    // Whether `stepThreads` has run through a full single tick.
 	    var ranFirstTick = false;
-	    var inactiveThreads = [];
+	    var doneThreads = [];
 	    // Conditions for continuing to stepping threads:
 	    // 1. We must have threads in the list, and some must be active.
 	    // 2. Time elapsed must be less than WORK_TIME.
@@ -2373,16 +2380,14 @@ module.exports =
 	           this.timer.timeElapsed() < WORK_TIME &&
 	           (this.runtime.turboMode || !this.runtime.redrawRequested)) {
 	        numActiveThreads = 0;
-	        // Inline copy of the threads, updated on each step.
-	        var threadsCopy = this.runtime.threads.slice();
 	        // Attempt to run each thread one time.
-	        for (var i = 0; i < threadsCopy.length; i++) {
-	            var activeThread = threadsCopy[i];
+	        for (var i = 0; i < this.runtime.threads.length; i++) {
+	            var activeThread = this.runtime.threads[i];
 	            if (activeThread.stack.length === 0 ||
 	                activeThread.status === Thread.STATUS_DONE) {
 	                // Finished with this thread.
-	                if (inactiveThreads.indexOf(activeThread) < 0) {
-	                    inactiveThreads.push(activeThread);
+	                if (doneThreads.indexOf(activeThread) < 0) {
+	                    doneThreads.push(activeThread);
 	                }
 	                continue;
 	            }
@@ -2407,12 +2412,12 @@ module.exports =
 	    }
 	    // Filter inactive threads from `this.runtime.threads`.
 	    this.runtime.threads = this.runtime.threads.filter(function (thread) {
-	        if (inactiveThreads.indexOf(thread) > -1) {
+	        if (doneThreads.indexOf(thread) > -1) {
 	            return false;
 	        }
 	        return true;
 	    });
-	    return inactiveThreads;
+	    return doneThreads;
 	};
 
 	/**
@@ -3697,7 +3702,7 @@ module.exports =
 
 	var adapter = __webpack_require__(25);
 	var mutationAdapter = __webpack_require__(26);
-	var xmlEscape = __webpack_require__(78);
+	var xmlEscape = __webpack_require__(77);
 
 	/**
 	 * @fileoverview
@@ -4422,13 +4427,13 @@ module.exports =
 			return defineProp("WritableStream", __webpack_require__(41));
 		},
 		get ProxyHandler(){
-			return defineProp("ProxyHandler", __webpack_require__(64));
+			return defineProp("ProxyHandler", __webpack_require__(63));
 		},
 		get DomUtils(){
-			return defineProp("DomUtils", __webpack_require__(65));
+			return defineProp("DomUtils", __webpack_require__(64));
 		},
 		get CollectingHandler(){
-			return defineProp("CollectingHandler", __webpack_require__(77));
+			return defineProp("CollectingHandler", __webpack_require__(76));
 		},
 		// For legacy support
 		DefaultHandler: DomHandler,
@@ -8495,7 +8500,7 @@ module.exports =
 	module.exports = Stream;
 
 	var Parser = __webpack_require__(28),
-	    WritableStream = __webpack_require__(42).Writable || __webpack_require__(63).Writable;
+	    WritableStream = __webpack_require__(42).Writable || __webpack_require__(62).Writable;
 
 	function Stream(cbs, options){
 		var parser = this._parser = new Parser(cbs, options);
@@ -8546,10 +8551,10 @@ module.exports =
 
 	inherits(Stream, EE);
 	Stream.Readable = __webpack_require__(44);
-	Stream.Writable = __webpack_require__(59);
-	Stream.Duplex = __webpack_require__(60);
-	Stream.Transform = __webpack_require__(61);
-	Stream.PassThrough = __webpack_require__(62);
+	Stream.Writable = __webpack_require__(58);
+	Stream.Duplex = __webpack_require__(59);
+	Stream.Transform = __webpack_require__(60);
+	Stream.PassThrough = __webpack_require__(61);
 
 	// Backwards-compat with node 0.4.x
 	Stream.Stream = Stream;
@@ -8683,10 +8688,10 @@ module.exports =
 	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(45);
 	exports.Stream = __webpack_require__(42);
 	exports.Readable = exports;
-	exports.Writable = __webpack_require__(55);
-	exports.Duplex = __webpack_require__(54);
-	exports.Transform = __webpack_require__(57);
-	exports.PassThrough = __webpack_require__(58);
+	exports.Writable = __webpack_require__(54);
+	exports.Duplex = __webpack_require__(53);
+	exports.Transform = __webpack_require__(56);
+	exports.PassThrough = __webpack_require__(57);
 	if (!process.browser && process.env.READABLE_STREAM === 'disable') {
 	  module.exports = __webpack_require__(42);
 	}
@@ -8743,14 +8748,14 @@ module.exports =
 
 	/*<replacement>*/
 	var util = __webpack_require__(51);
-	util.inherits = __webpack_require__(52);
+	util.inherits = __webpack_require__(43);
 	/*</replacement>*/
 
 	var StringDecoder;
 
 
 	/*<replacement>*/
-	var debug = __webpack_require__(53);
+	var debug = __webpack_require__(52);
 	if (debug && debug.debuglog) {
 	  debug = debug.debuglog('stream');
 	} else {
@@ -8762,7 +8767,7 @@ module.exports =
 	util.inherits(Readable, Stream);
 
 	function ReadableState(options, stream) {
-	  var Duplex = __webpack_require__(54);
+	  var Duplex = __webpack_require__(53);
 
 	  options = options || {};
 
@@ -8823,14 +8828,14 @@ module.exports =
 	  this.encoding = null;
 	  if (options.encoding) {
 	    if (!StringDecoder)
-	      StringDecoder = __webpack_require__(56).StringDecoder;
+	      StringDecoder = __webpack_require__(55).StringDecoder;
 	    this.decoder = new StringDecoder(options.encoding);
 	    this.encoding = options.encoding;
 	  }
 	}
 
 	function Readable(options) {
-	  var Duplex = __webpack_require__(54);
+	  var Duplex = __webpack_require__(53);
 
 	  if (!(this instanceof Readable))
 	    return new Readable(options);
@@ -8933,7 +8938,7 @@ module.exports =
 	// backwards compatibility.
 	Readable.prototype.setEncoding = function(enc) {
 	  if (!StringDecoder)
-	    StringDecoder = __webpack_require__(56).StringDecoder;
+	    StringDecoder = __webpack_require__(55).StringDecoder;
 	  this._readableState.decoder = new StringDecoder(enc);
 	  this._readableState.encoding = enc;
 	  return this;
@@ -11795,39 +11800,10 @@ module.exports =
 /* 52 */
 /***/ function(module, exports) {
 
-	if (typeof Object.create === 'function') {
-	  // implementation from standard node.js 'util' module
-	  module.exports = function inherits(ctor, superCtor) {
-	    ctor.super_ = superCtor
-	    ctor.prototype = Object.create(superCtor.prototype, {
-	      constructor: {
-	        value: ctor,
-	        enumerable: false,
-	        writable: true,
-	        configurable: true
-	      }
-	    });
-	  };
-	} else {
-	  // old school shim for old browsers
-	  module.exports = function inherits(ctor, superCtor) {
-	    ctor.super_ = superCtor
-	    var TempCtor = function () {}
-	    TempCtor.prototype = superCtor.prototype
-	    ctor.prototype = new TempCtor()
-	    ctor.prototype.constructor = ctor
-	  }
-	}
-
-
-/***/ },
-/* 53 */
-/***/ function(module, exports) {
-
 	/* (ignored) */
 
 /***/ },
-/* 54 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11869,11 +11845,11 @@ module.exports =
 
 	/*<replacement>*/
 	var util = __webpack_require__(51);
-	util.inherits = __webpack_require__(52);
+	util.inherits = __webpack_require__(43);
 	/*</replacement>*/
 
 	var Readable = __webpack_require__(45);
-	var Writable = __webpack_require__(55);
+	var Writable = __webpack_require__(54);
 
 	util.inherits(Duplex, Readable);
 
@@ -11923,7 +11899,7 @@ module.exports =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 55 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11962,7 +11938,7 @@ module.exports =
 
 	/*<replacement>*/
 	var util = __webpack_require__(51);
-	util.inherits = __webpack_require__(52);
+	util.inherits = __webpack_require__(43);
 	/*</replacement>*/
 
 	var Stream = __webpack_require__(42);
@@ -11976,7 +11952,7 @@ module.exports =
 	}
 
 	function WritableState(options, stream) {
-	  var Duplex = __webpack_require__(54);
+	  var Duplex = __webpack_require__(53);
 
 	  options = options || {};
 
@@ -12064,7 +12040,7 @@ module.exports =
 	}
 
 	function Writable(options) {
-	  var Duplex = __webpack_require__(54);
+	  var Duplex = __webpack_require__(53);
 
 	  // Writable ctor is applied to Duplexes, though they're not
 	  // instanceof Writable, they're instanceof Readable.
@@ -12407,7 +12383,7 @@ module.exports =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 56 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -12634,7 +12610,7 @@ module.exports =
 
 
 /***/ },
-/* 57 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -12703,11 +12679,11 @@ module.exports =
 
 	module.exports = Transform;
 
-	var Duplex = __webpack_require__(54);
+	var Duplex = __webpack_require__(53);
 
 	/*<replacement>*/
 	var util = __webpack_require__(51);
-	util.inherits = __webpack_require__(52);
+	util.inherits = __webpack_require__(43);
 	/*</replacement>*/
 
 	util.inherits(Transform, Duplex);
@@ -12849,7 +12825,7 @@ module.exports =
 
 
 /***/ },
-/* 58 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -12879,11 +12855,11 @@ module.exports =
 
 	module.exports = PassThrough;
 
-	var Transform = __webpack_require__(57);
+	var Transform = __webpack_require__(56);
 
 	/*<replacement>*/
 	var util = __webpack_require__(51);
-	util.inherits = __webpack_require__(52);
+	util.inherits = __webpack_require__(43);
 	/*</replacement>*/
 
 	util.inherits(PassThrough, Transform);
@@ -12901,17 +12877,24 @@ module.exports =
 
 
 /***/ },
+/* 58 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__(54)
+
+
+/***/ },
 /* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(55)
+	module.exports = __webpack_require__(53)
 
 
 /***/ },
 /* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(54)
+	module.exports = __webpack_require__(56)
 
 
 /***/ },
@@ -12923,19 +12906,12 @@ module.exports =
 
 /***/ },
 /* 62 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = __webpack_require__(58)
-
-
-/***/ },
-/* 63 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 64 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = ProxyHandler;
@@ -12967,18 +12943,18 @@ module.exports =
 	});
 
 /***/ },
-/* 65 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var DomUtils = module.exports;
 
 	[
-		__webpack_require__(66),
+		__webpack_require__(65),
+		__webpack_require__(71),
 		__webpack_require__(72),
 		__webpack_require__(73),
 		__webpack_require__(74),
-		__webpack_require__(75),
-		__webpack_require__(76)
+		__webpack_require__(75)
 	].forEach(function(ext){
 		Object.keys(ext).forEach(function(key){
 			DomUtils[key] = ext[key].bind(DomUtils);
@@ -12987,11 +12963,11 @@ module.exports =
 
 
 /***/ },
-/* 66 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var ElementType = __webpack_require__(36),
-	    getOuterHTML = __webpack_require__(67),
+	    getOuterHTML = __webpack_require__(66),
 	    isTag = ElementType.isTag;
 
 	module.exports = {
@@ -13015,14 +12991,14 @@ module.exports =
 
 
 /***/ },
-/* 67 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
 	  Module dependencies
 	*/
-	var ElementType = __webpack_require__(68);
-	var entities = __webpack_require__(69);
+	var ElementType = __webpack_require__(67);
+	var entities = __webpack_require__(68);
 
 	/*
 	  Boolean Attributes
@@ -13199,7 +13175,7 @@ module.exports =
 
 
 /***/ },
-/* 68 */
+/* 67 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -13218,11 +13194,11 @@ module.exports =
 	};
 
 /***/ },
-/* 69 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var encode = __webpack_require__(70),
-	    decode = __webpack_require__(71);
+	var encode = __webpack_require__(69),
+	    decode = __webpack_require__(70);
 
 	exports.decode = function(data, level){
 		return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -13257,7 +13233,7 @@ module.exports =
 
 
 /***/ },
-/* 70 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var inverseXML = getInverseObj(__webpack_require__(34)),
@@ -13336,7 +13312,7 @@ module.exports =
 
 
 /***/ },
-/* 71 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var entityMap = __webpack_require__(32),
@@ -13413,7 +13389,7 @@ module.exports =
 	};
 
 /***/ },
-/* 72 */
+/* 71 */
 /***/ function(module, exports) {
 
 	var getChildren = exports.getChildren = function(elem){
@@ -13443,7 +13419,7 @@ module.exports =
 
 
 /***/ },
-/* 73 */
+/* 72 */
 /***/ function(module, exports) {
 
 	exports.removeElement = function(elem){
@@ -13526,7 +13502,7 @@ module.exports =
 
 
 /***/ },
-/* 74 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isTag = __webpack_require__(36).isTag;
@@ -13626,7 +13602,7 @@ module.exports =
 
 
 /***/ },
-/* 75 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var ElementType = __webpack_require__(36);
@@ -13719,7 +13695,7 @@ module.exports =
 
 
 /***/ },
-/* 76 */
+/* 75 */
 /***/ function(module, exports) {
 
 	// removeSubsets
@@ -13866,7 +13842,7 @@ module.exports =
 
 
 /***/ },
-/* 77 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = CollectingHandler;
@@ -13927,7 +13903,7 @@ module.exports =
 
 
 /***/ },
-/* 78 */
+/* 77 */
 /***/ function(module, exports) {
 
 	/**
@@ -13954,7 +13930,7 @@ module.exports =
 
 
 /***/ },
-/* 79 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Timer = __webpack_require__(8);
@@ -13997,10 +13973,10 @@ module.exports =
 
 
 /***/ },
-/* 80 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(81);
+	var Cast = __webpack_require__(80);
 
 	var Keyboard = function (runtime) {
 	    /**
@@ -14104,10 +14080,10 @@ module.exports =
 
 
 /***/ },
-/* 81 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Color = __webpack_require__(82);
+	var Color = __webpack_require__(81);
 
 	var Cast = function () {};
 
@@ -14273,7 +14249,7 @@ module.exports =
 
 
 /***/ },
-/* 82 */
+/* 81 */
 /***/ function(module, exports) {
 
 	var Color = function () {};
@@ -14355,10 +14331,10 @@ module.exports =
 
 
 /***/ },
-/* 83 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var MathUtil = __webpack_require__(84);
+	var MathUtil = __webpack_require__(83);
 
 	var Mouse = function (runtime) {
 	    this._x = 0;
@@ -14440,7 +14416,7 @@ module.exports =
 
 
 /***/ },
-/* 84 */
+/* 83 */
 /***/ function(module, exports) {
 
 	var MathUtil = function () {};
@@ -14494,10 +14470,85 @@ module.exports =
 
 
 /***/ },
+/* 84 */
+/***/ function(module, exports) {
+
+	/**
+	 * Created by Riven on 2016/10/3.
+	 */
+
+	function Serial (runtime) {
+
+	    /**
+	     * Reference to the owning Runtime.
+	     * Can be used, for example, to activate hats.
+	     * @type{!Runtime}
+	     */
+	    this.runtime = runtime;
+	    // call back for send msg
+	    this.sendMsg = null;
+	    this.sendBuff = null;
+	    // call back for data query
+	    this.query = null;
+	    // promise cb for each command
+	    this._resolves = {};
+	}
+
+	Serial.prototype.postData = function (data) {
+	    var slot = data.slot;
+	    var report = data.report;
+	    if(slot in this._resolves){
+	        if(report!=null){
+	            this._resolves[slot](report);
+	        }else{
+	            this._resolves[slot]();
+	        }
+	    }
+
+	};
+
+	Serial.prototype.sendBuff = function(data){
+	    if(this.sendBuff){
+	        this.sendBuff(data);
+	    }
+	};
+
+	Serial.prototype.sendMsg = function(data){
+	    if(this.sendMsg){
+	        this.sendMsg(data);
+	    }
+	};
+
+	Serial.prototype.queryData = function(data){
+	    if(this.query){
+	        return this.query(data);
+	    }
+	    return null;
+	};
+
+	Serial.prototype.regSendMsg = function(cb){
+	    this.sendMsg = cb;
+	};
+
+	Serial.prototype.regQueryData = function(cb){
+	    this.query = cb;
+	};
+
+	Serial.prototype.regResolve = function(data){
+	    var slot = data["slot"];
+	    var cb = data["resolve"];
+	    this._resolves[slot] = cb;
+	};
+
+
+	module.exports = Serial;
+
+
+/***/ },
 /* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(81);
+	var Cast = __webpack_require__(80);
 	var Timer = __webpack_require__(8);
 
 	var Scratch3ControlBlocks = function (runtime) {
@@ -14642,7 +14693,7 @@ module.exports =
 /* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(81);
+	var Cast = __webpack_require__(80);
 
 	var Scratch3EventBlocks = function (runtime) {
 	    /**
@@ -14737,7 +14788,7 @@ module.exports =
 /* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(81);
+	var Cast = __webpack_require__(80);
 
 	var Scratch3LooksBlocks = function (runtime) {
 	    /**
@@ -14964,8 +15015,8 @@ module.exports =
 /* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(81);
-	var MathUtil = __webpack_require__(84);
+	var Cast = __webpack_require__(80);
+	var MathUtil = __webpack_require__(83);
 	var Timer = __webpack_require__(8);
 
 	var Scratch3MotionBlocks = function (runtime) {
@@ -15204,7 +15255,7 @@ module.exports =
 /* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(81);
+	var Cast = __webpack_require__(80);
 
 	var Scratch3OperatorsBlocks = function (runtime) {
 	    /**
@@ -15353,7 +15404,7 @@ module.exports =
 /* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(81);
+	var Cast = __webpack_require__(80);
 
 	var Scratch3SensingBlocks = function (runtime) {
 	    /**
@@ -15530,7 +15581,7 @@ module.exports =
 /* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(81);
+	var Cast = __webpack_require__(80);
 
 	var Scratch3DataBlocks = function (runtime) {
 	    /**
@@ -15720,6 +15771,146 @@ module.exports =
 
 /***/ },
 /* 93 */
+/***/ function(module, exports) {
+
+	/**
+	 * Created by Riven on 7/8/2016.
+	 */
+
+	function ArduinoBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	ArduinoBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'event_arduinobegin': this.arduinobegin,
+	        'arduino_pin_mode': this.pinMode,
+	        'arduino_analog_read': this.analogRead,
+	        'arduino_pin_mode_option': this.pinModeOption,
+	        'arduino_digital_write': this.digitalWrite,
+	        'arduino_level_option': this.levelOption,
+	        'arduino_pwm_write': this.pwmWrite,
+	        'arduino_pwm_option': this.pwmOption,
+	        'arduino_digital_read': this.digitalRead,
+	        'arduino_analog_in_option': this.analogPinOption,
+	        'arduino_tone': this.tone,
+	        'arduino_map': this.map,
+	        'arduino_servo': this.servo,
+	        'arduino_pulsein': this.pulsein
+	    };
+	};
+
+	ArduinoBlocks.prototype.getHats = function () {
+	    return {
+	        event_whenarduinobegin: {
+	            restartExistingThreads: true
+	        }
+	    };
+	};
+
+	ArduinoBlocks.prototype.arduinobegin = function(argValues, util){
+	    console.log("restart arduino programe");
+	    cmd = "M999";
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.pinMode = function(argValues, util) {
+	    var pinmode = {"INPUT":0,"OUTPUT":1};
+	    pin = argValues.PINNUM;
+	    mode = pinmode[argValues.ARDUINO_PIN_MODE_OPTION];
+	    cmd = "M1 "+pin+" "+mode;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.digitalWrite = function(argValues, util) {
+	    var level = {"HIGH":1,"LOW":0};
+	    pin = argValues.PINNUM;
+	    value = level[argValues.ARDUINO_LEVEL_OPTION];
+	    cmd = "M2 "+pin+" "+value;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.pwmWrite = function(argValues, util) {
+	    pin = argValues.ARDUINO_PWM_OPTION;
+	    value = argValues.PWM;
+	    cmd = "M4 "+pin+" "+value;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.digitalRead = function(argValues, util) {
+	    var pin = argValues.PINNUM;
+	    var data = {type:'D',pin:pin};
+	    return util.ioQuery('serial', 'queryData', data);
+	};
+
+	ArduinoBlocks.prototype.analogRead = function(argValues, util) {
+	    var pin = argValues.PINNUM;
+	    var data = {type:'A',pin:pin};
+	    return util.ioQuery('serial', 'queryData', data);
+	};
+
+
+	ArduinoBlocks.prototype.tone = function(argValues, util){
+	    pin = argValues.PINNUM;
+	    var cmd = "M6 "+pin+" "+argValues.FREQUENCY+" "+argValues.DURATION;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.servo = function(argValues, util){
+	    pin = argValues.PINNUM;
+	    var cmd = "M7 "+pin+" "+argValues.ANGLE;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.pulsein = function(argValues, util) {
+	    var cmd = "M8 "+argValues.PINNUM;
+	    var exePromise = new Promise(function(resolve) {
+	        util.ioQuery('serial', 'sendMsg', cmd);
+	        util.ioQuery('serial', 'regResolve', {"slot":"M8", "resolve":resolve});
+	    });
+	    return exePromise;
+	};
+
+
+	ArduinoBlocks.prototype.map = function(argValues, util){
+	    x = argValues.VAL;
+	    in_min = argValues.FROMLOW;
+	    in_max = argValues.FROMHIGH;
+	    out_min = argValues.TOLOW;
+	    out_max = argValues.TOHIGH;
+	    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	};
+
+	ArduinoBlocks.prototype.pinModeOption = function(argValues, util) {
+	    return argValues.ARDUINO_PIN_MODE_OPTION;
+	};
+
+	ArduinoBlocks.prototype.levelOption = function(argValues, util) {
+	    return argValues.ARDUINO_LEVEL_OPTION;
+	};
+
+	ArduinoBlocks.prototype.pwmOption = function(argValues, util) {
+	    return argValues.ARDUINO_PWM_OPTION;
+	};
+
+	ArduinoBlocks.prototype.analogPinOption = function(argValues, util) {
+	    return argValues.ARDUINO_ANALOG_IN_OPTION;
+	};
+
+	module.exports = ArduinoBlocks;
+
+
+/***/ },
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -15730,14 +15921,14 @@ module.exports =
 	 */
 
 	var Blocks = __webpack_require__(24);
-	var RenderedTarget = __webpack_require__(94);
-	var Sprite = __webpack_require__(99);
-	var Color = __webpack_require__(82);
+	var RenderedTarget = __webpack_require__(95);
+	var Sprite = __webpack_require__(100);
+	var Color = __webpack_require__(81);
 	var log = __webpack_require__(11);
-	var uid = __webpack_require__(98);
-	var specMap = __webpack_require__(100);
-	var Variable = __webpack_require__(96);
-	var List = __webpack_require__(97);
+	var uid = __webpack_require__(99);
+	var specMap = __webpack_require__(101);
+	var Variable = __webpack_require__(97);
+	var List = __webpack_require__(98);
 
 	/**
 	 * Parse a single "Scratch object" and create all its in-memory VM objects.
@@ -15766,8 +15957,9 @@ module.exports =
 	            var costume = object.costumes[i];
 	            // @todo: Make sure all the relevant metadata is being pulled out.
 	            sprite.costumes.push({
-	                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
-	                    costume.baseLayerMD5 + '/get/',
+	                //skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
+	                //    costume.baseLayerMD5 + '/get/',
+	                skin: 'http://localhost:9234/' + costume.baseLayerMD5,
 	                name: costume.costumeName,
 	                bitmapResolution: costume.bitmapResolution,
 	                rotationCenterX: costume.rotationCenterX,
@@ -16151,14 +16343,14 @@ module.exports =
 
 
 /***/ },
-/* 94 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var util = __webpack_require__(2);
 
 	var log = __webpack_require__(11);
-	var MathUtil = __webpack_require__(84);
-	var Target = __webpack_require__(95);
+	var MathUtil = __webpack_require__(83);
+	var Target = __webpack_require__(96);
 
 	/**
 	 * Rendered target: instance of a sprite (clone), or the stage.
@@ -16405,9 +16597,18 @@ module.exports =
 	    if (this.isStage) {
 	        return;
 	    }
-	    // Keep size between 5% and 535%.
-	    this.size = MathUtil.clamp(size, 5, 535);
 	    if (this.renderer) {
+	        // Clamp to scales relative to costume and stage size.
+	        // See original ScratchSprite.as:setSize.
+	        var costumeSize = this.renderer.getSkinSize(this.drawableID);
+	        var origW = Math.round(costumeSize[0]);
+	        var origH = Math.round(costumeSize[1]);
+	        var minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
+	        var maxScale = Math.min(
+	            (1.5 * this.runtime.constructor.STAGE_WIDTH) / origW,
+	            (1.5 * this.runtime.constructor.STAGE_HEIGHT) / origH
+	        );
+	        this.size = Math.round(MathUtil.clamp(size / 100, minScale, maxScale) * 100);
 	        var renderedDirectionScale = this._getRenderedDirectionAndScale();
 	        this.renderer.updateDrawableProperties(this.drawableID, {
 	            direction: renderedDirectionScale.direction,
@@ -16476,6 +16677,7 @@ module.exports =
 	            this.runtime.requestRedraw();
 	        }
 	    }
+	    this.runtime.spriteInfoReport(this);
 	};
 
 	/**
@@ -16515,6 +16717,22 @@ module.exports =
 	        }
 	    }
 	    return -1;
+	};
+
+	/**
+	 * Get a costume of this rendered target by id.
+	 * @return {object} current costume
+	 */
+	RenderedTarget.prototype.getCurrentCostume = function () {
+	    return this.sprite.costumes[this.currentCostume];
+	};
+
+	/**
+	 * Get full costume list
+	 * @return {object[]} list of costumes
+	 */
+	RenderedTarget.prototype.getCostumes = function () {
+	    return this.sprite.costumes;
 	};
 
 	/**
@@ -16793,6 +17011,25 @@ module.exports =
 	};
 
 	/**
+	 * Serialize sprite info, used when emitting events about the sprite
+	 * @returns {object} sprite data as a simple object
+	 */
+	RenderedTarget.prototype.toJSON = function () {
+	    return {
+	        id: this.id,
+	        name: this.getName(),
+	        isStage: this.isStage,
+	        x: this.x,
+	        y: this.y,
+	        direction: this.direction,
+	        costume: this.getCurrentCostume(),
+	        costumeCount: this.getCostumes().length,
+	        visible: this.visible,
+	        rotationStyle: this.rotationStyle
+	    };
+	};
+
+	/**
 	 * Dispose, destroying any run-time properties.
 	 */
 	RenderedTarget.prototype.dispose = function () {
@@ -16809,13 +17046,13 @@ module.exports =
 
 
 /***/ },
-/* 95 */
+/* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Blocks = __webpack_require__(24);
-	var Variable = __webpack_require__(96);
-	var List = __webpack_require__(97);
-	var uid = __webpack_require__(98);
+	var Variable = __webpack_require__(97);
+	var List = __webpack_require__(98);
+	var uid = __webpack_require__(99);
 
 	/**
 	 * @fileoverview
@@ -16936,7 +17173,7 @@ module.exports =
 
 
 /***/ },
-/* 96 */
+/* 97 */
 /***/ function(module, exports) {
 
 	/**
@@ -16960,7 +17197,7 @@ module.exports =
 
 
 /***/ },
-/* 97 */
+/* 98 */
 /***/ function(module, exports) {
 
 	/**
@@ -16982,7 +17219,7 @@ module.exports =
 
 
 /***/ },
-/* 98 */
+/* 99 */
 /***/ function(module, exports) {
 
 	/**
@@ -17017,10 +17254,10 @@ module.exports =
 
 
 /***/ },
-/* 99 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var RenderedTarget = __webpack_require__(94);
+	var RenderedTarget = __webpack_require__(95);
 	var Blocks = __webpack_require__(24);
 
 	/**
@@ -17080,7 +17317,7 @@ module.exports =
 
 
 /***/ },
-/* 100 */
+/* 101 */
 /***/ function(module, exports) {
 
 	/**
