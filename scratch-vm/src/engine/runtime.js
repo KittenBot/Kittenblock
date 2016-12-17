@@ -8,6 +8,7 @@ var util = require('util');
 var Clock = require('../io/clock');
 var Keyboard = require('../io/keyboard');
 var Mouse = require('../io/mouse');
+var Serial = require('../io/serial');
 
 var defaultBlockPackages = {
     scratch3_control: require('../blocks/scratch3_control'),
@@ -17,7 +18,8 @@ var defaultBlockPackages = {
     scratch3_operators: require('../blocks/scratch3_operators'),
     scratch3_sensing: require('../blocks/scratch3_sensing'),
     scratch3_data: require('../blocks/scratch3_data'),
-    scratch3_procedures: require('../blocks/scratch3_procedures')
+    scratch3_procedures: require('../blocks/scratch3_procedures'),
+    arduino: require('../blocks/arduino')
 };
 
 /**
@@ -84,6 +86,12 @@ var Runtime = function () {
     this._scriptGlowsPreviousFrame = [];
 
     /**
+     * Number of threads running during the previous frame
+     * @type {number}
+     */
+    this._threadCount = 0;
+
+    /**
      * Currently known number of clones, used to enforce clone limit.
      * @type {number}
      */
@@ -134,7 +142,8 @@ var Runtime = function () {
     this.ioDevices = {
         clock: new Clock(),
         keyboard: new Keyboard(this),
-        mouse: new Mouse(this)
+        mouse: new Mouse(this),
+        serial: new Serial(this)
     };
 };
 
@@ -159,13 +168,13 @@ Runtime.STAGE_HEIGHT = 360;
  * Event name for glowing a script.
  * @const {string}
  */
-Runtime.SCRIPT_GLOW_ON = 'STACK_GLOW_ON';
+Runtime.SCRIPT_GLOW_ON = 'SCRIPT_GLOW_ON';
 
 /**
  * Event name for unglowing a script.
  * @const {string}
  */
-Runtime.SCRIPT_GLOW_OFF = 'STACK_GLOW_OFF';
+Runtime.SCRIPT_GLOW_OFF = 'SCRIPT_GLOW_OFF';
 
 /**
  * Event name for glowing a block.
@@ -178,6 +187,18 @@ Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
  * @const {string}
  */
 Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
+
+/**
+ * Event name for glowing the green flag
+ * @const {string}
+ */
+Runtime.PROJECT_RUN_START = 'PROJECT_RUN_START';
+
+/**
+ * Event name for unglowing the green flag
+ * @const {string}
+ */
+Runtime.PROJECT_RUN_STOP = 'PROJECT_RUN_STOP';
 
 /**
  * Event name for visual value report.
@@ -330,6 +351,24 @@ Runtime.prototype._removeThread = function (thread) {
 };
 
 /**
+ * Restart a thread in place, maintaining its position in the list of threads.
+ * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
+ * Test project: https://scratch.mit.edu/projects/130183108/
+ * @param {!Thread} thread Thread object to restart.
+ */
+Runtime.prototype._restartThread = function (thread) {
+    var newThread = new Thread(thread.topBlock);
+    newThread.target = thread.target;
+    newThread.pushStack(thread.topBlock);
+    var i = this.threads.indexOf(thread);
+    if (i > -1) {
+        this.threads[i] = newThread;
+    } else {
+        this.threads.push(thread);
+    }
+};
+
+/**
  * Return whether a thread is currently active/running.
  * @param {?Thread} thread Thread object to check.
  * @return {Boolean} True if the thread is active/running.
@@ -422,7 +461,8 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             for (var i = 0; i < instance.threads.length; i++) {
                 if (instance.threads[i].topBlock === topBlockId &&
                     instance.threads[i].target === target) {
-                    instance._removeThread(instance.threads[i]);
+                    instance._restartThread(instance.threads[i]);
+                    return;
                 }
             }
         } else {
@@ -531,8 +571,9 @@ Runtime.prototype._step = function () {
         }
     }
     this.redrawRequested = false;
-    var inactiveThreads = this.sequencer.stepThreads();
-    this._updateGlows(inactiveThreads);
+    var doneThreads = this.sequencer.stepThreads();
+    this._updateGlows(doneThreads);
+    this._setThreadCount(this.threads.length + doneThreads.length);
     if (this.renderer) {
         // @todo: Only render when this.redrawRequested or clones rendered.
         this.renderer.draw();
@@ -621,6 +662,22 @@ Runtime.prototype._updateGlows = function (optExtraThreads) {
 };
 
 /**
+ * Emit run start/stop after each tick. Emits when `this.threads.length` goes
+ * between non-zero and zero
+ *
+ * @param {number} threadCount The new threadCount
+ */
+Runtime.prototype._setThreadCount = function (threadCount) {
+    if (this._threadCount === 0 && threadCount > 0) {
+        this.emit(Runtime.PROJECT_RUN_START);
+    }
+    if (this._threadCount > 0 && threadCount === 0) {
+        this.emit(Runtime.PROJECT_RUN_STOP);
+    }
+    this._threadCount = threadCount;
+};
+
+/**
  * "Quiet" a script's glow: stop the VM from generating glow/unglow events
  * about that script. Use when a script has just been deleted, but we may
  * still be tracking glow data about it.
@@ -640,9 +697,9 @@ Runtime.prototype.quietGlow = function (scriptBlockId) {
  */
 Runtime.prototype.glowBlock = function (blockId, isGlowing) {
     if (isGlowing) {
-        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
+        this.emit(Runtime.BLOCK_GLOW_ON, {id: blockId});
     } else {
-        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+        this.emit(Runtime.BLOCK_GLOW_OFF, {id: blockId});
     }
 };
 
@@ -653,9 +710,9 @@ Runtime.prototype.glowBlock = function (blockId, isGlowing) {
  */
 Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
     if (isGlowing) {
-        this.emit(Runtime.SCRIPT_GLOW_ON, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_ON, {id: topBlockId});
     } else {
-        this.emit(Runtime.SCRIPT_GLOW_OFF, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_OFF, {id: topBlockId});
     }
 };
 
@@ -665,24 +722,17 @@ Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
  * @param {string} value Value to show associated with the block.
  */
 Runtime.prototype.visualReport = function (blockId, value) {
-    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
+    this.emit(Runtime.VISUAL_REPORT, {id: blockId, value: String(value)});
 };
 
 /**
- * Emit a sprite info report if the provided target is the editing target.
+ * Emit a sprite info report if the provided target is the original sprite
  * @param {!Target} target Target to report sprite info for.
  */
 Runtime.prototype.spriteInfoReport = function (target) {
-    if (target !== this._editingTarget) {
-        return;
-    }
-    this.emit(Runtime.SPRITE_INFO_REPORT, {
-        x: target.x,
-        y: target.y,
-        direction: target.direction,
-        visible: target.visible,
-        rotationStyle: target.rotationStyle
-    });
+    if (!target.isOriginal) return;
+
+    this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
 };
 
 /**

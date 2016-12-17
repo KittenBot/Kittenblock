@@ -249,9 +249,18 @@ RenderedTarget.prototype.setSize = function (size) {
     if (this.isStage) {
         return;
     }
-    // Keep size between 5% and 535%.
-    this.size = MathUtil.clamp(size, 5, 535);
     if (this.renderer) {
+        // Clamp to scales relative to costume and stage size.
+        // See original ScratchSprite.as:setSize.
+        var costumeSize = this.renderer.getSkinSize(this.drawableID);
+        var origW = Math.round(costumeSize[0]);
+        var origH = Math.round(costumeSize[1]);
+        var minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
+        var maxScale = Math.min(
+            (1.5 * this.runtime.constructor.STAGE_WIDTH) / origW,
+            (1.5 * this.runtime.constructor.STAGE_HEIGHT) / origH
+        );
+        this.size = Math.round(MathUtil.clamp(size / 100, minScale, maxScale) * 100);
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
             direction: renderedDirectionScale.direction,
@@ -320,6 +329,7 @@ RenderedTarget.prototype.setCostume = function (index) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
@@ -359,6 +369,22 @@ RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
         }
     }
     return -1;
+};
+
+/**
+ * Get a costume of this rendered target by id.
+ * @return {object} current costume
+ */
+RenderedTarget.prototype.getCurrentCostume = function () {
+    return this.sprite.costumes[this.currentCostume];
+};
+
+/**
+ * Get full costume list
+ * @return {object[]} list of costumes
+ */
+RenderedTarget.prototype.getCostumes = function () {
+    return this.sprite.costumes;
 };
 
 /**
@@ -634,6 +660,25 @@ RenderedTarget.prototype.postSpriteInfo = function (data) {
     if (data.hasOwnProperty('visible')) {
         this.setVisible(data.visible);
     }
+};
+
+/**
+ * Serialize sprite info, used when emitting events about the sprite
+ * @returns {object} sprite data as a simple object
+ */
+RenderedTarget.prototype.toJSON = function () {
+    return {
+        id: this.id,
+        name: this.getName(),
+        isStage: this.isStage,
+        x: this.x,
+        y: this.y,
+        direction: this.direction,
+        costume: this.getCurrentCostume(),
+        costumeCount: this.getCostumes().length,
+        visible: this.visible,
+        rotationStyle: this.rotationStyle
+    };
 };
 
 /**

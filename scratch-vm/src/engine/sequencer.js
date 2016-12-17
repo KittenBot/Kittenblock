@@ -35,7 +35,7 @@ Sequencer.prototype.stepThreads = function () {
     var numActiveThreads = Infinity;
     // Whether `stepThreads` has run through a full single tick.
     var ranFirstTick = false;
-    var inactiveThreads = [];
+    var doneThreads = [];
     // Conditions for continuing to stepping threads:
     // 1. We must have threads in the list, and some must be active.
     // 2. Time elapsed must be less than WORK_TIME.
@@ -45,16 +45,14 @@ Sequencer.prototype.stepThreads = function () {
            this.timer.timeElapsed() < WORK_TIME &&
            (this.runtime.turboMode || !this.runtime.redrawRequested)) {
         numActiveThreads = 0;
-        // Inline copy of the threads, updated on each step.
-        var threadsCopy = this.runtime.threads.slice();
         // Attempt to run each thread one time.
-        for (var i = 0; i < threadsCopy.length; i++) {
-            var activeThread = threadsCopy[i];
+        for (var i = 0; i < this.runtime.threads.length; i++) {
+            var activeThread = this.runtime.threads[i];
             if (activeThread.stack.length === 0 ||
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread.
-                if (inactiveThreads.indexOf(activeThread) < 0) {
-                    inactiveThreads.push(activeThread);
+                if (doneThreads.indexOf(activeThread) < 0) {
+                    doneThreads.push(activeThread);
                 }
                 continue;
             }
@@ -79,12 +77,12 @@ Sequencer.prototype.stepThreads = function () {
     }
     // Filter inactive threads from `this.runtime.threads`.
     this.runtime.threads = this.runtime.threads.filter(function (thread) {
-        if (inactiveThreads.indexOf(thread) > -1) {
+        if (doneThreads.indexOf(thread) > -1) {
             return false;
         }
         return true;
     });
-    return inactiveThreads;
+    return doneThreads;
 };
 
 /**
