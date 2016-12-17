@@ -1,3 +1,4 @@
+var path = require('path');
 const bindAll = require('lodash.bindall');
 const defaultsDeep = require('lodash.defaultsdeep');
 const React = require('react');
@@ -27,6 +28,7 @@ class Blocks extends React.Component {
         const workspaceConfig = defaultsDeep({}, Blocks.defaultOptions, this.props.options,toolboxconfig);
         this.workspace = ScratchBlocks.inject(this.blocks, workspaceConfig);
         this.attachVM();
+        window.vm = this.props.vm;
     }
     componentWillUnmount () {
         this.detachVM();

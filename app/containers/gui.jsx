@@ -39,6 +39,7 @@ class GUI extends React.Component {
         this.vmManager.attachKeyboardEvents();
         this.props.vm.loadProject(this.props.projectData);
         this.props.vm.start();
+        this.props.kb.loadDefaultProj();
     }
     componentWillReceiveProps (nextProps) {
         if (this.props.projectData !== nextProps.projectData) {
