@@ -1,6 +1,7 @@
 # Mac OS
 .DS_Store
 /.idea
+/closure-library
 
 # NPM
 /node_modules
