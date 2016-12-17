@@ -155,7 +155,7 @@ Blockly.Blocks['operator_random'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "pick random %1 to %2",
+        "message0": Blockly.Msg.OPERATORS_PICKRANDOMTO,
         "args0": [
           {
             "type": "input_value",
@@ -271,7 +271,7 @@ Blockly.Blocks['operator_and'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "%1 and %2",
+      "message0": Blockly.Msg.OPERATORS_AND,
       "args0": [
         {
           "type": "input_value",
@@ -302,7 +302,7 @@ Blockly.Blocks['operator_or'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "%1 or %2",
+      "message0": Blockly.Msg.OPERATORS_OR,
       "args0": [
         {
           "type": "input_value",
@@ -333,7 +333,7 @@ Blockly.Blocks['operator_not'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "not %1",
+      "message0": Blockly.Msg.OPERATORS_NOT,
       "args0": [
         {
           "type": "input_value",
@@ -359,7 +359,7 @@ Blockly.Blocks['operator_join'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "join %1 %2",
+      "message0": Blockly.Msg.OPERATORS_JOIN,
       "args0": [
         {
           "type": "input_value",
@@ -388,7 +388,7 @@ Blockly.Blocks['operator_letter_of'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "letter %1 of %2",
+      "message0": Blockly.Msg.OPERATORS_LETTEROF,
       "args0": [
         {
           "type": "input_value",
@@ -417,7 +417,7 @@ Blockly.Blocks['operator_length'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "length of %1",
+      "message0": Blockly.Msg.OPERATORS_LENGTHOF,
       "args0": [
         {
           "type": "input_value",
@@ -443,7 +443,7 @@ Blockly.Blocks['operator_mod'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "%1 mod %2",
+        "message0": Blockly.Msg.OPERATORS_MOD ,
         "args0": [
           {
             "type": "input_value",
@@ -473,7 +473,7 @@ Blockly.Blocks['operator_round'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "round %1",
+        "message0": Blockly.Msg.OPERATORS_ROUND,
         "args0": [
           {
             "type": "input_value",
@@ -540,7 +540,7 @@ Blockly.Blocks['operator_mathop'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "%1 of %2",
+        "message0": Blockly.Msg.OPERATORS_OF,
         "args0": [
           {
             "type": "input_value",

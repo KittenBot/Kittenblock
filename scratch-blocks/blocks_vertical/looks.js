@@ -34,7 +34,7 @@ Blockly.Blocks['looks_sayforsecs'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "say %1 for %2 secs",
+      "message0": Blockly.Msg.LOOKS_SAYFORSECS,
       "args0": [
         {
           "type": "input_value",
@@ -62,7 +62,7 @@ Blockly.Blocks['looks_say'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "say %1",
+      "message0": Blockly.Msg.LOOKS_SAY,
       "args0": [
         {
           "type": "input_value",
@@ -86,7 +86,7 @@ Blockly.Blocks['looks_thinkforsecs'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "think %1 for %2 secs",
+      "message0": Blockly.Msg.LOOKS_THINKFORSECS,
       "args0": [
         {
           "type": "input_value",
@@ -114,7 +114,7 @@ Blockly.Blocks['looks_think'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "think %1",
+      "message0": Blockly.Msg.LOOKS_THINK,
       "args0": [
         {
           "type": "input_value",
@@ -139,7 +139,7 @@ Blockly.Blocks['looks_show'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "show",
+        "message0": Blockly.Msg.LOOKS_SHOW,
         "previousStatement": null,
         "nextStatement": null,
         "category": Blockly.Categories.looks,
@@ -158,7 +158,7 @@ Blockly.Blocks['looks_hide'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "hide",
+        "message0": Blockly.Msg.LOOKS_HIDE,
         "previousStatement": null,
         "nextStatement": null,
         "category": Blockly.Categories.looks,
@@ -210,7 +210,7 @@ Blockly.Blocks['looks_changeeffectby'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "change effect %1 by %2",
+      "message0": Blockly.Msg.LOOKS_CHANGEEFFECTBY,
       "args0": [
         {
           "type": "input_value",
@@ -239,7 +239,7 @@ Blockly.Blocks['looks_seteffectto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set effect %1 to %2",
+      "message0": Blockly.Msg.LOOKS_SETEFFECT,
       "args0": [
         {
           "type": "input_value",
@@ -268,7 +268,7 @@ Blockly.Blocks['looks_cleargraphiceffects'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "clear graphic effects",
+      "message0": Blockly.Msg.LOOKS_CLEARGRAPHICEFFECTS,
       "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.looks,
@@ -286,7 +286,7 @@ Blockly.Blocks['looks_changesizeby'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "change size by %1",
+      "message0": Blockly.Msg.LOOKS_CHANGESIZEBY,
       "args0": [
         {
           "type": "input_value",
@@ -310,7 +310,7 @@ Blockly.Blocks['looks_setsizeto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set size to %1 %",
+      "message0": Blockly.Msg.LOOKS_SETSIZETO,
       "args0": [
         {
           "type": "input_value",
@@ -334,7 +334,7 @@ Blockly.Blocks['looks_size'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "size",
+      "message0": Blockly.Msg.LOOKS_SIZE,
       "category": Blockly.Categories.looks,
       "colour": Blockly.Colours.looks.primary,
       "colourSecondary": Blockly.Colours.looks.secondary,
@@ -382,7 +382,7 @@ Blockly.Blocks['looks_switchcostumeto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "switch costume to %1",
+      "message0": Blockly.Msg.LOOKS_SWITCHCOSTUMETO,
       "args0": [
         {
           "type": "input_value",
@@ -408,7 +408,7 @@ Blockly.Blocks['looks_nextcostume'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "next costume",
+        "message0": Blockly.Msg.LOOKS_NEXTCOSTUME,
         "previousStatement": null,
         "nextStatement": null,
         "category": Blockly.Categories.looks,
@@ -426,7 +426,7 @@ Blockly.Blocks['looks_switchbackdropto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "switch backdrop to %1",
+      "message0": Blockly.Msg.LOOKS_SWITCHBACKDROP,
       "args0": [
         {
           "type": "input_value",
@@ -480,7 +480,7 @@ Blockly.Blocks['looks_gotofront'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "go to front",
+        "message0": Blockly.Msg.LOOKS_GOTOFRONT,
         "previousStatement": null,
         "nextStatement": null,
         "category": Blockly.Categories.looks,
@@ -498,7 +498,7 @@ Blockly.Blocks['looks_gobacklayers'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "go back %1 layers",
+      "message0": Blockly.Msg.LOOKS_GOBACKLAYERS,
       "args0": [
         {
           "type": "input_value",
@@ -523,7 +523,7 @@ Blockly.Blocks['looks_backdropname'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "backdrop name",
+      "message0": Blockly.Msg.LOOKS_BACKDROPNAME,
       "category": Blockly.Categories.looks,
       "colour": Blockly.Colours.looks.primary,
       "colourSecondary": Blockly.Colours.looks.secondary,
@@ -542,7 +542,7 @@ Blockly.Blocks['looks_costumeorder'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "costume #",
+      "message0": Blockly.Msg.LOOKS_COSTUME,
       "category": Blockly.Categories.looks,
       "colour": Blockly.Colours.looks.primary,
       "colourSecondary": Blockly.Colours.looks.secondary,
@@ -561,7 +561,7 @@ Blockly.Blocks['looks_backdroporder'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "backdrop #",
+      "message0": Blockly.Msg.LOOKS_BACKDROPORDER,
       "category": Blockly.Categories.looks,
       "colour": Blockly.Colours.looks.primary,
       "colourSecondary": Blockly.Colours.looks.secondary,
@@ -580,7 +580,7 @@ Blockly.Blocks['looks_switchbackdroptoandwait'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "switch backdrop to %1 and wait",
+      "message0": Blockly.Msg.LOOKS_SWITCHBACKDROPTOANDWAIT,
       "args0": [
         {
           "type": "input_value",
@@ -606,7 +606,7 @@ Blockly.Blocks['looks_nextbackdrop'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "next backdrop",
+        "message0": Blockly.Msg.LOOKS_NEXTBACKDROP,
         "previousStatement": null,
         "nextStatement": null,
         "category": Blockly.Categories.looks,

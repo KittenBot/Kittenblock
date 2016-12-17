@@ -68,7 +68,7 @@ Blockly.Blocks['sound_play'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "play sound %1",
+      "message0": Blockly.Msg.SOUND_PLAY,
       "args0": [
         {
           "type": "input_value",
@@ -93,7 +93,7 @@ Blockly.Blocks['sound_playuntildone'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "play sound %1 until done",
+      "message0": Blockly.Msg.SOUND_PLAYUTILDONE,
       "args0": [
         {
           "type": "input_value",
@@ -117,7 +117,7 @@ Blockly.Blocks['sound_playwithpitch'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "play sound %1 with pitch %2",
+      "message0": Blockly.Msg.SOUND_PLAYWITHPITCH,
       "args0": [
         {
           "type": "input_value",
@@ -146,7 +146,7 @@ Blockly.Blocks['sound_stopallsounds'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "stop all sounds",
+      "message0": Blockly.Msg.SOUND_STOPALLSOUND,
       "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.sound,
@@ -197,7 +197,7 @@ Blockly.Blocks['sound_playdrum'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "play drum %1",
+      "message0": Blockly.Msg.SOUND_PLAYDRUM,
       "args0": [
         {
           "type": "input_value",
@@ -221,7 +221,7 @@ Blockly.Blocks['sound_playdrumforbeats'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "play drum %1 for %2 beats",
+      "message0": Blockly.Msg.SOUND_PLAYDRUMFORBEATS,
       "args0": [
         {
           "type": "input_value",
@@ -249,7 +249,7 @@ Blockly.Blocks['sound_restforbeats'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "rest for %1 beats",
+      "message0": Blockly.Msg.SOUND_RESTFORBEATS,
       "args0": [
         {
           "type": "input_value",
@@ -273,7 +273,7 @@ Blockly.Blocks['sound_playnote'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "play note %1",
+      "message0": Blockly.Msg.SOUND_PLAYNOTE,
       "args0": [
         {
           "type": "input_value",
@@ -297,7 +297,7 @@ Blockly.Blocks['sound_playnoteforbeats'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "play note %1 for %2 beats",
+      "message0": Blockly.Msg.SOUND_PLAYNOTEFORBEATS,
       "args0": [
         {
           "type": "input_value",
@@ -395,7 +395,7 @@ Blockly.Blocks['sound_setkey'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set key %1 %2",
+      "message0": Blockly.Msg.SOUND_SETKEY,
       "args0": [
         {
           "type": "input_value",
@@ -453,7 +453,7 @@ Blockly.Blocks['sound_seteffectto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set effect %1 to %2",
+      "message0": Blockly.Msg.SOUND_SETEFFECTTO,
       "args0": [
         {
           "type": "input_value",
@@ -481,7 +481,7 @@ Blockly.Blocks['sound_changeeffectby'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "change effect %1 by %2",
+      "message0": Blockly.Msg.SOUND_CHANGEEFFECTBY,
       "args0": [
         {
           "type": "input_value",
@@ -508,7 +508,7 @@ Blockly.Blocks['sound_cleareffects'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "clear audio effects",
+      "message0": Blockly.Msg.SOUND_CLEAREFFECTS,
       "previousStatement": null,
       "nextStatement": null,
       "colour": Blockly.Colours.sounds.primary,
@@ -525,7 +525,7 @@ Blockly.Blocks['sound_setinstrumentto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set instrument to %1",
+      "message0": Blockly.Msg.SOUND_SETINSTRUMENTTO,
       "args0": [
         {
           "type": "input_value",
@@ -549,7 +549,7 @@ Blockly.Blocks['sound_changevolumeby'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "change volume by %1",
+      "message0": Blockly.Msg.SOUND_CHANGEVOLUMEBY ,
       "args0": [
         {
           "type": "input_value",
@@ -573,7 +573,7 @@ Blockly.Blocks['sound_setvolumeto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set volume to %1%",
+      "message0": Blockly.Msg.SOUND_SETVOLUMETO,
       "args0": [
         {
           "type": "input_value",
@@ -597,7 +597,7 @@ Blockly.Blocks['sound_volume'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "volume",
+      "message0": Blockly.Msg.SOUND_VOLUME,
       "category": Blockly.Categories.sound,
       "colour": Blockly.Colours.sounds.primary,
       "colourSecondary": Blockly.Colours.sounds.secondary,
@@ -616,7 +616,7 @@ Blockly.Blocks['sound_changetempoby'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "change tempo by %1",
+      "message0": Blockly.Msg.SOUND_CHANGETEMPOBY,
       "args0": [
         {
           "type": "input_value",
@@ -640,7 +640,7 @@ Blockly.Blocks['sound_settempotobpm'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set tempo to %1 bpm",
+      "message0": Blockly.Msg.SOUND_SETTEMPOTOBPM,
       "args0": [
         {
           "type": "input_value",
@@ -664,7 +664,7 @@ Blockly.Blocks['sound_tempo'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "tempo",
+      "message0": Blockly.Msg.SOUND_TEMPO,
       "category": Blockly.Categories.sound,
       "colour": Blockly.Colours.sounds.primary,
       "colourSecondary": Blockly.Colours.sounds.secondary,

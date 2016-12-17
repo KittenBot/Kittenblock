@@ -34,7 +34,7 @@ Blockly.Blocks['sensing_touchingobject'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "touching %1?",
+      "message0": Blockly.Msg.SENSING_TOUCHING,
       "args0": [
         {
           "type": "input_value",
@@ -88,7 +88,7 @@ Blockly.Blocks['sensing_touchingcolor'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "touching color %1?",
+      "message0": Blockly.Msg.SENSING_TOUCHINGCOLOR,
       "args0": [
         {
           "type": "input_value",
@@ -113,7 +113,7 @@ Blockly.Blocks['sensing_coloristouchingcolor'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "color %1 is touching %2?",
+      "message0": Blockly.Msg.SENSING_COLORISTOUCHING,
       "args0": [
         {
           "type": "input_value",
@@ -142,7 +142,7 @@ Blockly.Blocks['sensing_distanceto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "distance to %1",
+      "message0": Blockly.Msg.SENSING_DISTANCE,
       "args0": [
         {
           "type": "input_value",
@@ -194,7 +194,7 @@ Blockly.Blocks['sensing_askandwait'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "ask %1 and wait",
+      "message0": Blockly.Msg.SENSING_ASKANDWAIT,
       "args0": [
         {
           "type": "input_value",
@@ -218,7 +218,7 @@ Blockly.Blocks['sensing_answer'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "answer",
+      "message0": Blockly.Msg.SENSING_ANSWER,
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,
@@ -237,7 +237,7 @@ Blockly.Blocks['sensing_keypressed'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "key %1 pressed?",
+      "message0": Blockly.Msg.SENSING_KEYPRESSED,
       "args0": [
         {
           "type": "input_value",
@@ -331,7 +331,7 @@ Blockly.Blocks['sensing_mousedown'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "mouse down?",
+      "message0": Blockly.Msg.SENSING_MOUSEDOWN,
       "inputsInline": true,
       "output": "Boolean",
       "category": Blockly.Categories.sensing,
@@ -350,7 +350,7 @@ Blockly.Blocks['sensing_mousex'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "mouse x",
+      "message0": Blockly.Msg.SENSING_MOUSEX,
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,
@@ -368,7 +368,7 @@ Blockly.Blocks['sensing_mousey'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "mouse y",
+      "message0": Blockly.Msg.SENSING_MOUSEY,
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,
@@ -386,7 +386,7 @@ Blockly.Blocks['sensing_loudness'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "loudness",
+      "message0": Blockly.Msg.SENSING_LOUDNESS,
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,
@@ -405,7 +405,7 @@ Blockly.Blocks['sensing_videoon'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "video %1 on %2",
+      "message0": Blockly.Msg.SENSING_VIDEOON,
       "args0": [
         {
           "type": "input_value",
@@ -491,7 +491,7 @@ Blockly.Blocks['sensing_videotoggle'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "turn video %1",
+      "message0": Blockly.Msg.SENSING_TURNVIDEO,
       "args0": [
         {
           "type": "input_value",
@@ -545,7 +545,7 @@ Blockly.Blocks['sensing_setvideotransparency'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set video transparency to %1%",
+      "message0": Blockly.Msg.SENSING_SETVIDEOTRANSPARENCYTO,
       "args0": [
         {
           "type": "input_value",
@@ -569,7 +569,7 @@ Blockly.Blocks['sensing_timer'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "timer",
+      "message0": Blockly.Msg.SENSING_TIMER,
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,
@@ -588,7 +588,7 @@ Blockly.Blocks['sensing_resettimer'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "reset timer",
+      "message0": Blockly.Msg.SENSING_RESETTIMER,
       "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.sensing,
@@ -672,7 +672,7 @@ Blockly.Blocks['sensing_of'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "%1 of %2",
+      "message0": Blockly.Msg.SENSING_OF,
       "args0": [
         {
           "type": "input_value",
@@ -701,7 +701,7 @@ Blockly.Blocks['sensing_current'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "current %1",
+      "message0": Blockly.Msg.SENSING_CURRENT,
       "args0": [
         {
           "type": "input_value",
@@ -761,7 +761,7 @@ Blockly.Blocks['sensing_dayssince2000'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "days since 2000",
+      "message0": Blockly.Msg.SENSING_DAYSSINCE2000,
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,
@@ -779,7 +779,7 @@ Blockly.Blocks['sensing_username'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "username",
+      "message0": Blockly.Msg.SENSING_USERNAME,
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,

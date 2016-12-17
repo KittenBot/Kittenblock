@@ -34,7 +34,7 @@ Blockly.Blocks['motion_movesteps'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "move %1 steps",
+      "message0": Blockly.Msg.MOTION_MOVEBYSTEP,
       "args0": [
         {
           "type": "input_value",
@@ -59,7 +59,7 @@ Blockly.Blocks['motion_turnright'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "turn %1 %2 degrees",
+      "message0": Blockly.Msg.MOTION_TURNRIGHT,
       "args0": [
         {
           "type": "field_image",
@@ -90,7 +90,7 @@ Blockly.Blocks['motion_turnleft'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "turn %1 %2 degrees",
+      "message0": Blockly.Msg.MOTION_TURNLEFT,
       "args0": [
         {
           "type": "field_image",
@@ -121,7 +121,7 @@ Blockly.Blocks['motion_pointindirection'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "point in direction %1",
+      "message0": Blockly.Msg.MOTION_POINTINDIRECTION,
       "args0": [
         {
           "type": "input_value",
@@ -174,7 +174,7 @@ Blockly.Blocks['motion_pointtowards'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "point towards %1",
+      "message0": Blockly.Msg.MOTION_POINTTOWARD,
       "args0": [
         {
           "type": "input_value",
@@ -228,7 +228,7 @@ Blockly.Blocks['motion_gotoxy'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "go to x: %1 y: %2",
+      "message0": Blockly.Msg.MOTION_GOTOXY,
       "args0": [
         {
           "type": "input_value",
@@ -257,7 +257,7 @@ Blockly.Blocks['motion_goto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "go to %1",
+      "message0": Blockly.Msg.MOTION_GOTO,
       "args0": [
         {
           "type": "input_value",
@@ -282,7 +282,7 @@ Blockly.Blocks['motion_glidesecstoxy'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "glide %1 secs to x: %2 y: %3",
+      "message0": Blockly.Msg.MOTION_GLIDESECSTOX,
       "args0": [
         {
           "type": "input_value",
@@ -315,7 +315,7 @@ Blockly.Blocks['motion_changexby'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "change x by %1",
+      "message0": Blockly.Msg.MOTION_CHANGEXBY,
       "args0": [
         {
           "type": "input_value",
@@ -340,7 +340,7 @@ Blockly.Blocks['motion_setx'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set x to %1",
+      "message0": Blockly.Msg.MOTION_SETXTO,
       "args0": [
         {
           "type": "input_value",
@@ -365,7 +365,7 @@ Blockly.Blocks['motion_changeyby'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "change y by %1",
+      "message0": Blockly.Msg.MOTION_CHANGEYBY,
       "args0": [
         {
           "type": "input_value",
@@ -390,7 +390,7 @@ Blockly.Blocks['motion_sety'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set y to %1",
+      "message0": Blockly.Msg.MOTION_SETYTO,
       "args0": [
         {
           "type": "input_value",
@@ -415,7 +415,7 @@ Blockly.Blocks['motion_ifonedgebounce'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "if on edge, bounce",
+      "message0": Blockly.Msg.MOTION_IFONEDGEBOUNCE,
       "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.motion,
@@ -463,7 +463,7 @@ Blockly.Blocks['motion_setrotationstyle'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set rotation style %1",
+      "message0": Blockly.Msg.MOTION_SETROTATIONSTYLE,
       "args0": [
         {
           "type": "input_value",
@@ -487,7 +487,7 @@ Blockly.Blocks['motion_xposition'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "x position",
+      "message0": Blockly.Msg.MOTION_XPOSITION ,
       "output": "Number",
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "category": Blockly.Categories.motion,
@@ -506,7 +506,7 @@ Blockly.Blocks['motion_yposition'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "y position",
+      "message0": Blockly.Msg.MOTION_YPOSITION,
       "output": "Number",
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "category": Blockly.Categories.motion,
@@ -525,7 +525,7 @@ Blockly.Blocks['motion_direction'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "direction",
+      "message0": Blockly.Msg.MOTION_DIRECTION ,
       "output": "Number",
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "category": Blockly.Categories.motion,
