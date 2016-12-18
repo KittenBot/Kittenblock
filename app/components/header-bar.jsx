@@ -13,6 +13,7 @@ class HeaderBarComponent extends React.Component {
             toggleArduinoPanel,
             toggleStage,
             connectedPort,
+            openSetupModal,
             ...componentProps
         } = this.props;
         var portMenuItem;
@@ -114,7 +115,9 @@ class HeaderBarComponent extends React.Component {
                         >Arduino</Button>
                     </NavItem>
                     <NavItem>
-                        <Button bsStyle="warning">
+                        <Button bsStyle="warning"
+                            onClick={openSetupModal}
+                        >
                             <Icon name="gear"/>
                         </Button>
                     </NavItem>

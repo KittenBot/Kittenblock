@@ -17,6 +17,7 @@ const StopAll = require('./stop-all.jsx');
 const HeaderBar = require('./header-bar.jsx');
 const EditorTabs = require('./editor-tabs.jsx');
 const ArduinoPanel = require('./arduino-panel.jsx');
+const SetupModal = require('./setup-modal.jsx');
 
 const SpriteLibrary = require('./sprite-library.jsx');
 const CostumeLibrary = require('./costume-library.jsx');
@@ -51,6 +52,7 @@ class GUI extends React.Component {
         this.props.vm.stopAll();
     }
     openModal (modalName) {
+        console.log("open modal "+modalName);
         this.setState({currentModal: modalName});
     }
     closeModal () {
@@ -75,6 +77,7 @@ class GUI extends React.Component {
             stageProps,
             stopAllProps,
             headerBarProps,
+            setupModalProps,
             editorTabsProps,
             arduinoPanelProps,
             vm,
@@ -107,9 +110,13 @@ class GUI extends React.Component {
             openNewCostume: () => this.openModal('costume-library'),
             openNewSprite: () => this.openModal('sprite-library')
         });
+        setupModalProps = defaultsDeep({},setupModalProps, {
+            visible: this.state.currentModal === 'setup-modal'
+        });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),
-            toggleStage: ()=>this.toggelStage()
+            toggleStage: ()=>this.toggelStage(),
+            openSetupModal: ()=>this.openModal("setup-modal")
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
             visible: this.state.showArduinoPanel
@@ -168,6 +175,7 @@ GUI.defaultProps = {
     greenFlagProps: {},
     spriteSelectorProps: {},
     spriteLibraryProps: {},
+    setupModalProps: {},
     stageProps: {},
     stopAllProps: {},
     arduinoPanelProps: {},

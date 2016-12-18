@@ -54,6 +54,7 @@ class HeaderBar extends React.Component {
                 selectPort={this.selectPort}
                 toggleArduinoPanel={this.props.toggleArduinoPanel}
                 toggleStage={this.props.toggleStage}
+                openSetupModal={this.props.openSetupModal}
                 connectedPort={this.state.connectedPort}
                 {...props}
             />
