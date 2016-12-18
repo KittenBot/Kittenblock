@@ -17,6 +17,7 @@ class SetupModal  extends React.Component {
             <SetupModalComponent
                 visible={this.props.visible}
                 closeModal={this.props.onRequestClose}
+                version={this.props.kb.config.version}
             />
         );
     }

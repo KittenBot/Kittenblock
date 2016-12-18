@@ -1,37 +1,73 @@
 const React = require('react');
 
-var Modal = require('react-modal');
+import { ButtonGroup,Button,DropdownButton,FormControl,ButtonToolbar,MenuItem} from 'react-bootstrap';
 
-const modalStyle = {
-    overlay: {
-        zIndex: 1000,
-        backgroundColor: 'rgba(0, 0, 0, .75)'
-    },
-    content: {
-        position: 'absolute',
-        overflow: 'visible',
-        borderRadius: '6px',
-        padding: 0,
-        top: '15%',
-        bottom: '5%',
-        left: '5%',
-        right: '5%',
-        background: '#fcfcfc'
-    }
-};
+
+import {
+    Modal,
+    ModalHeader,
+    ModalTitle,
+    ModalClose,
+    ModalBody,
+    ModalFooter
+} from 'react-modal-bootstrap';
 
 class SetupModalComponent extends React.Component {
     render() {
         const {
+            version,
             ...componentProps
         } = this.props;
         return (
             <Modal
                 isOpen={this.props.visible}
-                onRequestClose={this.props.closeModal}
-                style={modalStyle}
+                onRequestHide={this.props.closeModal}
             >
-                <h2 ref="subtitle">Hello</h2>
+                <ModalHeader>
+                    <ModalClose onClick={this.props.closeModal}/>
+                    <ModalTitle>Setup Menu</ModalTitle>
+                </ModalHeader>
+                <ModalBody>
+                <div>
+                    <label id="versionNum">KittenBlock {version}</label>
+                    <Button bsStyle="success">Update to ?</Button>
+                </div>
+                <div>
+                    <label>Arduino Path</label>
+                    <br/>
+                        <FormControl
+                            type="text"
+                            placeholder="Arduino Path"
+                        />
+                    <ButtonToolbar>
+                        <Button bsStyle="default">Set</Button>
+                        <Button bsStyle="default">Copy Arduino Library</Button>
+                    </ButtonToolbar>
+                </div>
+                <div>
+                    <label>Language</label>
+                    <br/>
+                    <ButtonGroup>
+                        <DropdownButton title="Language" bsStyle="default" id="langDropdown">
+                            <MenuItem eventKey="1">English</MenuItem>
+                            <MenuItem eventKey="2">español</MenuItem>
+                            <MenuItem eventKey="3">中文</MenuItem>
+                            <MenuItem eventKey="4">français</MenuItem>
+                        </DropdownButton>
+                    </ButtonGroup>
+                </div>
+                <div>
+                    <label>Plugins</label>
+                    <br/>
+
+                </div>
+
+                </ModalBody>
+                <ModalFooter>
+                    <Button bsStyle="default" className="pull-left">Bug Report</Button>
+                    <Button bsStyle="primary">Save Config</Button>
+                </ModalFooter>
+
             </Modal>
         )
 
