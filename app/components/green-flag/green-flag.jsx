@@ -19,7 +19,7 @@ const GreenFlagComponent = function (props) {
                 height:25,
                 width:25,
                 // @todo Get real design here
-                filter: active ? 'saturate(200%) brightness(150%)' : 'none'
+                WebkitFilter: active ? 'saturate(200%) brightness(150%)' : 'none'
             }}
             title={title}
             onClick={onClick}
