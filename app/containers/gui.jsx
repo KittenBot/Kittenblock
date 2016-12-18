@@ -111,7 +111,8 @@ class GUI extends React.Component {
             openNewSprite: () => this.openModal('sprite-library')
         });
         setupModalProps = defaultsDeep({},setupModalProps, {
-            visible: this.state.currentModal === 'setup-modal'
+            visible: this.state.currentModal === 'setup-modal',
+            onRequestClose: this.closeModal
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),
@@ -145,6 +146,7 @@ class GUI extends React.Component {
                 <HeaderBar kb={kb} {...headerBarProps} />
                 <EditorTabs vm={vm} {...editorTabsProps} />
                 <ArduinoPanel vm={vm} {...arduinoPanelProps} />
+                <SetupModal kb={kb} {...setupModalProps}/>
             </GUIComponent>
         );
         /* eslint-enable react/jsx-max-props-per-line, lines-around-comment */
