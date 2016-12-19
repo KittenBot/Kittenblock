@@ -26,22 +26,30 @@ const BackdropLibrary = require('./backdrop-library.jsx');
 class GUI extends React.Component {
     constructor (props) {
         super(props);
-        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery']);
+        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
-
+        this.consoleMsgBuff=[{msg: "test", color: "green"}];
         this.state = {
             currentModal: null,
             showArduinoPanel: false,
-            showStage: true
-        };
+            showStage: true,
+            consoleMsg: this.consoleMsgBuff
+        }
+    }
+    clearConsole(){
+        this.consoleMsgBuff = [];
+        this.setState({consoleMsg:this.consoleMsgBuff})
     }
     sendCommonData(msg){
         this.props.kb.sendCmd(msg);
+        this.consoleMsgBuff.push({msg:msg,color:"Gray"});
+        this.setState({consoleMsg:this.consoleMsgBuff})
     }
     portReadLine(line){
         this.props.kb.arduino.parseLine(line);
-        console.log("portReadLine "+line);
+        this.consoleMsgBuff.push({msg:line,color:"LightSkyBlue"});
+        this.setState({consoleMsg:this.consoleMsgBuff})
     }
     deviceQuery(data){
         console.log("query data "+JSON.stringify(data));
@@ -137,7 +145,8 @@ class GUI extends React.Component {
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
             visible: this.state.showArduinoPanel,
-            code: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n'
+            code: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
+            consoleMsg: this.state.consoleMsg
         });
         editorTabsProps = defaultsDeep({},editorTabsProps,{
             showStage: this.state.showStage

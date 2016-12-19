@@ -9,9 +9,15 @@ class ArduinoPanelComponent extends React.Component {
     render() {
         const {
             code,
+            consoleMsg,
             ...componentProps
         } = this.props;
         var visible = this.props.visible?'block':'none';
+        const  msgs = [];
+        for (var i = 0; i < this.props.consoleMsg.length; i += 1) {
+            var t = this.props.consoleMsg[i];
+            msgs.push(<p style={{color:t.color}} key={i}>{t.msg}</p>);
+        };
         return (<div
                 style={{
                     position: 'absolute',
@@ -50,7 +56,7 @@ class ArduinoPanelComponent extends React.Component {
                 color: '#008000',
                 fontSize:18
             }}
-            >
+            >{msgs}
             </div>
             <form className="form-inline" id="console-input"
                  style={{
