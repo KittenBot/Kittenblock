@@ -26,7 +26,7 @@ const BackdropLibrary = require('./backdrop-library.jsx');
 class GUI extends React.Component {
     constructor (props) {
         super(props);
-        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage']);
+        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
 
@@ -36,9 +36,24 @@ class GUI extends React.Component {
             showStage: true
         };
     }
+    sendCommonData(msg){
+        this.props.kb.sendCmd(msg);
+    }
+    portReadLine(line){
+        this.props.kb.arduino.parseLine(line);
+        console.log("portReadLine "+line);
+    }
+    deviceQuery(data){
+        console.log("query data "+JSON.stringify(data));
+        return this.props.kb.arduino.queryData(data);
+    }
     componentDidMount () {
         this.vmManager.attachKeyboardEvents();
         this.props.vm.loadProject(this.props.projectData);
+        // kittenblock link hardware
+        this.props.vm.runtime.ioDevices.serial.regSendMsg(this.sendCommonData);
+        vm.runtime.ioDevices.serial.regQueryData(this.deviceQuery);
+        this.props.kb.arduino.sendCmdEvent.addListener(this.sendCommonData);
         this.props.vm.start();
         this.props.kb.loadDefaultProj();
     }
@@ -117,7 +132,8 @@ class GUI extends React.Component {
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),
             toggleStage: ()=>this.toggelStage(),
-            openSetupModal: ()=>this.openModal("setup-modal")
+            openSetupModal: ()=>this.openModal("setup-modal"),
+            portReadLine: (line)=>this.portReadLine(line)
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
             visible: this.state.showArduinoPanel

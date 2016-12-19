@@ -7,7 +7,7 @@ const HeaderBarComponent = require('../components/header-bar.jsx');
 class HeaderBar extends React.Component {
     constructor (props) {
         super(props);
-        bindAll(this, ['serialDevUpdate','refreshPort','selectPort','portConnected','portOnReadline','portClosed']);
+        bindAll(this, ['serialDevUpdate','refreshPort','selectPort','portConnected','portClosed']);
         this.state = {
             portDev: [],
             connectedPort: null
@@ -23,9 +23,6 @@ class HeaderBar extends React.Component {
         console.log("port connected "+port);
         this.setState({connectedPort:port});
     }
-    portOnReadline(line){
-        console.log("port get line "+line);
-    }
     portClosed(){
         this.setState({connectedPort:null});
 
@@ -35,7 +32,7 @@ class HeaderBar extends React.Component {
         if(port.type=='disconnect'){
             this.props.kb.disonnectPort();
         }else{
-            this.props.kb.connectPort(port,this.portConnected,this.portOnReadline,this.portClosed);
+            this.props.kb.connectPort(port,this.portConnected,this.props.portReadLine,this.portClosed);
         }
     }
     componentDidMount () {
@@ -45,6 +42,7 @@ class HeaderBar extends React.Component {
     render () {
         const {
             kb,
+            portReadLine,
             ...props
         } = this.props;
         return (
