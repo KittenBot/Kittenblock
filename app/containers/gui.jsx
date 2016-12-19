@@ -136,7 +136,8 @@ class GUI extends React.Component {
             portReadLine: (line)=>this.portReadLine(line)
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
-            visible: this.state.showArduinoPanel
+            visible: this.state.showArduinoPanel,
+            code: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n'
         });
         editorTabsProps = defaultsDeep({},editorTabsProps,{
             showStage: this.state.showStage

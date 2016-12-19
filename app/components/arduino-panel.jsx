@@ -8,6 +8,7 @@ import 'brace/theme/eclipse';
 class ArduinoPanelComponent extends React.Component {
     render() {
         const {
+            code,
             ...componentProps
         } = this.props;
         var visible = this.props.visible?'block':'none';
@@ -34,6 +35,7 @@ class ArduinoPanelComponent extends React.Component {
                 mode="c_cpp"
                 theme="eclipse"
                 name="arduino-code"
+                value={code}
                 editorProps={{$blockScrolling: true}}
             />
             <div id="console-log"
