@@ -28,7 +28,7 @@ class GreenFlag extends React.Component {
         this.setState({projectRunning: true});
     }
     onProjectRunStop () {
-        console.log("project stop")
+        console.log("project stop");
         this.setState({projectRunning: false});
     }
     handleClick (e) {

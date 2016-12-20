@@ -26,10 +26,10 @@ const BackdropLibrary = require('./backdrop-library.jsx');
 class GUI extends React.Component {
     constructor (props) {
         super(props);
-        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole']);
+        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole','stopProject']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
-        this.consoleMsgBuff=[{msg: "test", color: "green"}];
+        this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
         this.state = {
             currentModal: null,
             showArduinoPanel: false,
@@ -54,6 +54,9 @@ class GUI extends React.Component {
     deviceQuery(data){
         console.log("query data "+JSON.stringify(data));
         return this.props.kb.arduino.queryData(data);
+    }
+    stopProject(data){
+        this.sendCommonData("M999");
     }
     componentDidMount () {
         this.vmManager.attachKeyboardEvents();
@@ -162,7 +165,7 @@ class GUI extends React.Component {
         return (
             <GUIComponent {... guiProps}>
                 <GreenFlag vm={vm} {...greenFlagProps} />
-                <StopAll vm={vm} {...stopAllProps} />
+                <StopAll vm={vm} stopProject={this.stopProject} {...stopAllProps} />
                 <Stage vm={vm} {...stageProps} />
                 <SpriteSelector vm={vm} {... spriteSelectorProps} />
                 <Blocks vm={vm} kb={kb} {... blocksProps} />

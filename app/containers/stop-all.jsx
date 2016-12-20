@@ -27,6 +27,7 @@ class StopAll extends React.Component {
     }
     onProjectRunStop () {
         this.setState({projectRunning: false});
+        this.props.stopProject();
     }
     handleClick (e) {
         e.preventDefault();
@@ -35,6 +36,7 @@ class StopAll extends React.Component {
     render () {
         const {
             vm, // eslint-disable-line no-unused-vars
+            stopProject,
             ...props
         } = this.props;
         return (
@@ -48,7 +50,8 @@ class StopAll extends React.Component {
 }
 
 StopAll.propTypes = {
-    vm: React.PropTypes.instanceOf(VM)
+    vm: React.PropTypes.instanceOf(VM),
+    stopProject: React.PropTypes.func
 };
 
 module.exports = StopAll;
