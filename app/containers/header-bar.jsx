@@ -54,6 +54,7 @@ class HeaderBar extends React.Component {
                 toggleStage={this.props.toggleStage}
                 openSetupModal={this.props.openSetupModal}
                 connectedPort={this.state.connectedPort}
+                openLoadProjectDialog={this.state.openLoadProjectDialog}
                 {...props}
             />
         );

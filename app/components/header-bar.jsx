@@ -1,10 +1,16 @@
 const React = require('react');
 const logo = require('../media/logo.png');
+const bindAll = require('lodash.bindall');
 
 import { Navbar,Nav,NavItem,ButtonGroup,Button,DropdownButton,FormControl,MenuItem  } from 'react-bootstrap';
 import {Icon} from 'react-fa';
 
 class HeaderBarComponent extends React.Component {
+    constructor (props) {
+        super(props);
+        this.loadProjInput=null;
+        bindAll(this, []);
+    }
     render() {
         const {
             serialDev,
@@ -14,6 +20,7 @@ class HeaderBarComponent extends React.Component {
             toggleStage,
             connectedPort,
             openSetupModal,
+            openLoadProjectDialog,
             ...componentProps
         } = this.props;
         var portMenuItem;
@@ -105,7 +112,7 @@ class HeaderBarComponent extends React.Component {
                             <DropdownButton title="Project" bsStyle="warning" id="projDropdown">
                                 <MenuItem eventKey="1">New</MenuItem>
                                 <MenuItem eventKey="2">Save</MenuItem>
-                                <MenuItem eventKey="3">Load</MenuItem>
+                                <MenuItem eventKey="3" onClick={openLoadProjectDialog}>Load</MenuItem>
                             </DropdownButton>
                         </ButtonGroup>
                     </NavItem>

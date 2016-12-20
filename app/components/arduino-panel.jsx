@@ -50,17 +50,18 @@ class ArduinoPanelComponent extends React.Component {
                 ref={codeRef}
             />
             <div id="console-log"
-            style={{
-                position: 'absolute',
-                left:2,
-                width:495,
-                height:256,
-                top:500,
-                overflowY: 'scroll',
-                backgroundColor: '#000000',
-                color: '#008000',
-                fontSize:18
-            }}
+                style={{
+                    position: 'absolute',
+                    left:2,
+                    width:495,
+                    height:256,
+                    top:500,
+                    overflowY: 'scroll',
+                    backgroundColor: '#000000',
+                    color: '#008000',
+                    fontSize:18
+                }}
+                ref="arduinolog"
             >{msgs}
             </div>
             <form className="form-inline" id="console-input"

@@ -27,7 +27,8 @@ class GUI extends React.Component {
     constructor (props) {
         super(props);
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
-                        'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog']);
+                        'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
+                        'openLoadProjectDialog','loadProject']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -57,15 +58,14 @@ class GUI extends React.Component {
     }
     portReadLine(line){
         this.props.kb.arduino.parseLine(line);
-        this.consoleMsgBuff.push({msg:line,color:"LightSkyBlue"});
-        this.setState({consoleMsg:this.consoleMsgBuff})
+        this.appendLog(line,'LightSkyBlue');
     }
     deviceQuery(data){
         console.log("query data "+JSON.stringify(data));
         return this.props.kb.arduino.queryData(data);
     }
     stopProject(data){
-        this.sendCommonData("M999");
+        //this.sendCommonData("M999");
     }
     componentDidMount () {
         this.vmManager.attachKeyboardEvents();
@@ -114,6 +114,13 @@ class GUI extends React.Component {
     uploadProject() {
         var code = this.editor.getValue();
         this.props.kb.uploadProject(code,this.appendLog);
+    }
+    openLoadProjectDialog(){
+        this.loadProjDialog.click();
+    }
+    loadProject(proj){
+        var file = this.loadProjDialog.value;
+        this.props.kb.loadSb2(file);
     }
     render () {
         let {
@@ -169,7 +176,8 @@ class GUI extends React.Component {
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),
             toggleStage: ()=>this.toggelStage(),
             openSetupModal: ()=>this.openModal("setup-modal"),
-            portReadLine: (line)=>this.portReadLine(line)
+            portReadLine: (line)=>this.portReadLine(line),
+            openLoadProjectDialog:()=>this.openLoadProjectDialog()
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
             visible: this.state.showArduinoPanel,
@@ -205,6 +213,7 @@ class GUI extends React.Component {
                 <EditorTabs vm={vm} {...editorTabsProps} />
                 <ArduinoPanel vm={vm} {...arduinoPanelProps} />
                 <SetupModal kb={kb} {...setupModalProps}/>
+                <input type="file" style={{display:'none'}} ref={(ref) => this.loadProjDialog = ref} onChange={this.loadProject} accept=".sb2"/>
             </GUIComponent>
         );
         /* eslint-enable react/jsx-max-props-per-line, lines-around-comment */
