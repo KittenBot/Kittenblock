@@ -22,7 +22,7 @@ class ArduinoPanelComponent extends React.Component {
                 style={{
                     position: 'absolute',
                     display: visible,
-                    right: 0,
+                    right: 1,
                     width: 500,
                     height: 806,
                     top: 80,

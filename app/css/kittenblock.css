@@ -10,6 +10,7 @@
 
 body{
     background-color: #E9EEF2;
+    overflow: hidden;
 }
 
 .editor-tabs>li>a
