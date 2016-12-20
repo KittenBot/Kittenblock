@@ -11,6 +11,8 @@ class ArduinoPanelComponent extends React.Component {
             code,
             consoleMsg,
             restoreFirmware,
+            openIno,
+            codeRef,
             ...componentProps
         } = this.props;
         var visible = this.props.visible?'block':'none';
@@ -35,7 +37,7 @@ class ArduinoPanelComponent extends React.Component {
                 <Button style={{marginLeft:5,height:34}}><input type="checkbox"/>Translate</Button>
                 <Button style={{marginLeft:5}} onClick={restoreFirmware}>Restore</Button>
                 <Button style={{marginLeft:5}}>Upload</Button>
-                <Button style={{float:'right'}}>Open with arduino</Button>
+                <Button style={{float:'right'}} onClick={openIno}>Open with arduino</Button>
             </div>
             <AceEditor
                 style={{top:45,left:2,height:450,width:495}}
@@ -44,6 +46,7 @@ class ArduinoPanelComponent extends React.Component {
                 name="arduino-code"
                 value={code}
                 editorProps={{$blockScrolling: true}}
+                ref={codeRef}
             />
             <div id="console-log"
             style={{

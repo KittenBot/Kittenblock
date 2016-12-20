@@ -26,10 +26,12 @@ const BackdropLibrary = require('./backdrop-library.jsx');
 class GUI extends React.Component {
     constructor (props) {
         super(props);
-        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole','stopProject','restoreFirmware']);
+        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
+                        'stopProject','restoreFirmware','openIno','updateEditorInstance']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
+        this.editor;
         this.state = {
             currentModal: null,
             showArduinoPanel: false,
@@ -68,6 +70,7 @@ class GUI extends React.Component {
         this.props.kb.arduino.sendCmdEvent.addListener(this.sendCommonData);
         this.props.vm.start();
         this.props.kb.loadDefaultProj();
+        window.kb = this.props.kb; // for debug exoprt
     }
     componentWillReceiveProps (nextProps) {
         if (this.props.projectData !== nextProps.projectData) {
@@ -94,6 +97,14 @@ class GUI extends React.Component {
     restoreFirmware(){
         var code = this.props.kb.loadFirmware();
         this.setState({editorCode: code});
+    }
+    updateEditorInstance(editor){
+        this.editor = editor.editor;
+    }
+    openIno(){
+        var code = this.editor.getValue();
+        console.log(code);
+        this.props.kb.openIno(code);
     }
     render () {
         let {
@@ -155,7 +166,9 @@ class GUI extends React.Component {
             visible: this.state.showArduinoPanel,
             code: this.state.editorCode,
             consoleMsg: this.state.consoleMsg,
-            restoreFirmware: ()=>this.restoreFirmware()
+            codeUpdate: this.updateEditorInstance,
+            restoreFirmware: ()=>this.restoreFirmware(),
+            openIno: ()=>this.openIno()
         });
         editorTabsProps = defaultsDeep({},editorTabsProps,{
             showStage: this.state.showStage
