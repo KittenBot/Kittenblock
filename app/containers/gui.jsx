@@ -204,7 +204,7 @@ class GUI extends React.Component {
                 <GreenFlag vm={vm} {...greenFlagProps} />
                 <StopAll vm={vm} stopProject={this.stopProject} {...stopAllProps} />
                 <Stage vm={vm} {...stageProps} />
-                <SpriteSelector vm={vm} {... spriteSelectorProps} />
+                <SpriteSelector vm={vm} kb={kb} {... spriteSelectorProps} />
                 <Blocks vm={vm} kb={kb} {... blocksProps} />
                 <SpriteLibrary vm={vm} {...spriteLibraryProps} />
                 <CostumeLibrary vm={vm} {...costumeLibraryProps} />

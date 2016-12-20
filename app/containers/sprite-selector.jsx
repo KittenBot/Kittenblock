@@ -26,6 +26,7 @@ class SpriteSelector extends React.Component {
     render () {
         const {
             vm, // eslint-disable-line no-unused-vars
+            kb,
             openNewSprite,
             openNewCostume,
             openNewBackdrop,
@@ -36,14 +37,10 @@ class SpriteSelector extends React.Component {
                 openNewBackdrop={openNewBackdrop}
                 openNewCostume={openNewCostume}
                 openNewSprite={openNewSprite}
-                sprites={this.state.targets.targetList.map(target => (
-                    {
-                        id: target[0],
-                        name: target[1]
-                    }
-                ))}
+                sprites={this.state.targets}
                 value={this.state.targets.editingTarget && [this.state.targets.editingTarget]}
                 onChange={this.handleChange}
+                kb={this.props.kb}
                 {...props}
             />
         );

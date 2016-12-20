@@ -1,44 +1,53 @@
 const React = require('react');
 
-const SpriteSelectorComponent = function (props) {
-    const {
-        onChange,
-        sprites,
-        value,
-        openNewSprite,
-        openNewCostume,
-        openNewBackdrop,
-        ...componentProps
-    } = props;
-    return (
-        <div
-            style={{
-                position: 'absolute',
-                top: 450,
-                left: 10,
-                width:480,
-                height: 450,
-                backgroundColor:"#F9F9F9",
-                borderRadius: 10
-            }}
-            {...componentProps}
-        >
-            <div>
-                {sprites.map(sprite => (
-                    <img className="sprite img-thumbnail"
-                        alt={sprite.name}
-                        value={sprite.name}
-                         key={sprite.id}
-                    />
-                ))}
+class SpriteSelectorComponent extends React.Component {
+    render() {
+        const {
+            onChange,
+            sprites,
+            value,
+            openNewSprite,
+            openNewCostume,
+            openNewBackdrop,
+            kb,
+            ...componentProps
+        } = this.props;
+        var spriteList;
+        var targetList = this.props.sprites.targetList;
+        spriteList = targetList.map(sprite => (
+            <img className="sprite img-thumbnail"
+                 alt={sprite.name}
+                 value={sprite.name}
+                 key={sprite.id}
+                 src={this.props.kb.resourcemng.getSpriteSkin(sprite.id)}
+            />
+        ));
+
+        console.log(spriteList);
+        return (
+            <div
+                style={{
+                    position: 'absolute',
+                    top: 450,
+                    left: 10,
+                    width: 480,
+                    height: 450,
+                    backgroundColor: "#F9F9F9",
+                    borderRadius: 10
+                }}
+                {...componentProps}
+            >
+                <div>
+                    {spriteList}
+                </div>
+                <p>
+                    <button onClick={openNewSprite}>New sprite</button>
+                    <button onClick={openNewCostume}>New costume</button>
+                    <button onClick={openNewBackdrop}>New backdrop</button>
+                </p>
             </div>
-            <p>
-                <button onClick={openNewSprite}>New sprite</button>
-                <button onClick={openNewCostume}>New costume</button>
-                <button onClick={openNewBackdrop}>New backdrop</button>
-            </p>
-        </div>
-    );
+        );
+    }
 };
 
 SpriteSelectorComponent.propTypes = {
