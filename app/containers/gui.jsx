@@ -26,7 +26,7 @@ const BackdropLibrary = require('./backdrop-library.jsx');
 class GUI extends React.Component {
     constructor (props) {
         super(props);
-        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole','stopProject']);
+        bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole','stopProject','restoreFirmware']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -34,7 +34,8 @@ class GUI extends React.Component {
             currentModal: null,
             showArduinoPanel: false,
             showStage: true,
-            consoleMsg: this.consoleMsgBuff
+            consoleMsg: this.consoleMsgBuff,
+            editorCode: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
         }
     }
     clearConsole(){
@@ -89,6 +90,10 @@ class GUI extends React.Component {
     }
     toggelStage(){
         this.setState({showStage: !this.state.showStage})
+    }
+    restoreFirmware(){
+        var code = this.props.kb.loadFirmware();
+        this.setState({editorCode: code});
     }
     render () {
         let {
@@ -148,8 +153,9 @@ class GUI extends React.Component {
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
             visible: this.state.showArduinoPanel,
-            code: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
-            consoleMsg: this.state.consoleMsg
+            code: this.state.editorCode,
+            consoleMsg: this.state.consoleMsg,
+            restoreFirmware: ()=>this.restoreFirmware()
         });
         editorTabsProps = defaultsDeep({},editorTabsProps,{
             showStage: this.state.showStage
