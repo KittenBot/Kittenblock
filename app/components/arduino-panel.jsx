@@ -12,6 +12,7 @@ class ArduinoPanelComponent extends React.Component {
             consoleMsg,
             restoreFirmware,
             openIno,
+            uploadProj,
             codeRef,
             ...componentProps
         } = this.props;
@@ -36,7 +37,7 @@ class ArduinoPanelComponent extends React.Component {
             <div className="group" id="code-buttons" style={{top:4,left:4,width:480,position:'absolute'}}>
                 <Button style={{marginLeft:5,height:34}}><input type="checkbox"/>Translate</Button>
                 <Button style={{marginLeft:5}} onClick={restoreFirmware}>Restore</Button>
-                <Button style={{marginLeft:5}}>Upload</Button>
+                <Button style={{marginLeft:5}} onClick={uploadProj}>Upload</Button>
                 <Button style={{float:'right'}} onClick={openIno}>Open with arduino</Button>
             </div>
             <AceEditor

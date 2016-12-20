@@ -27,7 +27,7 @@ class GUI extends React.Component {
     constructor (props) {
         super(props);
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
-                        'stopProject','restoreFirmware','openIno','updateEditorInstance']);
+                        'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -47,6 +47,12 @@ class GUI extends React.Component {
     sendCommonData(msg){
         this.props.kb.sendCmd(msg);
         this.consoleMsgBuff.push({msg:msg,color:"Gray"});
+        this.setState({consoleMsg:this.consoleMsgBuff})
+    }
+    appendLog(msg,color){
+        if(!color)
+            color = "Gray";
+        this.consoleMsgBuff.push({msg:msg,color:color});
         this.setState({consoleMsg:this.consoleMsgBuff})
     }
     portReadLine(line){
@@ -103,8 +109,11 @@ class GUI extends React.Component {
     }
     openIno(){
         var code = this.editor.getValue();
-        console.log(code);
         this.props.kb.openIno(code);
+    }
+    uploadProject() {
+        var code = this.editor.getValue();
+        this.props.kb.uploadProject(code,this.appendLog);
     }
     render () {
         let {
@@ -168,7 +177,8 @@ class GUI extends React.Component {
             consoleMsg: this.state.consoleMsg,
             codeUpdate: this.updateEditorInstance,
             restoreFirmware: ()=>this.restoreFirmware(),
-            openIno: ()=>this.openIno()
+            openIno: ()=>this.openIno(),
+            uploadProj: ()=>this.uploadProject()
         });
         editorTabsProps = defaultsDeep({},editorTabsProps,{
             showStage: this.state.showStage
