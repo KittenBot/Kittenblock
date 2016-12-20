@@ -12,7 +12,7 @@ class SpriteSelectorComponent extends React.Component {
             kb,
             ...componentProps
         } = this.props;
-        var spriteList;
+        var spriteList=[];
         var targetList = this.props.sprites.targetList;
         spriteList = targetList.map(sprite => (
             <img className="sprite img-thumbnail"
@@ -20,6 +20,7 @@ class SpriteSelectorComponent extends React.Component {
                  value={sprite.name}
                  key={sprite.id}
                  src={this.props.kb.resourcemng.getSpriteSkin(sprite.id)}
+                 style={{width:70,height:70,border:this.props.sprites.editingTarget==sprite.id?'2px solid #179FD7':'none'}}
             />
         ));
 
