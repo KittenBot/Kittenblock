@@ -35,10 +35,10 @@ class ArduinoPanelComponent extends React.Component {
                 }}
             >
             <div className="group" id="code-buttons" style={{top:4,left:4,width:480,position:'absolute'}}>
-                <Button style={{marginLeft:5,height:34}}><input type="checkbox"/>Translate</Button>
-                <Button style={{marginLeft:5}} onClick={restoreFirmware}>Restore</Button>
-                <Button style={{marginLeft:5}} onClick={uploadProj}>Upload</Button>
-                <Button style={{float:'right'}} onClick={openIno}>Open with arduino</Button>
+                <Button style={{marginLeft:5,height:34}}><input type="checkbox"/>{Blockly.Msg.TRANSLATE}</Button>
+                <Button style={{marginLeft:5}} onClick={restoreFirmware}>{Blockly.Msg.RESTORE}</Button>
+                <Button style={{marginLeft:5}} onClick={uploadProj}>{Blockly.Msg.UPLOAD}</Button>
+                <Button style={{float:'right'}} onClick={openIno}>{Blockly.Msg.OPENWITHARDUINO}</Button>
             </div>
             <AceEditor
                 style={{top:45,left:2,height:450,width:495}}
@@ -82,7 +82,7 @@ class ArduinoPanelComponent extends React.Component {
                         color: '#000000'
                     }}
                 />
-                <Button style={{marginLeft:3}}>Send</Button>
+                <Button style={{marginLeft:3}}>{Blockly.Msg.SEND}</Button>
                 <Button style={{marginLeft:2}}>C</Button>
             </form>
 

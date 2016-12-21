@@ -42,7 +42,7 @@ class HeaderBarComponent extends React.Component {
                         'type': dev.type
                     }} key={dev.path}>{dev.path}</MenuItem>
                 ));
-            portDropdownTxt = "Not Connected";
+            portDropdownTxt = Blockly.Msg.SERIAL_PORT_NOTCONNECTED;
         }
         return (
             <Navbar
@@ -100,19 +100,19 @@ class HeaderBarComponent extends React.Component {
                 </Nav>
                 <Nav pullRight>
                     <NavItem>
-                        <Button bsStyle="warning">Examples</Button>
+                        <Button bsStyle="warning">{Blockly.Msg.EXAMPLE}</Button>
                     </NavItem>
                     <NavItem>
                         <Button bsStyle="warning"
                                 onClick={toggleStage}
-                        >Stage</Button>
+                        >{Blockly.Msg.STAGE}</Button>
                     </NavItem>
                     <NavItem>
                         <ButtonGroup>
-                            <DropdownButton title="Project" bsStyle="warning" id="projDropdown">
-                                <MenuItem eventKey="1">New</MenuItem>
-                                <MenuItem eventKey="2">Save</MenuItem>
-                                <MenuItem eventKey="3" onClick={openLoadProjectDialog}>Load</MenuItem>
+                            <DropdownButton title={Blockly.Msg.PROJECT} bsStyle="warning" id="projDropdown">
+                                <MenuItem eventKey="1">{Blockly.Msg.NEW_PROJECT}</MenuItem>
+                                <MenuItem eventKey="2">{Blockly.Msg.SAVE}</MenuItem>
+                                <MenuItem eventKey="3" onClick={openLoadProjectDialog}>{Blockly.Msg.LOAD_PROJECT}</MenuItem>
                             </DropdownButton>
                         </ButtonGroup>
                     </NavItem>

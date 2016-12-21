@@ -40,11 +40,12 @@ class SetupModalComponent extends React.Component {
             >
                 <ModalHeader>
                     <ModalClose onClick={this.props.closeModal}/>
-                    <ModalTitle>Setup Menu</ModalTitle>
+                    <ModalTitle>{Blockly.Msg.SETUP_MENU}</ModalTitle>
                 </ModalHeader>
                 <ModalBody>
                 <div className="setup-items">
                     <label id="versionNum">KittenBlock {version}</label>
+                    <br/>
                     <Button bsStyle="success">Update to ?</Button>
                 </div>
                 <div className="setup-items">
@@ -57,12 +58,12 @@ class SetupModalComponent extends React.Component {
                     />
                     <br/>
                     <ButtonToolbar>
-                        <Button bsStyle="default" onClick={openSetArduinoPathDialog}>Set</Button>
+                        <Button bsStyle="default" onClick={openSetArduinoPathDialog}>{Blockly.Msg.SET}</Button>
                         <Button bsStyle="default">Copy Arduino Library</Button>
                     </ButtonToolbar>
                 </div>
                 <div className="setup-items">
-                    <label>Language</label>
+                    <label>{Blockly.Msg.LANGUAGE}</label>
                     <br/>
                     <ButtonGroup>
                         <DropdownButton title={language.name} bsStyle="default" id="langDropdown">
@@ -74,14 +75,14 @@ class SetupModalComponent extends React.Component {
                     </ButtonGroup>
                 </div>
                 <div className="setup-items">
-                    <label>Plugins</label>
+                    <label>{Blockly.Msg.PLUGIN}</label>
                     <br/>
 
                 </div>
 
                 </ModalBody>
                 <ModalFooter>
-                    <Button bsStyle="primary" onClick={applyconfig}>Save Config</Button>
+                    <Button bsStyle="primary" onClick={applyconfig}>{Blockly.Msg.SAVE_CONFIG}</Button>
                 </ModalFooter>
 
             </Modal>
