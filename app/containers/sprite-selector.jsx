@@ -40,6 +40,7 @@ class SpriteSelector extends React.Component {
                 sprites={this.state.targets}
                 value={this.state.targets.editingTarget && [this.state.targets.editingTarget]}
                 onChange={this.handleChange}
+                selectTarget={this.props.selectTarget}
                 kb={this.props.kb}
                 {...props}
             />

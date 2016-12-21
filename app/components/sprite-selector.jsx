@@ -1,6 +1,13 @@
 const React = require('react');
+const bindAll = require('lodash.bindall');
 
 class SpriteSelectorComponent extends React.Component {
+    constructor (props) {
+        super(props);
+        bindAll(this, [
+        ]);
+    }
+
     render() {
         const {
             onChange,
@@ -9,6 +16,7 @@ class SpriteSelectorComponent extends React.Component {
             openNewSprite,
             openNewCostume,
             openNewBackdrop,
+            selectTarget,
             kb,
             ...componentProps
         } = this.props;
@@ -21,6 +29,7 @@ class SpriteSelectorComponent extends React.Component {
                  key={sprite.id}
                  src={this.props.kb.resourcemng.getSpriteSkin(sprite.id)}
                  style={{width:70,height:70,border:this.props.sprites.editingTarget==sprite.id?'2px solid #179FD7':'none'}}
+                 onClick={() => selectTarget(sprite.id)}
             />
         ));
 

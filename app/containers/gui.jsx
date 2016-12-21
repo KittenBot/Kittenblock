@@ -28,7 +28,7 @@ class GUI extends React.Component {
         super(props);
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
-                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig']);
+                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -162,6 +162,9 @@ class GUI extends React.Component {
         this.setState({language:langobj});
         this.props.kb.config.language = langobj;
     }
+    selectTarget(id){
+        this.props.vm.setEditingTarget(id);
+    }
     render () {
         let {
             backdropLibraryProps,
@@ -206,7 +209,8 @@ class GUI extends React.Component {
         spriteSelectorProps = defaultsDeep({}, spriteSelectorProps, {
             openNewBackdrop: () => this.openModal('backdrop-library'),
             openNewCostume: () => this.openModal('costume-library'),
-            openNewSprite: () => this.openModal('sprite-library')
+            openNewSprite: () => this.openModal('sprite-library'),
+            selectTarget: (e)=>this.selectTarget(e),
         });
         setupModalProps = defaultsDeep({},setupModalProps, {
             visible: this.state.currentModal === 'setup-modal',
