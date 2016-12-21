@@ -13,6 +13,10 @@ body{
     overflow: hidden;
 }
 
+.setup-items{
+    margin-top: 20px;
+}
+
 .editor-tabs>li>a
 {
     border: none!important;

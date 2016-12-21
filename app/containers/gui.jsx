@@ -40,7 +40,7 @@ class GUI extends React.Component {
             consoleMsg: this.consoleMsgBuff,
             editorCode: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
             arduinoPath: this.props.kb.config.arduino.path,
-            language: this.props.kb.config.language.name
+            language: this.props.kb.config.language
         };
         require("../language/"+this.props.kb.config.language.file);
     }
@@ -154,7 +154,7 @@ class GUI extends React.Component {
                 langobj.file='fr.js';
                 break;
         }
-        this.setState({language:langobj.name})
+        this.setState({language:langobj})
     }
     render () {
         let {

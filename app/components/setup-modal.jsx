@@ -42,28 +42,29 @@ class SetupModalComponent extends React.Component {
                     <ModalTitle>Setup Menu</ModalTitle>
                 </ModalHeader>
                 <ModalBody>
-                <div>
+                <div className="setup-items">
                     <label id="versionNum">KittenBlock {version}</label>
                     <Button bsStyle="success">Update to ?</Button>
                 </div>
-                <div>
+                <div className="setup-items">
                     <label>Arduino Path</label>
                     <br/>
-                        <FormControl
-                            type="text"
-                            placeholder="Arduino Path"
-                            value={arduinoPath}
-                        />
+                    <FormControl
+                        type="text"
+                        placeholder="Arduino Path"
+                        value={arduinoPath}
+                    />
+                    <br/>
                     <ButtonToolbar>
                         <Button bsStyle="default" onClick={openSetArduinoPathDialog}>Set</Button>
                         <Button bsStyle="default">Copy Arduino Library</Button>
                     </ButtonToolbar>
                 </div>
-                <div>
+                <div className="setup-items">
                     <label>Language</label>
                     <br/>
                     <ButtonGroup>
-                        <DropdownButton title={language} bsStyle="default" id="langDropdown">
+                        <DropdownButton title={language.name} bsStyle="default" id="langDropdown">
                             <MenuItem eventKey="en" onSelect={this.setLang}>English</MenuItem>
                             <MenuItem eventKey="es" onSelect={this.setLang}>español</MenuItem>
                             <MenuItem eventKey="zh-hans" onSelect={this.setLang}>中文</MenuItem>
@@ -71,7 +72,7 @@ class SetupModalComponent extends React.Component {
                         </DropdownButton>
                     </ButtonGroup>
                 </div>
-                <div>
+                <div className="setup-items">
                     <label>Plugins</label>
                     <br/>
 
@@ -79,7 +80,6 @@ class SetupModalComponent extends React.Component {
 
                 </ModalBody>
                 <ModalFooter>
-                    <Button bsStyle="default" className="pull-left">Bug Report</Button>
                     <Button bsStyle="primary">Save Config</Button>
                 </ModalFooter>
 
