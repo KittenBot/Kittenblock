@@ -29,6 +29,7 @@ class SetupModalComponent extends React.Component {
             openSetArduinoPathDialog,
             arduinoPath,
             language,
+            applyconfig,
             selectLanguage,
     ...componentProps
         } = this.props;
@@ -80,7 +81,7 @@ class SetupModalComponent extends React.Component {
 
                 </ModalBody>
                 <ModalFooter>
-                    <Button bsStyle="primary">Save Config</Button>
+                    <Button bsStyle="primary" onClick={applyconfig}>Save Config</Button>
                 </ModalFooter>
 
             </Modal>

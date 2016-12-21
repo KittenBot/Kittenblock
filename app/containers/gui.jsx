@@ -28,7 +28,7 @@ class GUI extends React.Component {
         super(props);
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
-                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage']);
+                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -69,6 +69,10 @@ class GUI extends React.Component {
     }
     stopProject(data){
         //this.sendCommonData("M999");
+    }
+    applyConfig(){
+        this.props.kb.saveConfig();
+        this.props.kb.reloadApp();
     }
     componentDidMount () {
         // add nwdirectory tag to input file
@@ -131,7 +135,7 @@ class GUI extends React.Component {
     }
     setArduinoPath(){
         var temppath = this.setArduinoDialog.value;
-
+        this.props.kb.config.arduino.path = temppath;
         this.setState({arduinoPath: temppath})
     }
     selectLanguage(lang){
@@ -154,7 +158,8 @@ class GUI extends React.Component {
                 langobj.file='fr.js';
                 break;
         }
-        this.setState({language:langobj})
+        this.setState({language:langobj});
+        this.props.kb.config.language = langobj;
     }
     render () {
         let {
@@ -208,7 +213,8 @@ class GUI extends React.Component {
             openSetArduinoPathDialog: ()=>this.openSetArduinoPathDialog(),
             arduinoPath: this.state.arduinoPath,
             language: this.state.language,
-            selectLanguage: this.selectLanguage
+            selectLanguage: this.selectLanguage,
+            applyconfig: this.applyConfig
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),
