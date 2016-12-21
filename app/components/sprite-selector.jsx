@@ -24,7 +24,6 @@ class SpriteSelectorComponent extends React.Component {
             />
         ));
 
-        console.log(spriteList);
         return (
             <div
                 style={{
