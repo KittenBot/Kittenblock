@@ -28,7 +28,7 @@ class GUI extends React.Component {
         super(props);
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
-                        'openLoadProjectDialog','loadProject','loadPlugin']);
+                        'openLoadProjectDialog','loadProject']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -39,7 +39,7 @@ class GUI extends React.Component {
             showStage: true,
             consoleMsg: this.consoleMsgBuff,
             editorCode: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
-        }
+        };
     }
     clearConsole(){
         this.consoleMsgBuff = [];
@@ -67,14 +67,6 @@ class GUI extends React.Component {
     stopProject(data){
         //this.sendCommonData("M999");
     }
-    loadPlugin(){
-        var runtime = this.props.vm.runtime;
-        this.props.kb.loadPlugin("kittenbot",runtime);
-        var pluginPackage = {
-            "kittenbot":this.props.kb.pluginmodule
-        };
-        runtime._registerBlockPackages(pluginPackage);
-    }
     componentDidMount () {
         this.vmManager.attachKeyboardEvents();
         this.props.vm.loadProject(this.props.projectData);
@@ -82,10 +74,8 @@ class GUI extends React.Component {
         this.props.vm.runtime.ioDevices.serial.regSendMsg(this.sendCommonData);
         vm.runtime.ioDevices.serial.regQueryData(this.deviceQuery);
         this.props.kb.arduino.sendCmdEvent.addListener(this.sendCommonData);
-        this.loadPlugin();
         this.props.vm.start();
         this.props.kb.loadDefaultProj();
-        window.kb = this.props.kb; // for debug exoprt
     }
     componentWillReceiveProps (nextProps) {
         if (this.props.projectData !== nextProps.projectData) {

@@ -19,20 +19,41 @@ class Blocks extends React.Component {
             'onBlockGlowOff',
             'onVisualReport',
             'onWorkspaceUpdate',
-            'setBlocks'
+            'setBlocks',
+            'loadPlugin'
         ]);
     }
     componentDidMount () {
+        this.loadPlugin();
         ScratchBlocks.Msg = Blockly.Msg;
-        var toolboxconfig = {toolbox:this.props.kb.toolbox.getDefalutToolBox(ScratchBlocks.Msg)};
+        var blocks = this.props.kb.plugin.getBlocks();
+        // insert into blocks
+        for(var key in blocks){
+            ScratchBlocks.Blocks[key] = blocks[key];
+        }
+        var toolbox = this.props.kb.toolbox.getDefalutToolBox(ScratchBlocks.Msg);
+        var pluginToolbox =  this.props.kb.plugin.getToolbox();
+        // load plugin xml into toolbox
+        toolbox = toolbox.replace("</xml>", pluginToolbox+ "</xml>");
+        var toolboxconfig = {toolbox:toolbox};
+
         const workspaceConfig = defaultsDeep({}, Blocks.defaultOptions, this.props.options,toolboxconfig);
         this.workspace = ScratchBlocks.inject(this.blocks, workspaceConfig);
         this.attachVM();
+        window.kb = this.props.kb;
         window.vm = this.props.vm;
     }
     componentWillUnmount () {
         this.detachVM();
         this.workspace.dispose();
+    }
+    loadPlugin(){
+        var runtime = this.props.vm.runtime;
+        this.props.kb.loadPlugin("kittenbot",runtime);
+        var pluginPackage = {
+            "kittenbot":this.props.kb.pluginmodule
+        };
+        runtime._registerBlockPackages(pluginPackage);
     }
     attachVM () {
         this.workspace.addChangeListener(this.props.vm.blockListener);
