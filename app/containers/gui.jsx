@@ -39,6 +39,7 @@ class GUI extends React.Component {
             showStage: true,
             consoleMsg: this.consoleMsgBuff,
             editorCode: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
+            arduinoPath: this.props.kb.config.arduino.path,
         };
     }
     clearConsole(){
@@ -127,8 +128,9 @@ class GUI extends React.Component {
         this.props.kb.loadSb2(file);
     }
     setArduinoPath(){
-        var arduinoPath = this.setArduinoDialog.value;
-        console.log("set arduino path to "+arduinoPath);
+        var temppath = this.setArduinoDialog.value;
+        console.log("set arduino path to "+temppath);
+        this.setState({arduinoPath: temppath})
     }
     render () {
         let {
@@ -179,7 +181,8 @@ class GUI extends React.Component {
         setupModalProps = defaultsDeep({},setupModalProps, {
             visible: this.state.currentModal === 'setup-modal',
             onRequestClose: this.closeModal,
-            openSetArduinoPathDialog: ()=>this.openSetArduinoPathDialog()
+            openSetArduinoPathDialog: ()=>this.openSetArduinoPathDialog(),
+            arduinoPath: this.state.arduinoPath,
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),

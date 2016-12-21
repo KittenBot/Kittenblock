@@ -17,6 +17,7 @@ class SetupModalComponent extends React.Component {
         const {
             version,
             openSetArduinoPathDialog,
+            arduinoPath,
     ...componentProps
         } = this.props;
         return (
@@ -39,6 +40,7 @@ class SetupModalComponent extends React.Component {
                         <FormControl
                             type="text"
                             placeholder="Arduino Path"
+                            value={arduinoPath}
                         />
                     <ButtonToolbar>
                         <Button bsStyle="default" onClick={openSetArduinoPathDialog}>Set</Button>
