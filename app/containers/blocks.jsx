@@ -9,7 +9,6 @@ const BlocksComponent = require('../components/blocks.jsx');
 class Blocks extends React.Component {
     constructor (props) {
         super(props);
-        require("../language/"+this.props.kb.config.language);
         bindAll(this, [
             'attachVM',
             'detachVM',

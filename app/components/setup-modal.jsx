@@ -1,3 +1,4 @@
+const bindAll = require('lodash.bindall');
 const React = require('react');
 
 import { ButtonGroup,Button,DropdownButton,FormControl,ButtonToolbar,MenuItem} from 'react-bootstrap';
@@ -13,11 +14,22 @@ import {
 } from 'react-modal-bootstrap';
 
 class SetupModalComponent extends React.Component {
+    constructor (props) {
+        super(props);
+        bindAll(this, [
+            'setLang',
+        ]);
+    }
+    setLang(lang){
+        this.props.selectLanguage(lang);
+    }
     render() {
         const {
             version,
             openSetArduinoPathDialog,
             arduinoPath,
+            language,
+            selectLanguage,
     ...componentProps
         } = this.props;
         return (
@@ -51,11 +63,11 @@ class SetupModalComponent extends React.Component {
                     <label>Language</label>
                     <br/>
                     <ButtonGroup>
-                        <DropdownButton title="Language" bsStyle="default" id="langDropdown">
-                            <MenuItem eventKey="1">English</MenuItem>
-                            <MenuItem eventKey="2">español</MenuItem>
-                            <MenuItem eventKey="3">中文</MenuItem>
-                            <MenuItem eventKey="4">français</MenuItem>
+                        <DropdownButton title={language} bsStyle="default" id="langDropdown">
+                            <MenuItem eventKey="en" onSelect={this.setLang}>English</MenuItem>
+                            <MenuItem eventKey="es" onSelect={this.setLang}>español</MenuItem>
+                            <MenuItem eventKey="zh-hans" onSelect={this.setLang}>中文</MenuItem>
+                            <MenuItem eventKey="fr" onSelect={this.setLang}>français</MenuItem>
                         </DropdownButton>
                     </ButtonGroup>
                 </div>

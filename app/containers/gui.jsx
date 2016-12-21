@@ -28,7 +28,7 @@ class GUI extends React.Component {
         super(props);
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
-                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath']);
+                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -40,7 +40,9 @@ class GUI extends React.Component {
             consoleMsg: this.consoleMsgBuff,
             editorCode: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
             arduinoPath: this.props.kb.config.arduino.path,
+            language: this.props.kb.config.language.name
         };
+        require("../language/"+this.props.kb.config.language.file);
     }
     clearConsole(){
         this.consoleMsgBuff = [];
@@ -129,8 +131,30 @@ class GUI extends React.Component {
     }
     setArduinoPath(){
         var temppath = this.setArduinoDialog.value;
-        console.log("set arduino path to "+temppath);
+
         this.setState({arduinoPath: temppath})
+    }
+    selectLanguage(lang){
+        var langobj={"name":'',"file":''}
+        switch (lang){
+            case 'en':
+                langobj.name='english';
+                langobj.file='en.js';
+                break;
+            case 'es':
+                langobj.name='español';
+                langobj.file='es.js';
+                break;
+            case 'zh-hans':
+                langobj.name='中文';
+                langobj.file='zh-hans.js';
+                break;
+            case 'fr':
+                langobj.name='français';
+                langobj.file='fr.js';
+                break;
+        }
+        this.setState({language:langobj.name})
     }
     render () {
         let {
@@ -183,6 +207,8 @@ class GUI extends React.Component {
             onRequestClose: this.closeModal,
             openSetArduinoPathDialog: ()=>this.openSetArduinoPathDialog(),
             arduinoPath: this.state.arduinoPath,
+            language: this.state.language,
+            selectLanguage: this.selectLanguage
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),
