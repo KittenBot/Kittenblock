@@ -18,14 +18,14 @@ KittenBot.BASE_WIDTH = 0.128;
 KittenBot.prototype.getBlocks = function () {
     var color = this.color;
     return {
-        'rosbot_stepperspeed': {
+        'kittenbot_stepperspeed': {
             /**
              * Block to turn
              * @this Blockly.Block
              */
             init: function() {
                 this.jsonInit({
-                    "id": "rosbot_stepperspeed",
+                    "id": "kittenbot_stepperspeed",
                     "message0": "stepper speed L %1 R %2",
                     "args0": [
                         {
@@ -46,14 +46,14 @@ KittenBot.prototype.getBlocks = function () {
                 });
             }
         },
-        "rosbot_motorspeed":{
+        "kittenbot_motorspeed":{
             /**
              * Block to set motor speed
              * @this Blockly.Block
              */
             init: function() {
                 this.jsonInit({
-                    "id": "rosbot_motorspeed",
+                    "id": "kittenbot_motorspeed",
                     "message0": "motor at speed %1",
                     "args0": [
                         {
@@ -70,14 +70,14 @@ KittenBot.prototype.getBlocks = function () {
                 });
             }
         },
-        'rosbot_motorturn':{
+        'kittenbot_motorturn':{
             /**
              * Block to turn
              * @this Blockly.Block
              */
             init: function() {
                 this.jsonInit({
-                    "id": "rosbot_motorturn",
+                    "id": "kittenbot_motorturn",
                     "message0": "motor turn speed %1",
                     "args0": [
                         {
@@ -94,9 +94,9 @@ KittenBot.prototype.getBlocks = function () {
                 });
             }
         },
-        'rosbot_direction_option':{
+        'kittenbot_direction_option':{
             /**
-             * rosbot_direction_menu
+             * kittenbot_direction_menu
              * @this Blockly.Block
              */
             init: function() {
@@ -106,7 +106,7 @@ KittenBot.prototype.getBlocks = function () {
                         "args0": [
                             {
                                 "type": "field_dropdown",
-                                "name": "ROSBOT_DIRECTION_OPTION",
+                                "name": "KITTENBOT_DIRECTION_OPTION",
                                 "options": [
                                     ['forward', 'FORWARD'],
                                     ['backward', 'BACKWARD']
@@ -121,9 +121,9 @@ KittenBot.prototype.getBlocks = function () {
                     });
             }
         },
-        'rosbot_turn_option':{
+        'kittenbot_turn_option':{
             /**
-             * rosbot_turn_menu
+             * kittenbot_turn_menu
              * @this Blockly.Block
              */
             init: function() {
@@ -133,7 +133,7 @@ KittenBot.prototype.getBlocks = function () {
                         "args0": [
                             {
                                 "type": "field_dropdown",
-                                "name": "ROSBOT_TURN_OPTION",
+                                "name": "KITTENBOT_TURN_OPTION",
                                 "options": [
                                     ['left', 'LEFT'],
                                     ['right', 'RIGHT']
@@ -148,14 +148,14 @@ KittenBot.prototype.getBlocks = function () {
                     });
             }
         },
-        'rosbot_steppermove':{
+        'kittenbot_steppermove':{
             /**
              * Block to set motor speed
              * @this Blockly.Block
              */
             init: function() {
                 this.jsonInit({
-                    "id": "rosbot_steppermove",
+                    "id": "kittenbot_steppermove",
                     "message0": "stepper move %1 cm",
                     "args0": [
                         {
@@ -172,14 +172,14 @@ KittenBot.prototype.getBlocks = function () {
                 });
             }
         },
-        'rosbot_stepperturn':{
+        'kittenbot_stepperturn':{
             /**
              * Block to turn
              * @this Blockly.Block
              */
             init: function() {
                 this.jsonInit({
-                    "id": "rosbot_stepperturn",
+                    "id": "kittenbot_stepperturn",
                     "message0": "stepper turn %1 degrees",
                     "args0": [
                         {
@@ -196,14 +196,14 @@ KittenBot.prototype.getBlocks = function () {
                 });
             }
         },
-        'rosbot_stop':{
+        'kittenbot_stop':{
             /**
              * Block to stop the robot
              * @this Blockly.Block
              */
             init: function() {
                 this.jsonInit({
-                    "id": "rosbot_stop",
+                    "id": "kittenbot_stop",
                     "message0": "stop",
                     "args0": [
                     ],
@@ -216,7 +216,7 @@ KittenBot.prototype.getBlocks = function () {
                 });
             }
         },
-        'rosbot_rgb':{
+        'kittenbot_rgb':{
             /**
              * Block to say.
              * @this Blockly.Block
@@ -246,7 +246,7 @@ KittenBot.prototype.getBlocks = function () {
                 });
             }
         },
-        'rosbot_distance':{
+        'kittenbot_distance':{
             /**
              * return distance of infra sensor
              * @this Blockly.Block
@@ -270,7 +270,7 @@ KittenBot.prototype.getBlocks = function () {
                     });
             }
         },
-        'rosbot_power':{
+        'kittenbot_power':{
             /**
              * return vin voltage
              * @this Blockly.Block
@@ -290,7 +290,7 @@ KittenBot.prototype.getBlocks = function () {
                     });
             }
         },
-        'rosbot_ping':{
+        'kittenbot_ping':{
             /**
              * return distance of ultrasonic sensor
              * @this Blockly.Block
@@ -325,17 +325,17 @@ KittenBot.prototype.getBlocks = function () {
 
 KittenBot.prototype.getPrimitives = function() {
     return {
-        'rosbot_motorturn': this.motorTurn,
-        'rosbot_motorspeed': this.motorSpeed,
-        'rosbot_steppermove': this.stepperMove,
-        'rosbot_stepperturn': this.stepperTurn,
-        'rosbot_stop': this.motorStop,
-        'rosbot_rgb': this.rgbPixels,
-        'rosbot_distance': this.distance,
-        'rosbot_power': this.power,
-        'rosbot_ping': this.ping,
-        'rosbot_direction_option': this.rosbot_direction_option,
-        'rosbot_turn_option': this.rosbot_turn_option
+        'kittenbot_motorturn': this.motorTurn,
+        'kittenbot_motorspeed': this.motorSpeed,
+        'kittenbot_steppermove': this.stepperMove,
+        'kittenbot_stepperturn': this.stepperTurn,
+        'kittenbot_stop': this.motorStop,
+        'kittenbot_rgb': this.rgbPixels,
+        'kittenbot_distance': this.distance,
+        'kittenbot_power': this.power,
+        'kittenbot_ping': this.ping,
+        'kittenbot_direction_option': this.kittenbot_direction_option,
+        'kittenbot_turn_option': this.kittenbot_turn_option
     };
 };
 
@@ -417,31 +417,31 @@ KittenBot.prototype.ping = function(argValues, util) {
     return exePromise;
 };
 
-KittenBot.prototype.rosbot_direction_option = function(argValues, util) {
-    return argValues.ROSBOT_DIRECTION_OPTION;
+KittenBot.prototype.kittenbot_direction_option = function(argValues, util) {
+    return argValues.KITTENBOT_DIRECTION_OPTION;
 };
 
-KittenBot.prototype.rosbot_turn_option = function(argValues, util) {
-    return argValues.ROSBOT_TURN_OPTION;
+KittenBot.prototype.kittenbot_turn_option = function(argValues, util) {
+    return argValues.KITTENBOT_TURN_OPTION;
 };
 
 
 
-KittenBot.prototype.rosbot_direction_option = function(argValues, util) {
+KittenBot.prototype.kittenbot_direction_option = function(argValues, util) {
     return argValues.ARDUINO_PIN_MODE_OPTION;
 };
 
 
 KittenBot.prototype.getToolbox = function () {
-    return '<category name="Rosbot" colour="#FF6680" secondaryColour="#FF3355">'+
-        '<block type="rosbot_motorspeed">'+
+    return '<category name="KittenBot" colour="#FF6680" secondaryColour="#FF3355">'+
+        '<block type="kittenbot_motorspeed">'+
         '<value name="SPEED">'+
         '<shadow type="math_number">'+
         '<field name="NUM">150</field>'+
         '</shadow>'+
         '</value>'+
         '</block>'+
-        '<block type="rosbot_motorturn">'+
+        '<block type="kittenbot_motorturn">'+
         '<value name="SPEED">'+
         '<shadow type="math_number">'+
         '<field name="NUM">100</field>'+
@@ -449,21 +449,21 @@ KittenBot.prototype.getToolbox = function () {
         '</value>'+
         '</block>'+
         '<sep></sep>'+
-        '<block type="rosbot_steppermove">'+
+        '<block type="kittenbot_steppermove">'+
         '<value name="LENGTH">'+
         '<shadow type="math_number">'+
         '<field name="NUM">100</field>'+
         '</shadow>'+
         '</value>'+
         '</block>'+
-        '<block type="rosbot_stepperturn">'+
+        '<block type="kittenbot_stepperturn">'+
         '<value name="DEGREE">'+
         '<shadow type="math_number">'+
         '<field name="NUM">90</field>'+
         '</shadow>'+
         '</value>'+
         '</block>'+
-        '<block type="rosbot_stepperspeed">'+
+        '<block type="kittenbot_stepperspeed">'+
         '<value name="SPEEDL">'+
         '<shadow type="math_number">'+
         '<field name="NUM">200</field>'+
@@ -475,9 +475,9 @@ KittenBot.prototype.getToolbox = function () {
         '</shadow>'+
         '</value>'+
         '</block>'+
-        '<block type="rosbot_stop">'+
+        '<block type="kittenbot_stop">'+
         '</block>'+
-        '<block type="rosbot_rgb">'+
+        '<block type="kittenbot_rgb">'+
         '<value name="PINNUM">'+
         '<shadow type="math_number">'+
         '<field name="NUM">4</field>'+
@@ -493,16 +493,16 @@ KittenBot.prototype.getToolbox = function () {
         '</shadow>'+
         '</value>'+
         '</block>'+
-        '<block type="rosbot_distance">'+
+        '<block type="kittenbot_distance">'+
         '<value name="PINNUM">'+
         '<shadow type="text">'+
         '<field name="TEXT">A3</field>'+
         '</shadow>'+
         '</value>'+
         '</block>'+
-        '<block type="rosbot_power">'+
+        '<block type="kittenbot_power">'+
         '</block>'+
-        '<block type="rosbot_ping">'+
+        '<block type="kittenbot_ping">'+
         '<value name="TRIGPIN">'+
         '<shadow type="text">'+
         '<field name="TEXT">11</field>'+
