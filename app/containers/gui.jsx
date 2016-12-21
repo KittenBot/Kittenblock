@@ -28,7 +28,7 @@ class GUI extends React.Component {
         super(props);
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
-                        'openLoadProjectDialog','loadProject']);
+                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -68,6 +68,8 @@ class GUI extends React.Component {
         //this.sendCommonData("M999");
     }
     componentDidMount () {
+        // add nwdirectory tag to input file
+        this.setArduinoDialog.nwdirectory = true;
         this.vmManager.attachKeyboardEvents();
         this.props.vm.loadProject(this.props.projectData);
         // kittenblock link hardware
@@ -117,9 +119,16 @@ class GUI extends React.Component {
     openLoadProjectDialog(){
         this.loadProjDialog.click();
     }
-    loadProject(proj){
+    openSetArduinoPathDialog(){
+        this.setArduinoDialog.click();
+    }
+    loadProject(){
         var file = this.loadProjDialog.value;
         this.props.kb.loadSb2(file);
+    }
+    setArduinoPath(){
+        var arduinoPath = this.setArduinoDialog.value;
+        console.log("set arduino path to "+arduinoPath);
     }
     render () {
         let {
@@ -169,14 +178,15 @@ class GUI extends React.Component {
         });
         setupModalProps = defaultsDeep({},setupModalProps, {
             visible: this.state.currentModal === 'setup-modal',
-            onRequestClose: this.closeModal
+            onRequestClose: this.closeModal,
+            openSetArduinoPathDialog: ()=>this.openSetArduinoPathDialog()
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),
             toggleStage: ()=>this.toggelStage(),
             openSetupModal: ()=>this.openModal("setup-modal"),
             portReadLine: (line)=>this.portReadLine(line),
-            openLoadProjectDialog:()=>this.openLoadProjectDialog()
+            openLoadProjectDialog:()=>this.openLoadProjectDialog(),
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
             visible: this.state.showArduinoPanel,
@@ -185,7 +195,7 @@ class GUI extends React.Component {
             codeUpdate: this.updateEditorInstance,
             restoreFirmware: ()=>this.restoreFirmware(),
             openIno: ()=>this.openIno(),
-            uploadProj: ()=>this.uploadProject()
+            uploadProj: ()=>this.uploadProject(),
         });
         editorTabsProps = defaultsDeep({},editorTabsProps,{
             showStage: this.state.showStage
@@ -213,6 +223,7 @@ class GUI extends React.Component {
                 <ArduinoPanel vm={vm} {...arduinoPanelProps} />
                 <SetupModal kb={kb} {...setupModalProps}/>
                 <input type="file" style={{display:'none'}} ref={(ref) => this.loadProjDialog = ref} onChange={this.loadProject} accept=".sb2"/>
+                <input type="file" style={{display:'none'}} ref={(ref) => this.setArduinoDialog = ref} onChange={this.setArduinoPath} />
             </GUIComponent>
         );
         /* eslint-enable react/jsx-max-props-per-line, lines-around-comment */

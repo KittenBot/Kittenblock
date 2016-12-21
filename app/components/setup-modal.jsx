@@ -16,7 +16,8 @@ class SetupModalComponent extends React.Component {
     render() {
         const {
             version,
-            ...componentProps
+            openSetArduinoPathDialog,
+    ...componentProps
         } = this.props;
         return (
             <Modal
@@ -40,7 +41,7 @@ class SetupModalComponent extends React.Component {
                             placeholder="Arduino Path"
                         />
                     <ButtonToolbar>
-                        <Button bsStyle="default">Set</Button>
+                        <Button bsStyle="default" onClick={openSetArduinoPathDialog}>Set</Button>
                         <Button bsStyle="default">Copy Arduino Library</Button>
                     </ButtonToolbar>
                 </div>
