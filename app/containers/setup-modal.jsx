@@ -23,6 +23,7 @@ class SetupModal  extends React.Component {
                 language={this.props.language}
                 selectLanguage={this.props.selectLanguage}
                 applyconfig={this.props.applyconfig}
+                pluginlist={this.props.pluginlist}
             />
         );
     }

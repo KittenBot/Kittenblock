@@ -40,7 +40,8 @@ class GUI extends React.Component {
             consoleMsg: this.consoleMsgBuff,
             editorCode: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
             arduinoPath: this.props.kb.config.arduino.path,
-            language: this.props.kb.config.language
+            language: this.props.kb.config.language,
+            pluginlist: this.props.kb.pluginlist
         };
         require("../language/"+this.props.kb.config.language.file);
     }
@@ -214,7 +215,8 @@ class GUI extends React.Component {
             arduinoPath: this.state.arduinoPath,
             language: this.state.language,
             selectLanguage: this.selectLanguage,
-            applyconfig: this.applyConfig
+            applyconfig: this.applyConfig,
+            pluginlist: this.state.pluginlist
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),
