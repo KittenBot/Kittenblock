@@ -42,7 +42,8 @@ class GUI extends React.Component {
             editorCode: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
             arduinoPath: this.props.kb.config.arduino.path,
             language: this.props.kb.config.language,
-            pluginlist: this.props.kb.pluginlist
+            pluginlist: this.props.kb.pluginlist,
+            projectName: ""
         };
         require("../language/"+this.props.kb.config.language.file);
     }
@@ -133,7 +134,8 @@ class GUI extends React.Component {
     }
     loadProject(){
         var file = this.loadProjDialog.value;
-        this.props.kb.loadSb2(file);
+        var name = this.props.kb.loadSb2(file);
+        this.setState({projectName:name});
     }
     setArduinoPath(){
         var temppath = this.setArduinoDialog.value;
@@ -236,6 +238,7 @@ class GUI extends React.Component {
             openSetupModal: ()=>this.openModal("setup-modal"),
             portReadLine: (line)=>this.portReadLine(line),
             openLoadProjectDialog:()=>this.openLoadProjectDialog(),
+            projectName: this.state.projectName
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
             visible: this.state.showArduinoPanel,

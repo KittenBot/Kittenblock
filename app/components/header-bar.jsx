@@ -20,6 +20,7 @@ class HeaderBarComponent extends React.Component {
             connectedPort,
             openSetupModal,
             openLoadProjectDialog,
+            projectName,
             ...componentProps
         } = this.props;
         var portMenuItem;
@@ -94,7 +95,7 @@ class HeaderBarComponent extends React.Component {
                                 border: '0px',
                                 color: '#FFFFFF'
                             }}
-                            value="Empty Project"
+                            value={projectName}
                         />
                     </NavItem>
                 </Nav>
