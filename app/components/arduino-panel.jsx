@@ -33,6 +33,7 @@ class ArduinoPanelComponent extends React.Component {
             uploadProj,
             codeRef,
             consoleClear,
+            translateCode,
             ...componentProps
         } = this.props;
         var visible = this.props.visible?'block':'none';
@@ -54,7 +55,7 @@ class ArduinoPanelComponent extends React.Component {
                 }}
             >
             <div className="group" id="code-buttons" style={{top:4,left:4,width:480,position:'absolute'}}>
-                <Button style={{marginLeft:5,height:34}}><input type="checkbox"/>{Blockly.Msg.TRANSLATE}</Button>
+                <Button style={{marginLeft:5,height:34}} onClick={translateCode}><input type="checkbox"/>{Blockly.Msg.TRANSLATE}</Button>
                 <Button style={{marginLeft:5}} onClick={restoreFirmware}>{Blockly.Msg.RESTORE}</Button>
                 <Button style={{marginLeft:5}} onClick={uploadProj}>{Blockly.Msg.UPLOAD}</Button>
                 <Button style={{float:'right'}} onClick={openIno}>{Blockly.Msg.OPENWITHARDUINO}</Button>

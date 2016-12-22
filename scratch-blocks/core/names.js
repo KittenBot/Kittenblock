@@ -141,3 +141,10 @@ Blockly.Names.prototype.safeName_ = function(name) {
 Blockly.Names.equals = function(name1, name2) {
   return name1.toLowerCase() == name2.toLowerCase();
 };
+
+if (!goog.global['Blockly']) {
+  goog.global['Blockly'] = {};
+}
+if (!goog.global['Blockly']['Names']) {
+  goog.global['Blockly']['Names'] = Blockly.Names;
+}

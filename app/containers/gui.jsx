@@ -2,6 +2,7 @@ const bindAll = require('lodash.bindall');
 const defaultsDeep = require('lodash.defaultsdeep');
 const React = require('react');
 const VM = require('../../scratch-vm');
+const ScratchBlocks = require('../../scratch-blocks');
 const KittenBlock = require('../../kittenblock-pc');
 
 const VMManager = require('../lib/vm-manager');
@@ -29,7 +30,7 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
                         'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget',
-                        'consoleSend','consoleClear']);
+                        'consoleSend','consoleClear','translateCode']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -175,6 +176,10 @@ class GUI extends React.Component {
         this.consoleMsgBuff=[];
         this.setState({consoleMsg:this.consoleMsgBuff})
     }
+    translateCode(){
+        var code = this.refs.Blocks.sb2cpp();
+        console.log("sb2cpp "+code)
+    }
     render () {
         let {
             backdropLibraryProps,
@@ -249,7 +254,8 @@ class GUI extends React.Component {
             openIno: ()=>this.openIno(),
             uploadProj: ()=>this.uploadProject(),
             consoleSend: (txt)=>this.consoleSend(txt),
-            consoleClear: ()=>this.consoleClear()
+            consoleClear: ()=>this.consoleClear(),
+            translateCode: ()=>this.translateCode()
         });
         editorTabsProps = defaultsDeep({},editorTabsProps,{
             showStage: this.state.showStage
@@ -268,7 +274,7 @@ class GUI extends React.Component {
                 <StopAll vm={vm} stopProject={this.stopProject} {...stopAllProps} />
                 <Stage vm={vm} {...stageProps} />
                 <SpriteSelector vm={vm} kb={kb} {... spriteSelectorProps} />
-                <Blocks vm={vm} kb={kb} {... blocksProps} />
+                <Blocks ref="Blocks" vm={vm} kb={kb} {... blocksProps} />
                 <SpriteLibrary vm={vm} {...spriteLibraryProps} />
                 <CostumeLibrary vm={vm} {...costumeLibraryProps} />
                 <BackdropLibrary vm={vm} {...backdropLibraryProps} />

@@ -373,3 +373,10 @@ Blockly.Generator.prototype.provideFunction_ = function(desiredName, code) {
   }
   return this.functionNames_[desiredName];
 };
+
+if (!goog.global['Blockly']) {
+  goog.global['Blockly'] = {};
+}
+if (!goog.global['Blockly']['Generator']) {
+  goog.global['Blockly']['Generator'] = Blockly.Generator;
+}

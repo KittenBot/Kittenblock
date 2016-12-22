@@ -5,6 +5,7 @@ const React = require('react');
 const ScratchBlocks = require('../../scratch-blocks');
 const VM = require('../../scratch-vm');
 const BlocksComponent = require('../components/blocks.jsx');
+var ArduinoGenerator = require('../lib/arduino-generator');
 
 class Blocks extends React.Component {
     constructor (props) {
@@ -19,12 +20,15 @@ class Blocks extends React.Component {
             'onVisualReport',
             'onWorkspaceUpdate',
             'setBlocks',
-            'loadPlugin'
+            'loadPlugin',
+            'sb2cpp'
         ]);
     }
     componentDidMount () {
         this.loadPlugin();
         ScratchBlocks.Msg = Blockly.Msg;
+        // todo: import generator in a ugly way, is there better method to use compressed generator from blockly?
+
         var blocks = this.props.kb.plugin.getBlocks();
         // insert into blocks
         for(var key in blocks){
@@ -99,6 +103,15 @@ class Blocks extends React.Component {
     }
     setBlocks (blocks) {
         this.blocks = blocks;
+    }
+    sb2cpp(){
+        try {
+            var code = "";
+            code += Blockly.Arduino.workspaceToCode(this.workspace);
+        } catch(e) {
+            console.log(e.message);
+        }
+        return code;
     }
     render () {
         const {
