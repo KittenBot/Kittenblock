@@ -1,4 +1,7 @@
 const React = require('react');
+const ReactDOM = require('react-dom');
+const bindAll = require('lodash.bindall');
+
 import {Button,FormControl} from 'react-bootstrap';
 import brace from 'brace';
 import AceEditor from 'react-ace';
@@ -6,6 +9,21 @@ import 'brace/mode/java';
 import 'brace/theme/eclipse';
 
 class ArduinoPanelComponent extends React.Component {
+    constructor (props) {
+        super(props);
+
+        bindAll(this, ['consoleSend','consoleEnter']);
+    }
+    consoleSend(){
+        var txt = ReactDOM.findDOMNode(this.refs.consoleInput).value;
+        this.props.consoleSend(txt);
+    }
+    consoleEnter(e){
+        e.preventDefault();
+        this.consoleSend();
+        return false;
+    }
+
     render() {
         const {
             code,
@@ -14,6 +32,7 @@ class ArduinoPanelComponent extends React.Component {
             openIno,
             uploadProj,
             codeRef,
+            consoleClear,
             ...componentProps
         } = this.props;
         var visible = this.props.visible?'block':'none';
@@ -65,6 +84,7 @@ class ArduinoPanelComponent extends React.Component {
             >{msgs}
             </div>
             <form className="form-inline" id="console-input"
+                  onSubmit={this.consoleEnter}
                  style={{
                      position:'absolute',
                      top:754,
@@ -81,9 +101,10 @@ class ArduinoPanelComponent extends React.Component {
                         border: '0px',
                         color: '#000000'
                     }}
+                    ref="consoleInput"
                 />
-                <Button style={{marginLeft:3}}>{Blockly.Msg.SEND}</Button>
-                <Button style={{marginLeft:2}}>C</Button>
+                <Button style={{marginLeft:3}} onClick={this.consoleSend}>{Blockly.Msg.SEND}</Button>
+                <Button style={{marginLeft:2}} onClick={consoleClear}>C</Button>
             </form>
 
             </div>

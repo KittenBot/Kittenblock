@@ -28,7 +28,8 @@ class GUI extends React.Component {
         super(props);
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
-                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget']);
+                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget',
+                        'consoleSend','consoleClear']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -165,6 +166,13 @@ class GUI extends React.Component {
     selectTarget(id){
         this.props.vm.setEditingTarget(id);
     }
+    consoleSend(txt){
+        this.sendCommonData(txt);
+    }
+    consoleClear(){
+        this.consoleMsgBuff=[];
+        this.setState({consoleMsg:this.consoleMsgBuff})
+    }
     render () {
         let {
             backdropLibraryProps,
@@ -237,6 +245,8 @@ class GUI extends React.Component {
             restoreFirmware: ()=>this.restoreFirmware(),
             openIno: ()=>this.openIno(),
             uploadProj: ()=>this.uploadProject(),
+            consoleSend: (txt)=>this.consoleSend(txt),
+            consoleClear: ()=>this.consoleClear()
         });
         editorTabsProps = defaultsDeep({},editorTabsProps,{
             showStage: this.state.showStage

@@ -8,7 +8,6 @@ import {Icon} from 'react-fa';
 class HeaderBarComponent extends React.Component {
     constructor (props) {
         super(props);
-        this.loadProjInput=null;
         bindAll(this, []);
     }
     render() {
@@ -95,6 +94,7 @@ class HeaderBarComponent extends React.Component {
                                 border: '0px',
                                 color: '#FFFFFF'
                             }}
+                            value="Empty Project"
                         />
                     </NavItem>
                 </Nav>
