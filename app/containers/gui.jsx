@@ -178,7 +178,7 @@ class GUI extends React.Component {
     }
     translateCode(){
         var code = this.refs.Blocks.sb2cpp();
-        console.log("sb2cpp "+code)
+        this.setState({editorCode:code});
     }
     render () {
         let {

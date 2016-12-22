@@ -176,6 +176,14 @@ Blockly.Generator.prototype.blockToCode = function(block) {
   goog.asserts.assertFunction(func,
       'Language "%s" does not know how to generate code for block type "%s".',
       this.name_, block.type);
+  if(!func){
+    throw {
+      name:        "Unknow Block",
+      block:        block.type,
+      message: "Unknow Block "+block.type,
+      toString:    function(){return this.name + ": " + this.message;}
+    }
+  }
   // First argument to func.call is the value of 'this' in the generator.
   // Prior to 24 September 2013 'this' was the only way to access the block.
   // The current prefered method of accessing the block is through the second
