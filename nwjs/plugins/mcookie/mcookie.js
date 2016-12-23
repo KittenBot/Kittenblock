@@ -28,16 +28,16 @@ Mcookie.prototype.getBlocks = function () {
                             "type": "field_dropdown",
                             "name": "MCOOKIE_PORT_OPTION",
                             "options": [
-                                ['0/1', '0_1'],
-                                ['2/3', '2_3'],
-                                ['4/5', '4_5'],
-                                ['6/7', '6_7'],
-                                ['8/9', '8_9'],
-                                ['10/11', '10_11'],
-                                ['12/13', '12_13'],
-                                ['A0/A1', 'A0_A1'],
-                                ['A2/A3', 'A2_A3'],
-                                ['A6/A7', 'A6_A7']
+                                ['0/1', '0'],
+                                ['2/3', '1'],
+                                ['4/5', '2'],
+                                ['6/7', '3'],
+                                ['8/9', '4'],
+                                ['10/11', '5'],
+                                ['12/13', '6'],
+                                ['A0/A1', '7'],
+                                ['A2/A3', '8'],
+                                ['A6/A7', '9']
                             ]
                         }
                     ],
@@ -60,8 +60,8 @@ Mcookie.prototype.getBlocks = function () {
                             "type": "field_dropdown",
                             "name": "MCOOKIE_LEVEL_OPTION",
                             "options": [
-                                ['high', 'HIGH'],
-                                ['low', 'LOW']
+                                ['high', '1'],
+                                ['low', '0']
                             ]
                         }
                     ],
@@ -255,15 +255,46 @@ Mcookie.prototype.getBlocks = function () {
 Mcookie.prototype.getPrimitives = function() {
     return {
         'mcookie_led': this.mcookie_led,
+        'mcookie_button': this.mcookie_button,
+        'mcookie_crash': this.mcookie_crash,
+        'mcookie_tone': this.mcookie_tone
 
     };
 };
 
 Mcookie.prototype.mcookie_led = function(argValues, util) {
-    console.log("argValues "+argValues);
     var level = argValues.MCOOKIE_LEVEL_OPTION;
     var port = argValues.MCOOKIE_PORT_OPTION;
+    var cmd = "0 "+port+" "+level;
+    util.ioQuery('serial', 'sendMsg', cmd);
+};
 
+Mcookie.prototype.mcookie_button = function (argValues, util) {
+    var port = argValues.MCOOKIE_PORT_OPTION;
+    var cmd = "1 " + port;
+    var exePromise = new Promise(function (resolve) {
+        util.ioQuery('serial', 'sendMsg', cmd);
+        util.ioQuery('serial', 'regResolve', {"slot": "BTN_" + port, "resolve": resolve});
+    });
+    return exePromise;
+}
+
+Mcookie.prototype.mcookie_crash = function (argValues, util) {
+    var port = argValues.MCOOKIE_PORT_OPTION;
+    var cmd = "2 " + port;
+    var exePromise = new Promise(function (resolve) {
+        util.ioQuery('serial', 'sendMsg', cmd);
+        util.ioQuery('serial', 'regResolve', {"slot": "CRASH_" + port, "resolve": resolve});
+    });
+    return exePromise;
+}
+
+Mcookie.prototype.mcookie_tone = function(argValues, util) {
+    var port = argValues.MCOOKIE_PORT_OPTION;
+    var freq = argValues.FREQUENCY;
+    var dur = argValues.DURATION;
+    var cmd = "3 "+port+" "+freq+" "+dur;
+    util.ioQuery('serial', 'sendMsg', cmd);
 };
 
 
