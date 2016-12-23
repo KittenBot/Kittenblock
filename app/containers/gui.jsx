@@ -1,3 +1,4 @@
+var path = require('path');
 const bindAll = require('lodash.bindall');
 const defaultsDeep = require('lodash.defaultsdeep');
 const React = require('react');
@@ -23,6 +24,7 @@ const SetupModal = require('./setup-modal.jsx');
 const SpriteLibrary = require('./sprite-library.jsx');
 const CostumeLibrary = require('./costume-library.jsx');
 const BackdropLibrary = require('./backdrop-library.jsx');
+
 
 class GUI extends React.Component {
     constructor (props) {
@@ -139,8 +141,17 @@ class GUI extends React.Component {
     }
     loadProject(){
         var file = this.loadProjDialog.value;
-        var name = this.props.kb.loadSb2(file);
-        this.setState({projectName:name});
+        var extName = path.extname(file);
+        if(extName=='.sb2'){
+            var name = this.props.kb.loadSb2(file);
+            this.setState({projectName:name});
+        }else if(extName=='.kb'){
+            var kbobj = this.props.kb.loadKb(file);
+            var xml = Blockly.Xml.textToDom(kbobj.xml);
+            var workspace = this.refs.Blocks.workspace
+            Blockly.Xml.domToWorkspace(xml, workspace);
+            this.setState({projectName:kbobj.name});
+        }
     }
     saveProject(){
         var file = this.saveProjDialog.value;
@@ -294,7 +305,7 @@ class GUI extends React.Component {
                 <EditorTabs vm={vm} {...editorTabsProps} />
                 <ArduinoPanel vm={vm} {...arduinoPanelProps} />
                 <SetupModal kb={kb} {...setupModalProps}/>
-                <input type="file" style={{display:'none'}} ref={(ref) => this.loadProjDialog = ref} onChange={this.loadProject} accept=".sb2;.kb"/>
+                <input type="file" style={{display:'none'}} ref={(ref) => this.loadProjDialog = ref} onChange={this.loadProject} accept=".sb2,.kb"/>
                 <input type="file" style={{display:'none'}} ref={(ref) => this.saveProjDialog = ref} onChange={this.saveProject} accept=".kb"/>
                 <input type="file" style={{display:'none'}} ref={(ref) => this.setArduinoDialog = ref} onChange={this.setArduinoPath} />
             </GUIComponent>
