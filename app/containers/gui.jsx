@@ -101,6 +101,10 @@ class GUI extends React.Component {
             this.state.firmwares.push(firmobj);
             this.setState({firmwares:this.state.firmwares});
         }
+        // check if plugin has parseLine method
+        if('parseLine' in this.props.kb.plugin){
+            this.props.kb.setPluginParseLine(this.props.kb.plugin.parseLine);
+        }
     }
     componentWillReceiveProps (nextProps) {
         if (this.props.projectData !== nextProps.projectData) {

@@ -13,6 +13,16 @@ var Mcookie = function (runtime) {
 
 };
 
+Mcookie.prototype.parseLine = function (msg) {
+    var ret = null;
+    var tmp = msg.trim().split(" ");
+    if (tmp[0]==1) { // touch return
+        var port = tmp[1];
+        var val = tmp[2]
+        window.vm.postIOData('serial', {slot: "BTN_"+port, report: val});
+    }
+}
+
 Mcookie.prototype.getBlocks = function () {
     var color = this.color;
     var OUTPUT_SHAPE_ROUND = 2;
