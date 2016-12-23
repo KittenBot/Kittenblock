@@ -46,7 +46,8 @@ class GUI extends React.Component {
             arduinoPath: this.props.kb.config.arduino.path,
             language: this.props.kb.config.language,
             pluginlist: this.props.kb.pluginlist,
-            projectName: ""
+            projectName: "",
+            firmwares: ['arduino','kittenbot']
         };
         require("../language/"+this.props.kb.config.language.file);
     }
@@ -115,8 +116,8 @@ class GUI extends React.Component {
     toggelStage(){
         this.setState({showStage: !this.state.showStage})
     }
-    restoreFirmware(){
-        var code = this.props.kb.loadFirmware();
+    restoreFirmware(firmware){
+        var code = this.props.kb.loadFirmware(firmware);
         this.setState({editorCode: code});
     }
     updateEditorInstance(editor){
@@ -279,7 +280,8 @@ class GUI extends React.Component {
             code: this.state.editorCode,
             consoleMsg: this.state.consoleMsg,
             codeUpdate: this.updateEditorInstance,
-            restoreFirmware: ()=>this.restoreFirmware(),
+            firmwares:this.state.firmwares,
+            restoreFirmware: (f)=>this.restoreFirmware(f),
             openIno: ()=>this.openIno(),
             uploadProj: ()=>this.uploadProject(),
             consoleSend: (txt)=>this.consoleSend(txt),

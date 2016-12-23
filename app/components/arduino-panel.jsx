@@ -2,7 +2,7 @@ const React = require('react');
 const ReactDOM = require('react-dom');
 const bindAll = require('lodash.bindall');
 
-import {Button,FormControl} from 'react-bootstrap';
+import {Button,FormControl,MenuItem,ButtonGroup,DropdownButton } from 'react-bootstrap';
 import brace from 'brace';
 import AceEditor from 'react-ace';
 import 'brace/mode/java';
@@ -34,6 +34,7 @@ class ArduinoPanelComponent extends React.Component {
             codeRef,
             consoleClear,
             translateCode,
+            firmwares,
             ...componentProps
         } = this.props;
         var visible = this.props.visible?'block':'none';
@@ -42,6 +43,9 @@ class ArduinoPanelComponent extends React.Component {
             var t = this.props.consoleMsg[i];
             msgs.push(<p style={{color:t.color}} key={i}>{t.msg}</p>);
         };
+        var firmwareItems  = firmwares.map(f => (
+            <MenuItem eventKey={f} key={f}>{f}</MenuItem>
+        ));
         return (<div
                 style={{
                     position: 'absolute',
@@ -56,7 +60,14 @@ class ArduinoPanelComponent extends React.Component {
             >
             <div className="group" id="code-buttons" style={{top:4,left:4,width:480,position:'absolute'}}>
                 <Button style={{marginLeft:5,height:34}} onClick={translateCode}><input type="checkbox"/>{Blockly.Msg.TRANSLATE}</Button>
-                <Button style={{marginLeft:5}} onClick={restoreFirmware}>{Blockly.Msg.RESTORE}</Button>
+                <ButtonGroup style={{marginLeft:5}}>
+                    <DropdownButton title={Blockly.Msg.RESTORE}
+                                    onSelect={restoreFirmware}
+                                    id="portDropdown">{
+                        firmwareItems
+                    }
+                    </DropdownButton>
+                </ButtonGroup>
                 <Button style={{marginLeft:5}} onClick={uploadProj}>{Blockly.Msg.UPLOAD}</Button>
                 <Button style={{float:'right'}} onClick={openIno}>{Blockly.Msg.OPENWITHARDUINO}</Button>
             </div>

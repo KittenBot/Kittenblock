@@ -23,6 +23,7 @@ class ArduinoPanel extends React.Component {
                 openIno={this.props.openIno}
                 codeRef={this.props.codeUpdate}
                 uploadProj={this.props.uploadProj}
+                firmwares={this.props.firmwares}
                 {...props}
             />
         );
