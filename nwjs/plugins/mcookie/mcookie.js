@@ -253,8 +253,16 @@ Mcookie.prototype.getBlocks = function () {
 
 Mcookie.prototype.getPrimitives = function() {
     return {
+        'mcookie_led': this.mcookie_led,
 
     };
+};
+
+Mcookie.prototype.mcookie_led = function(argValues, util) {
+    console.log("argValues "+argValues);
+    var level = argValues.MCOOKIE_LEVEL_OPTION;
+    var port = argValues.MCOOKIE_PORT_OPTION;
+
 };
 
 
