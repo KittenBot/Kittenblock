@@ -144,7 +144,10 @@ class GUI extends React.Component {
     }
     saveProject(){
         var file = this.saveProjDialog.value;
-        console.log("save proj "+file);
+        var workspace = this.refs.Blocks.workspace
+        var xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+        //console.log("save proj "+file+" "+xml );
+        this.props.kb.saveKb(file,xml);
     }
     setArduinoPath(){
         var temppath = this.setArduinoDialog.value;
