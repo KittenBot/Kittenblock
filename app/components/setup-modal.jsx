@@ -35,6 +35,7 @@ class SetupModalComponent extends React.Component {
             language,
             applyconfig,
             pluginlist,
+            copyArduinoLib,
     ...componentProps
         } = this.props;
         var plugins = [];
@@ -78,7 +79,7 @@ class SetupModalComponent extends React.Component {
                     <br/>
                     <ButtonToolbar>
                         <Button bsStyle="default" onClick={openSetArduinoPathDialog}>{Blockly.Msg.SET}</Button>
-                        <Button bsStyle="default">Copy Arduino Library</Button>
+                        <Button bsStyle="default" onClick={copyArduinoLib}>Copy Arduino Library</Button>
                     </ButtonToolbar>
                 </div>
                 <div className="setup-items">

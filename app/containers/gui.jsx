@@ -32,7 +32,7 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
                         'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget',
-                        'consoleSend','consoleClear','translateCode','saveProject']);
+                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -220,6 +220,9 @@ class GUI extends React.Component {
         var ret = this.props.kb.selectPlugin(plugin);
         this.setState({pluginlist:ret});
     }
+    copyArduinoLib(){
+        this.props.kb.copyArduinoLibrary();
+    }
     render () {
         let {
             backdropLibraryProps,
@@ -276,7 +279,8 @@ class GUI extends React.Component {
             selectLanguage: this.selectLanguage,
             applyconfig: this.applyConfig,
             pluginlist: this.state.pluginlist,
-            selectPlugin: (plugin)=>this.selectPlugin(plugin)
+            selectPlugin: (plugin)=>this.selectPlugin(plugin),
+            copyArduinoLib: ()=>this.copyArduinoLib(),
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),

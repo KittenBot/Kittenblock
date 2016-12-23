@@ -46,6 +46,7 @@
     "lodash.bindall": "4.4.0",
     "lodash.defaultsdeep": "4.4.0",
     "minilog": "3.0.1",
+    "ncp": "^2.0.0",
     "opt-cli": "1.5.1",
     "react": "15.3.2",
     "react-ace": "^4.1.0",

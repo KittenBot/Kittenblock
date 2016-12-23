@@ -25,6 +25,7 @@ class SetupModal  extends React.Component {
                 applyconfig={this.props.applyconfig}
                 pluginlist={this.props.pluginlist}
                 selectPlugin={this.props.selectPlugin}
+                copyArduinoLib={this.props.copyArduinoLib}
             />
         );
     }

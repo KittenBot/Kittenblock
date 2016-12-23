@@ -20,6 +20,10 @@ Mcookie.prototype.parseLine = function (msg) {
         var port = tmp[1];
         var val = tmp[2]
         window.vm.postIOData('serial', {slot: "BTN_"+port, report: val});
+    }else if(tmp[0]==2){
+        var port = tmp[1];
+        var val = tmp[2]
+        window.vm.postIOData('serial', {slot: "CRASH_"+port, report: val});
     }
 }
 
