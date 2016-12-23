@@ -44,7 +44,7 @@ class ArduinoPanelComponent extends React.Component {
             msgs.push(<p style={{color:t.color}} key={i}>{t.msg}</p>);
         };
         var firmwareItems  = firmwares.map(f => (
-            <MenuItem eventKey={f} key={f}>{f}</MenuItem>
+            <MenuItem eventKey={{ 'name':f.name,'path':f.path}} key={f.name}>{f.name}</MenuItem>
         ));
         return (<div
                 style={{

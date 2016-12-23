@@ -9,6 +9,7 @@ var Mcookie = function (runtime) {
         "secondary": "#b7cbd7",
         "tertiary": "#e3e3e3"
     };
+    this.firmware = "./mcookie/mcookie.ino"
 
 };
 

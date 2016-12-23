@@ -47,7 +47,7 @@ class GUI extends React.Component {
             language: this.props.kb.config.language,
             pluginlist: this.props.kb.pluginlist,
             projectName: "",
-            firmwares: ['arduino','kittenbot']
+            firmwares: [{name:'arduino','path':null}]
         };
         require("../language/"+this.props.kb.config.language.file);
     }
@@ -93,6 +93,14 @@ class GUI extends React.Component {
         this.props.vm.start();
         this.props.kb.loadDefaultProj();
         this.saveProjDialog.nwsaveas = "KittenBot";
+        // check if firmware exist in plugin
+        if("firmware" in this.props.kb.plugin){
+            var pluginName = this.props.kb.pluginmng.enabled;
+            var firmpath = path.resolve(this.props.kb.pluginpath,pluginName,this.props.kb.plugin.firmware);
+            var firmobj = {"name":pluginName,'path':firmpath}
+            this.state.firmwares.push(firmobj);
+            this.setState({firmwares:this.state.firmwares});
+        }
     }
     componentWillReceiveProps (nextProps) {
         if (this.props.projectData !== nextProps.projectData) {
@@ -117,7 +125,7 @@ class GUI extends React.Component {
         this.setState({showStage: !this.state.showStage})
     }
     restoreFirmware(firmware){
-        var code = this.props.kb.loadFirmware(firmware);
+        var code = this.props.kb.loadFirmware(firmware.path);
         this.setState({editorCode: code});
     }
     updateEditorInstance(editor){
