@@ -51,10 +51,11 @@ class Blocks extends React.Component {
         this.workspace.dispose();
     }
     loadPlugin(){
+        var pluginName = this.props.kb.pluginmng.enabled;
         var runtime = this.props.vm.runtime;
-        this.props.kb.loadPlugin("kittenbot",runtime);
+        this.props.kb.loadPlugin(pluginName,runtime);
         var pluginPackage = {
-            "kittenbot":this.props.kb.pluginmodule
+            pluginName:this.props.kb.pluginmodule
         };
         runtime._registerBlockPackages(pluginPackage);
     }
