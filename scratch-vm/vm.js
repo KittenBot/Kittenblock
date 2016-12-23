@@ -53,9 +53,11 @@
 
 	var EventEmitter = __webpack_require__(2);
 	var util = __webpack_require__(3);
+	var Blocks = __webpack_require__(7);
+	var Sprite = __webpack_require__(61);
 
-	var Runtime = __webpack_require__(7);
-	var sb2import = __webpack_require__(95);
+	var Runtime = __webpack_require__(81);
+	var sb2import = __webpack_require__(101);
 
 	/**
 	 * Handles connections between blocks, stage, and extensions.
@@ -206,6 +208,100 @@
 	    this.emitWorkspaceUpdate();
 	    this.runtime.setEditingTarget(this.editingTarget);
 	};
+
+	VirtualMachine.prototype.toPrettyJSON = function (testing) {
+	    this.runtime.targets.testing = testing;
+	    var json = JSON.stringify(this.toJSON(), null, 4);
+	    this.runtime.targets.testing = false;
+	    if (testing == true) {
+	        console.log('Exported To JSON');
+	    }
+	    return json;
+	};
+
+	VirtualMachine.prototype.toJSON = function () {
+	    if (this.runtime.targets.hasOwnProperty('testing') == false) {
+	        this.runtime.targets.testing = false;
+	    }
+	    var obj = new Object();
+	    obj.sprites = this.runtime.targets;
+	    obj.meta = new Object();
+	    obj.meta.name = 'WIP';
+	    obj.meta.useragent = navigator.userAgent;
+	    return obj;
+	};
+
+	VirtualMachine.prototype.fromJSON = function (json, testing) {
+	    this.clear();
+	    if (testing == true) {
+	        console.log('Importing JSON');
+	    }
+	    var obj = JSON.parse(json);
+	    var i = 0;
+	    for (; i < obj.sprites.length; i++) {
+	        var blocks = new Blocks();
+	        var z = null;
+	        for (z in obj.sprites[i].sprite.blocks) {
+	            blocks[z] = obj.sprites[i].sprite.blocks[z];
+	            if (testing == true) {
+	                console.log('Importing ' + z + ' to Blocks');
+	            }
+	        }
+	        var sprite = new Sprite(blocks, this.runtime);
+	        var y = null;
+	        for (y in obj.sprites[i].sprite) {
+	            if (y === 'blocks') {
+	                continue;
+	            }
+	            sprite[y] = obj.sprites[i].sprite[y];
+	            if (testing == true) {
+	                console.log('Importing ' + y + ' to Sprite');
+	            }
+	        }
+	        var target = sprite.createClone();
+	        this.runtime.targets.push(target);
+	        var x = null;
+	        for (x in obj.sprites[i]) {
+	            if (x === 'sprite') {
+	                continue;
+	            }
+	            target[x] = obj.sprites[i][x];
+	            console.log('Importing ' + x + ' to Rendered Target');
+	        }
+	        target.updateAllDrawableProperties();
+	    }
+	    this.editingTarget = this.runtime.targets[0];
+	    // Update the VM user's knowledge of targets and blocks on the workspace.
+	    this.emitTargetsUpdate();
+	    this.emitWorkspaceUpdate();
+	    this.runtime.setEditingTarget(this.editingTarget);
+	    if (testing == true) {
+	        console.log('Imported from JSON');
+	    }
+	};
+
+	VirtualMachine.prototype.testJSON = function () {
+	    console.log('Exporting to JSON...');
+	    var json = this.toPrettyJSON(true);
+	    console.log('Importing from JSON...');
+	    this.fromJSON(json, true);
+	    console.log('Exporting to JSON...');
+	    var json2 = this.toPrettyJSON(true);
+	    if (json == json2) {
+	        console.log('JSON Test: Successful');
+	    } else {
+	        console.log('JSON Test: Failed: JSON Not Equivalent');
+	        console.log('JSON 1:');
+	        console.log(json);
+	        console.log('JSON 2:');
+	        console.log(json2);
+	    }
+	    this.editingTarget = this.runtime.targets[0];
+	    this.emitTargetsUpdate();
+	    this.emitWorkspaceUpdate();
+	    this.runtime.setEditingTarget(this.editingTarget);
+	};
+
 
 	/**
 	 * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
@@ -1516,2202 +1612,9 @@
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var EventEmitter = __webpack_require__(2);
-	var Sequencer = __webpack_require__(8);
-	var Blocks = __webpack_require__(25);
-	var Thread = __webpack_require__(10);
-	var util = __webpack_require__(3);
-
-	// Virtual I/O devices.
-	var Clock = __webpack_require__(79);
-	var Keyboard = __webpack_require__(80);
-	var Mouse = __webpack_require__(83);
-	var Serial = __webpack_require__(85);
-
-	var defaultBlockPackages = {
-	    scratch3_control: __webpack_require__(86),
-	    scratch3_event: __webpack_require__(87),
-	    scratch3_looks: __webpack_require__(88),
-	    scratch3_motion: __webpack_require__(89),
-	    scratch3_operators: __webpack_require__(90),
-	    scratch3_sensing: __webpack_require__(91),
-	    scratch3_data: __webpack_require__(92),
-	    scratch3_procedures: __webpack_require__(93),
-	    arduino: __webpack_require__(94)
-	};
-
-	/**
-	 * Manages targets, scripts, and the sequencer.
-	 */
-	var Runtime = function () {
-	    // Bind event emitter
-	    EventEmitter.call(this);
-
-	    /**
-	     * Target management and storage.
-	     * @type {Array.<!Target>}
-	     */
-	    this.targets = [];
-
-	    /**
-	     * A list of threads that are currently running in the VM.
-	     * Threads are added when execution starts and pruned when execution ends.
-	     * @type {Array.<Thread>}
-	     */
-	    this.threads = [];
-
-	    /** @type {!Sequencer} */
-	    this.sequencer = new Sequencer(this);
-
-	    /**
-	     * Storage container for flyout blocks.
-	     * These will execute on `_editingTarget.`
-	     * @type {!Blocks}
-	     */
-	    this.flyoutBlocks = new Blocks();
-
-	    /**
-	     * Currently known editing target for the VM.
-	     * @type {?Target}
-	     */
-	    this._editingTarget = null;
-
-	    /**
-	     * Map to look up a block primitive's implementation function by its opcode.
-	     * This is a two-step lookup: package name first, then primitive name.
-	     * @type {Object.<string, Function>}
-	     */
-	    this._primitives = {};
-
-	    /**
-	     * Map to look up hat blocks' metadata.
-	     * Keys are opcode for hat, values are metadata objects.
-	     * @type {Object.<string, Object>}
-	     */
-	    this._hats = {};
-
-	    /**
-	     * Currently known values for edge-activated hats.
-	     * Keys are block ID for the hat; values are the currently known values.
-	     * @type {Object.<string, *>}
-	     */
-	    this._edgeActivatedHatValues = {};
-
-	    /**
-	     * A list of script block IDs that were glowing during the previous frame.
-	     * @type {!Array.<!string>}
-	     */
-	    this._scriptGlowsPreviousFrame = [];
-
-	    /**
-	     * Number of threads running during the previous frame
-	     * @type {number}
-	     */
-	    this._threadCount = 0;
-
-	    /**
-	     * Currently known number of clones, used to enforce clone limit.
-	     * @type {number}
-	     */
-	    this._cloneCounter = 0;
-
-	    /**
-	     * Whether the project is in "turbo mode."
-	     * @type {Boolean}
-	     */
-	    this.turboMode = false;
-
-	    /**
-	     * Whether the project is in "compatibility mode" (30 TPS).
-	     * @type {Boolean}
-	     */
-	    this.compatibilityMode = false;
-
-	    /**
-	     * A reference to the current runtime stepping interval, set
-	     * by a `setInterval`.
-	     * @type {!number}
-	     */
-	    this._steppingInterval = null;
-
-	    /**
-	     * Current length of a step.
-	     * Changes as mode switches, and used by the sequencer to calculate
-	     * WORK_TIME.
-	     * @type {!number}
-	     */
-	    this.currentStepTime = null;
-
-	    /**
-	     * Whether any primitive has requested a redraw.
-	     * Affects whether `Sequencer.stepThreads` will yield
-	     * after stepping each thread.
-	     * Reset on every frame.
-	     * @type {boolean}
-	     */
-	    this.redrawRequested = false;
-
-	    // Register all given block packages.
-	    this._registerBlockPackages();
-
-	    // Register and initialize "IO devices", containers for processing
-	    // I/O related data.
-	    /** @type {Object.<string, Object>} */
-	    this.ioDevices = {
-	        clock: new Clock(),
-	        keyboard: new Keyboard(this),
-	        mouse: new Mouse(this),
-	        serial: new Serial(this)
-	    };
-	};
-
-	/**
-	 * Inherit from EventEmitter
-	 */
-	util.inherits(Runtime, EventEmitter);
-
-	/**
-	 * Width of the stage, in pixels.
-	 * @const {number}
-	 */
-	Runtime.STAGE_WIDTH = 480;
-
-	/**
-	 * Height of the stage, in pixels.
-	 * @const {number}
-	 */
-	Runtime.STAGE_HEIGHT = 360;
-
-	/**
-	 * Event name for glowing a script.
-	 * @const {string}
-	 */
-	Runtime.SCRIPT_GLOW_ON = 'SCRIPT_GLOW_ON';
-
-	/**
-	 * Event name for unglowing a script.
-	 * @const {string}
-	 */
-	Runtime.SCRIPT_GLOW_OFF = 'SCRIPT_GLOW_OFF';
-
-	/**
-	 * Event name for glowing a block.
-	 * @const {string}
-	 */
-	Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
-
-	/**
-	 * Event name for unglowing a block.
-	 * @const {string}
-	 */
-	Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
-
-	/**
-	 * Event name for glowing the green flag
-	 * @const {string}
-	 */
-	Runtime.PROJECT_RUN_START = 'PROJECT_RUN_START';
-
-	/**
-	 * Event name for unglowing the green flag
-	 * @const {string}
-	 */
-	Runtime.PROJECT_RUN_STOP = 'PROJECT_RUN_STOP';
-
-	/**
-	 * Event name for visual value report.
-	 * @const {string}
-	 */
-	Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
-
-	/**
-	 * Event name for sprite info report.
-	 * @const {string}
-	 */
-	Runtime.SPRITE_INFO_REPORT = 'SPRITE_INFO_REPORT';
-
-	/**
-	 * How rapidly we try to step threads by default, in ms.
-	 */
-	Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
-
-	/**
-	 * In compatibility mode, how rapidly we try to step threads, in ms.
-	 */
-	Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY = 1000 / 30;
-
-	/**
-	 * How many clones can be created at a time.
-	 * @const {number}
-	 */
-	Runtime.MAX_CLONES = 300;
-
-	// -----------------------------------------------------------------------------
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Register default block packages with this runtime.
-	 * @todo Prefix opcodes with package name.
-	 * @private
-	 */
-	Runtime.prototype._registerBlockPackages = function (packageToLoad) {
-	    if(packageToLoad==null){
-	        packageToLoad = defaultBlockPackages;
-	    }
-	    for (var packageName in packageToLoad) {
-	        if (packageToLoad.hasOwnProperty(packageName)) {
-	            // @todo pass a different runtime depending on package privilege?
-	            var packageObject = new (packageToLoad[packageName])(this);
-	            // Collect primitives from package.
-	            if (packageObject.getPrimitives) {
-	                var packagePrimitives = packageObject.getPrimitives();
-	                for (var op in packagePrimitives) {
-	                    if (packagePrimitives.hasOwnProperty(op)) {
-	                        this._primitives[op] =
-	                            packagePrimitives[op].bind(packageObject);
-	                    }
-	                }
-	            }
-	            // Collect hat metadata from package.
-	            if (packageObject.getHats) {
-	                var packageHats = packageObject.getHats();
-	                for (var hatName in packageHats) {
-	                    if (packageHats.hasOwnProperty(hatName)) {
-	                        this._hats[hatName] = packageHats[hatName];
-	                    }
-	                }
-	            }
-	        }
-	    }
-	};
-
-	/**
-	 * Retrieve the function associated with the given opcode.
-	 * @param {!string} opcode The opcode to look up.
-	 * @return {Function} The function which implements the opcode.
-	 */
-	Runtime.prototype.getOpcodeFunction = function (opcode) {
-	    return this._primitives[opcode];
-	};
-
-	/**
-	 * Return whether an opcode represents a hat block.
-	 * @param {!string} opcode The opcode to look up.
-	 * @return {Boolean} True if the op is known to be a hat.
-	 */
-	Runtime.prototype.getIsHat = function (opcode) {
-	    return this._hats.hasOwnProperty(opcode);
-	};
-
-	/**
-	 * Return whether an opcode represents an edge-activated hat block.
-	 * @param {!string} opcode The opcode to look up.
-	 * @return {Boolean} True if the op is known to be a edge-activated hat.
-	 */
-	Runtime.prototype.getIsEdgeActivatedHat = function (opcode) {
-	    return this._hats.hasOwnProperty(opcode) &&
-	        this._hats[opcode].edgeActivated;
-	};
-
-	/**
-	 * Update an edge-activated hat block value.
-	 * @param {!string} blockId ID of hat to store value for.
-	 * @param {*} newValue Value to store for edge-activated hat.
-	 * @return {*} The old value for the edge-activated hat.
-	 */
-	Runtime.prototype.updateEdgeActivatedValue = function (blockId, newValue) {
-	    var oldValue = this._edgeActivatedHatValues[blockId];
-	    this._edgeActivatedHatValues[blockId] = newValue;
-	    return oldValue;
-	};
-
-	/**
-	 * Clear all edge-activaed hat values.
-	 */
-	Runtime.prototype.clearEdgeActivatedValues = function () {
-	    this._edgeActivatedHatValues = {};
-	};
-
-	/**
-	 * Attach the renderer
-	 * @param {!RenderWebGL} renderer The renderer to attach
-	 */
-	Runtime.prototype.attachRenderer = function (renderer) {
-	    this.renderer = renderer;
-	};
-
-	// -----------------------------------------------------------------------------
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Create a thread and push it to the list of threads.
-	 * @param {!string} id ID of block that starts the stack.
-	 * @param {!Target} target Target to run thread on.
-	 * @return {!Thread} The newly created thread.
-	 */
-	Runtime.prototype._pushThread = function (id, target) {
-	    var thread = new Thread(id);
-	    thread.target = target;
-	    thread.pushStack(id);
-	    this.threads.push(thread);
-	    return thread;
-	};
-
-	/**
-	 * Remove a thread from the list of threads.
-	 * @param {?Thread} thread Thread object to remove from actives
-	 */
-	Runtime.prototype._removeThread = function (thread) {
-	    // Inform sequencer to stop executing that thread.
-	    this.sequencer.retireThread(thread);
-	    // Remove from the list.
-	    var i = this.threads.indexOf(thread);
-	    if (i > -1) {
-	        this.threads.splice(i, 1);
-	    }
-	};
-
-	/**
-	 * Restart a thread in place, maintaining its position in the list of threads.
-	 * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
-	 * Test project: https://scratch.mit.edu/projects/130183108/
-	 * @param {!Thread} thread Thread object to restart.
-	 */
-	Runtime.prototype._restartThread = function (thread) {
-	    var newThread = new Thread(thread.topBlock);
-	    newThread.target = thread.target;
-	    newThread.pushStack(thread.topBlock);
-	    var i = this.threads.indexOf(thread);
-	    if (i > -1) {
-	        this.threads[i] = newThread;
-	    } else {
-	        this.threads.push(thread);
-	    }
-	};
-
-	/**
-	 * Return whether a thread is currently active/running.
-	 * @param {?Thread} thread Thread object to check.
-	 * @return {Boolean} True if the thread is active/running.
-	 */
-	Runtime.prototype.isActiveThread = function (thread) {
-	    return this.threads.indexOf(thread) > -1;
-	};
-
-	/**
-	 * Toggle a script.
-	 * @param {!string} topBlockId ID of block that starts the script.
-	 */
-	Runtime.prototype.toggleScript = function (topBlockId) {
-	    // Remove any existing thread.
-	    for (var i = 0; i < this.threads.length; i++) {
-	        if (this.threads[i].topBlock === topBlockId) {
-	            this._removeThread(this.threads[i]);
-	            return;
-	        }
-	    }
-	    // Otherwise add it.
-	    this._pushThread(topBlockId, this._editingTarget);
-	};
-
-	/**
-	 * Run a function `f` for all scripts in a workspace.
-	 * `f` will be called with two parameters:
-	 *  - the top block ID of the script.
-	 *  - the target that owns the script.
-	 * @param {!Function} f Function to call for each script.
-	 * @param {Target=} optTarget Optionally, a target to restrict to.
-	 */
-	Runtime.prototype.allScriptsDo = function (f, optTarget) {
-	    var targets = this.targets;
-	    if (optTarget) {
-	        targets = [optTarget];
-	    }
-	    for (var t = 0; t < targets.length; t++) {
-	        var target = targets[t];
-	        var scripts = target.blocks.getScripts();
-	        for (var j = 0; j < scripts.length; j++) {
-	            var topBlockId = scripts[j];
-	            f(topBlockId, target);
-	        }
-	    }
-	};
-
-	/**
-	 * Start all relevant hats.
-	 * @param {!string} requestedHatOpcode Opcode of hats to start.
-	 * @param {Object=} optMatchFields Optionally, fields to match on the hat.
-	 * @param {Target=} optTarget Optionally, a target to restrict to.
-	 * @return {Array.<Thread>} List of threads started by this function.
-	 */
-	Runtime.prototype.startHats = function (requestedHatOpcode,
-	    optMatchFields, optTarget) {
-	    if (!this._hats.hasOwnProperty(requestedHatOpcode)) {
-	        // No known hat with this opcode.
-	        return;
-	    }
-	    var instance = this;
-	    var newThreads = [];
-	    // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
-	    this.allScriptsDo(function (topBlockId, target) {
-	        var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
-	        if (potentialHatOpcode !== requestedHatOpcode) {
-	            // Not the right hat.
-	            return;
-	        }
-	        // Match any requested fields.
-	        // For example: ensures that broadcasts match.
-	        // This needs to happen before the block is evaluated
-	        // (i.e., before the predicate can be run) because "broadcast and wait"
-	        // needs to have a precise collection of started threads.
-	        var hatFields = target.blocks.getFields(topBlockId);
-	        if (optMatchFields) {
-	            for (var matchField in optMatchFields) {
-	                if (hatFields[matchField].value !==
-	                    optMatchFields[matchField]) {
-	                    // Field mismatch.
-	                    return;
-	                }
-	            }
-	        }
-	        // Look up metadata for the relevant hat.
-	        var hatMeta = instance._hats[requestedHatOpcode];
-	        if (hatMeta.restartExistingThreads) {
-	            // If `restartExistingThreads` is true, we should stop
-	            // any existing threads starting with the top block.
-	            for (var i = 0; i < instance.threads.length; i++) {
-	                if (instance.threads[i].topBlock === topBlockId &&
-	                    instance.threads[i].target === target) {
-	                    instance._restartThread(instance.threads[i]);
-	                    return;
-	                }
-	            }
-	        } else {
-	            // If `restartExistingThreads` is false, we should
-	            // give up if any threads with the top block are running.
-	            for (var j = 0; j < instance.threads.length; j++) {
-	                if (instance.threads[j].topBlock === topBlockId &&
-	                    instance.threads[j].target === target) {
-	                    // Some thread is already running.
-	                    return;
-	                }
-	            }
-	        }
-	        // Start the thread with this top block.
-	        newThreads.push(instance._pushThread(topBlockId, target));
-	    }, optTarget);
-	    return newThreads;
-	};
-
-	/**
-	 * Dispose all targets. Return to clean state.
-	 */
-	Runtime.prototype.dispose = function () {
-	    this.stopAll();
-	    this.targets.map(this.disposeTarget, this);
-	};
-
-	/**
-	 * Dispose of a target.
-	 * @param {!Target} disposingTarget Target to dispose of.
-	 */
-	Runtime.prototype.disposeTarget = function (disposingTarget) {
-	    this.targets = this.targets.filter(function (target) {
-	        if (disposingTarget !== target) return true;
-	        // Allow target to do dispose actions.
-	        target.dispose();
-	        // Remove from list of targets.
-	        return false;
-	    });
-	};
-
-	/**
-	 * Stop any threads acting on the target.
-	 * @param {!Target} target Target to stop threads for.
-	 * @param {Thread=} optThreadException Optional thread to skip.
-	 */
-	Runtime.prototype.stopForTarget = function (target, optThreadException) {
-	    // Stop any threads on the target.
-	    for (var i = 0; i < this.threads.length; i++) {
-	        if (this.threads[i] === optThreadException) {
-	            continue;
-	        }
-	        if (this.threads[i].target === target) {
-	            this._removeThread(this.threads[i]);
-	        }
-	    }
-	};
-
-	/**
-	 * Start all threads that start with the green flag.
-	 */
-	Runtime.prototype.greenFlag = function () {
-	    this.stopAll();
-	    this.ioDevices.clock.resetProjectTimer();
-	    this.clearEdgeActivatedValues();
-	    // Inform all targets of the green flag.
-	    for (var i = 0; i < this.targets.length; i++) {
-	        this.targets[i].onGreenFlag();
-	    }
-	    this.startHats('event_whenflagclicked');
-	};
-
-	/**
-	 * Stop "everything."
-	 */
-	Runtime.prototype.stopAll = function () {
-	    // Dispose all clones.
-	    var newTargets = [];
-	    for (var i = 0; i < this.targets.length; i++) {
-	        if (this.targets[i].hasOwnProperty('isOriginal') &&
-	            !this.targets[i].isOriginal) {
-	            this.targets[i].dispose();
-	        } else {
-	            newTargets.push(this.targets[i]);
-	        }
-	    }
-	    this.targets = newTargets;
-	    // Dispose all threads.
-	    var threadsCopy = this.threads.slice();
-	    while (threadsCopy.length > 0) {
-	        var poppedThread = threadsCopy.pop();
-	        this._removeThread(poppedThread);
-	    }
-	};
-
-	/**
-	 * Repeatedly run `sequencer.stepThreads` and filter out
-	 * inactive threads after each iteration.
-	 */
-	Runtime.prototype._step = function () {
-	    // Find all edge-activated hats, and add them to threads to be evaluated.
-	    for (var hatType in this._hats) {
-	        var hat = this._hats[hatType];
-	        if (hat.edgeActivated) {
-	            this.startHats(hatType);
-	        }
-	    }
-	    this.redrawRequested = false;
-	    var doneThreads = this.sequencer.stepThreads();
-	    this._updateGlows(doneThreads);
-	    this._setThreadCount(this.threads.length + doneThreads.length);
-	    if (this.renderer) {
-	        // @todo: Only render when this.redrawRequested or clones rendered.
-	        this.renderer.draw();
-	    }
-	};
-
-	/**
-	 * Set the current editing target known by the runtime.
-	 * @param {!Target} editingTarget New editing target.
-	 */
-	Runtime.prototype.setEditingTarget = function (editingTarget) {
-	    this._editingTarget = editingTarget;
-	    // Script glows must be cleared.
-	    this._scriptGlowsPreviousFrame = [];
-	    this._updateGlows();
-	    this.spriteInfoReport(editingTarget);
-	};
-
-	/**
-	 * Set whether we are in 30 TPS compatibility mode.
-	 * @param {boolean} compatibilityModeOn True iff in compatibility mode.
-	 */
-	Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
-	    this.compatibilityMode = compatibilityModeOn;
-	    if (this._steppingInterval) {
-	        self.clearInterval(this._steppingInterval);
-	        this.start();
-	    }
-	};
-
-	/**
-	 * Emit glows/glow clears for scripts after a single tick.
-	 * Looks at `this.threads` and notices which have turned on/off new glows.
-	 * @param {Array.<Thread>=} optExtraThreads Optional list of inactive threads.
-	 */
-	Runtime.prototype._updateGlows = function (optExtraThreads) {
-	    var searchThreads = [];
-	    searchThreads.push.apply(searchThreads, this.threads);
-	    if (optExtraThreads) {
-	        searchThreads.push.apply(searchThreads, optExtraThreads);
-	    }
-	    // Set of scripts that request a glow this frame.
-	    var requestedGlowsThisFrame = [];
-	    // Final set of scripts glowing during this frame.
-	    var finalScriptGlows = [];
-	    // Find all scripts that should be glowing.
-	    for (var i = 0; i < searchThreads.length; i++) {
-	        var thread = searchThreads[i];
-	        var target = thread.target;
-	        if (target === this._editingTarget) {
-	            var blockForThread = thread.blockGlowInFrame;
-	            if (thread.requestScriptGlowInFrame) {
-	                var script = target.blocks.getTopLevelScript(blockForThread);
-	                if (!script) {
-	                    // Attempt to find in flyout blocks.
-	                    script = this.flyoutBlocks.getTopLevelScript(
-	                        blockForThread
-	                    );
-	                }
-	                if (script) {
-	                    requestedGlowsThisFrame.push(script);
-	                }
-	            }
-	        }
-	    }
-	    // Compare to previous frame.
-	    for (var j = 0; j < this._scriptGlowsPreviousFrame.length; j++) {
-	        var previousFrameGlow = this._scriptGlowsPreviousFrame[j];
-	        if (requestedGlowsThisFrame.indexOf(previousFrameGlow) < 0) {
-	            // Glow turned off.
-	            this.glowScript(previousFrameGlow, false);
-	        } else {
-	            // Still glowing.
-	            finalScriptGlows.push(previousFrameGlow);
-	        }
-	    }
-	    for (var k = 0; k < requestedGlowsThisFrame.length; k++) {
-	        var currentFrameGlow = requestedGlowsThisFrame[k];
-	        if (this._scriptGlowsPreviousFrame.indexOf(currentFrameGlow) < 0) {
-	            // Glow turned on.
-	            this.glowScript(currentFrameGlow, true);
-	            finalScriptGlows.push(currentFrameGlow);
-	        }
-	    }
-	    this._scriptGlowsPreviousFrame = finalScriptGlows;
-	};
-
-	/**
-	 * Emit run start/stop after each tick. Emits when `this.threads.length` goes
-	 * between non-zero and zero
-	 *
-	 * @param {number} threadCount The new threadCount
-	 */
-	Runtime.prototype._setThreadCount = function (threadCount) {
-	    if (this._threadCount === 0 && threadCount > 0) {
-	        this.emit(Runtime.PROJECT_RUN_START);
-	    }
-	    if (this._threadCount > 0 && threadCount === 0) {
-	        this.emit(Runtime.PROJECT_RUN_STOP);
-	    }
-	    this._threadCount = threadCount;
-	};
-
-	/**
-	 * "Quiet" a script's glow: stop the VM from generating glow/unglow events
-	 * about that script. Use when a script has just been deleted, but we may
-	 * still be tracking glow data about it.
-	 * @param {!string} scriptBlockId Id of top-level block in script to quiet.
-	 */
-	Runtime.prototype.quietGlow = function (scriptBlockId) {
-	    var index = this._scriptGlowsPreviousFrame.indexOf(scriptBlockId);
-	    if (index > -1) {
-	        this._scriptGlowsPreviousFrame.splice(index, 1);
-	    }
-	};
-
-	/**
-	 * Emit feedback for block glowing (used in the sequencer).
-	 * @param {?string} blockId ID for the block to update glow
-	 * @param {boolean} isGlowing True to turn on glow; false to turn off.
-	 */
-	Runtime.prototype.glowBlock = function (blockId, isGlowing) {
-	    if (isGlowing) {
-	        this.emit(Runtime.BLOCK_GLOW_ON, {id: blockId});
-	    } else {
-	        this.emit(Runtime.BLOCK_GLOW_OFF, {id: blockId});
-	    }
-	};
-
-	/**
-	 * Emit feedback for script glowing.
-	 * @param {?string} topBlockId ID for the top block to update glow
-	 * @param {boolean} isGlowing True to turn on glow; false to turn off.
-	 */
-	Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
-	    if (isGlowing) {
-	        this.emit(Runtime.SCRIPT_GLOW_ON, {id: topBlockId});
-	    } else {
-	        this.emit(Runtime.SCRIPT_GLOW_OFF, {id: topBlockId});
-	    }
-	};
-
-	/**
-	 * Emit value for reporter to show in the blocks.
-	 * @param {string} blockId ID for the block.
-	 * @param {string} value Value to show associated with the block.
-	 */
-	Runtime.prototype.visualReport = function (blockId, value) {
-	    this.emit(Runtime.VISUAL_REPORT, {id: blockId, value: String(value)});
-	};
-
-	/**
-	 * Emit a sprite info report if the provided target is the original sprite
-	 * @param {!Target} target Target to report sprite info for.
-	 */
-	Runtime.prototype.spriteInfoReport = function (target) {
-	    if (!target.isOriginal) return;
-
-	    this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
-	};
-
-	/**
-	 * Get a target by its id.
-	 * @param {string} targetId Id of target to find.
-	 * @return {?Target} The target, if found.
-	 */
-	Runtime.prototype.getTargetById = function (targetId) {
-	    for (var i = 0; i < this.targets.length; i++) {
-	        var target = this.targets[i];
-	        if (target.id === targetId) {
-	            return target;
-	        }
-	    }
-	};
-
-	/**
-	 * Get the first original (non-clone-block-created) sprite given a name.
-	 * @param {string} spriteName Name of sprite to look for.
-	 * @return {?Target} Target representing a sprite of the given name.
-	 */
-	Runtime.prototype.getSpriteTargetByName = function (spriteName) {
-	    for (var i = 0; i < this.targets.length; i++) {
-	        var target = this.targets[i];
-	        if (target.sprite && target.sprite.name === spriteName) {
-	            return target;
-	        }
-	    }
-	};
-
-	/**
-	 * Update the clone counter to track how many clones are created.
-	 * @param {number} changeAmount How many clones have been created/destroyed.
-	 */
-	Runtime.prototype.changeCloneCounter = function (changeAmount) {
-	    this._cloneCounter += changeAmount;
-	};
-
-	/**
-	 * Return whether there are clones available.
-	 * @return {boolean} True until the number of clones hits Runtime.MAX_CLONES.
-	 */
-	Runtime.prototype.clonesAvailable = function () {
-	    return this._cloneCounter < Runtime.MAX_CLONES;
-	};
-
-	/**
-	 * Get a target representing the Scratch stage, if one exists.
-	 * @return {?Target} The target, if found.
-	 */
-	Runtime.prototype.getTargetForStage = function () {
-	    for (var i = 0; i < this.targets.length; i++) {
-	        var target = this.targets[i];
-	        if (target.isStage) {
-	            return target;
-	        }
-	    }
-	};
-
-	/**
-	 * Tell the runtime to request a redraw.
-	 * Use after a clone/sprite has completed some visible operation on the stage.
-	 */
-	Runtime.prototype.requestRedraw = function () {
-	    this.redrawRequested = true;
-	};
-
-	/**
-	 * Set up timers to repeatedly step in a browser.
-	 */
-	Runtime.prototype.start = function () {
-	    var interval = Runtime.THREAD_STEP_INTERVAL;
-	    if (this.compatibilityMode) {
-	        interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
-	    }
-	    this.currentStepTime = interval;
-	    this._steppingInterval = self.setInterval(function () {
-	        this._step();
-	    }.bind(this), interval);
-	};
-
-	module.exports = Runtime;
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Timer = __webpack_require__(9);
-	var Thread = __webpack_require__(10);
-	var execute = __webpack_require__(11);
-
-	var Sequencer = function (runtime) {
-	    /**
-	     * A utility timer for timing thread sequencing.
-	     * @type {!Timer}
-	     */
-	    this.timer = new Timer();
-
-	    /**
-	     * Reference to the runtime owning this sequencer.
-	     * @type {!Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Time to run a warp-mode thread, in ms.
-	 * @type {number}
-	 */
-	Sequencer.WARP_TIME = 500;
-
-	/**
-	 * Step through all threads in `this.runtime.threads`, running them in order.
-	 * @return {Array.<!Thread>} List of inactive threads after stepping.
-	 */
-	Sequencer.prototype.stepThreads = function () {
-	    // Work time is 75% of the thread stepping interval.
-	    var WORK_TIME = 0.75 * this.runtime.currentStepTime;
-	    // Start counting toward WORK_TIME.
-	    this.timer.start();
-	    // Count of active threads.
-	    var numActiveThreads = Infinity;
-	    // Whether `stepThreads` has run through a full single tick.
-	    var ranFirstTick = false;
-	    var doneThreads = [];
-	    // Conditions for continuing to stepping threads:
-	    // 1. We must have threads in the list, and some must be active.
-	    // 2. Time elapsed must be less than WORK_TIME.
-	    // 3. Either turbo mode, or no redraw has been requested by a primitive.
-	    while (this.runtime.threads.length > 0 &&
-	           numActiveThreads > 0 &&
-	           this.timer.timeElapsed() < WORK_TIME &&
-	           (this.runtime.turboMode || !this.runtime.redrawRequested)) {
-	        numActiveThreads = 0;
-	        // Attempt to run each thread one time.
-	        for (var i = 0; i < this.runtime.threads.length; i++) {
-	            var activeThread = this.runtime.threads[i];
-	            if (activeThread.stack.length === 0 ||
-	                activeThread.status === Thread.STATUS_DONE) {
-	                // Finished with this thread.
-	                if (doneThreads.indexOf(activeThread) < 0) {
-	                    doneThreads.push(activeThread);
-	                }
-	                continue;
-	            }
-	            if (activeThread.status === Thread.STATUS_YIELD_TICK &&
-	                !ranFirstTick) {
-	                // Clear single-tick yield from the last call of `stepThreads`.
-	                activeThread.status = Thread.STATUS_RUNNING;
-	            }
-	            if (activeThread.status === Thread.STATUS_RUNNING ||
-	                activeThread.status === Thread.STATUS_YIELD) {
-	                // Normal-mode thread: step.
-	                this.stepThread(activeThread);
-	                activeThread.warpTimer = null;
-	            }
-	            if (activeThread.status === Thread.STATUS_RUNNING) {
-	                numActiveThreads++;
-	            }
-	        }
-	        // We successfully ticked once. Prevents running STATUS_YIELD_TICK
-	        // threads on the next tick.
-	        ranFirstTick = true;
-	    }
-	    // Filter inactive threads from `this.runtime.threads`.
-	    this.runtime.threads = this.runtime.threads.filter(function (thread) {
-	        if (doneThreads.indexOf(thread) > -1) {
-	            return false;
-	        }
-	        return true;
-	    });
-	    return doneThreads;
-	};
-
-	/**
-	 * Step the requested thread for as long as necessary.
-	 * @param {!Thread} thread Thread object to step.
-	 */
-	Sequencer.prototype.stepThread = function (thread) {
-	    var currentBlockId = thread.peekStack();
-	    if (!currentBlockId) {
-	        // A "null block" - empty branch.
-	        thread.popStack();
-	    }
-	    while (thread.peekStack()) {
-	        var isWarpMode = thread.peekStackFrame().warpMode;
-	        if (isWarpMode && !thread.warpTimer) {
-	            // Initialize warp-mode timer if it hasn't been already.
-	            // This will start counting the thread toward `Sequencer.WARP_TIME`.
-	            thread.warpTimer = new Timer();
-	            thread.warpTimer.start();
-	        }
-	        // Execute the current block.
-	        // Save the current block ID to notice if we did control flow.
-	        currentBlockId = thread.peekStack();
-	        execute(this, thread);
-	        thread.blockGlowInFrame = currentBlockId;
-	        // If the thread has yielded or is waiting, yield to other threads.
-	        if (thread.status === Thread.STATUS_YIELD) {
-	            // Mark as running for next iteration.
-	            thread.status = Thread.STATUS_RUNNING;
-	            // In warp mode, yielded blocks are re-executed immediately.
-	            if (isWarpMode &&
-	                thread.warpTimer.timeElapsed() <= Sequencer.WARP_TIME) {
-	                continue;
-	            }
-	            return;
-	        } else if (thread.status === Thread.STATUS_PROMISE_WAIT) {
-	            // A promise was returned by the primitive. Yield the thread
-	            // until the promise resolves. Promise resolution should reset
-	            // thread.status to Thread.STATUS_RUNNING.
-	            return;
-	        }
-	        // If no control flow has happened, switch to next block.
-	        if (thread.peekStack() === currentBlockId) {
-	            thread.goToNextBlock();
-	        }
-	        // If no next block has been found at this point, look on the stack.
-	        while (!thread.peekStack()) {
-	            thread.popStack();
-	            if (thread.stack.length === 0) {
-	                // No more stack to run!
-	                thread.status = Thread.STATUS_DONE;
-	                return;
-	            }
-	            if (thread.peekStackFrame().isLoop) {
-	                // The current level of the stack is marked as a loop.
-	                // Return to yield for the frame/tick in general.
-	                // Unless we're in warp mode - then only return if the
-	                // warp timer is up.
-	                if (!isWarpMode ||
-	                    thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
-	                    // Don't do anything to the stack, since loops need
-	                    // to be re-executed.
-	                    return;
-	                } else {
-	                    // Don't go to the next block for this level of the stack,
-	                    // since loops need to be re-executed.
-	                    continue;
-	                }
-	            } else if (thread.peekStackFrame().waitingReporter) {
-	                // This level of the stack was waiting for a value.
-	                // This means a reporter has just returned - so don't go
-	                // to the next block for this level of the stack.
-	                return;
-	            }
-	            // Get next block of existing block on the stack.
-	            thread.goToNextBlock();
-	        }
-	    }
-	};
-
-	/**
-	 * Step a thread into a block's branch.
-	 * @param {!Thread} thread Thread object to step to branch.
-	 * @param {Number} branchNum Which branch to step to (i.e., 1, 2).
-	 * @param {Boolean} isLoop Whether this block is a loop.
-	 */
-	Sequencer.prototype.stepToBranch = function (thread, branchNum, isLoop) {
-	    if (!branchNum) {
-	        branchNum = 1;
-	    }
-	    var currentBlockId = thread.peekStack();
-	    var branchId = thread.target.blocks.getBranch(
-	        currentBlockId,
-	        branchNum
-	    );
-	    thread.peekStackFrame().isLoop = isLoop;
-	    if (branchId) {
-	        // Push branch ID to the thread's stack.
-	        thread.pushStack(branchId);
-	    } else {
-	        thread.pushStack(null);
-	    }
-	};
-
-	/**
-	 * Step a procedure.
-	 * @param {!Thread} thread Thread object to step to procedure.
-	 * @param {!string} procedureCode Procedure code of procedure to step to.
-	 */
-	Sequencer.prototype.stepToProcedure = function (thread, procedureCode) {
-	    var definition = thread.target.blocks.getProcedureDefinition(procedureCode);
-	    if (!definition) {
-	        return;
-	    }
-	    // Check if the call is recursive.
-	    // If so, set the thread to yield after pushing.
-	    var isRecursive = thread.isRecursiveCall(procedureCode);
-	    // To step to a procedure, we put its definition on the stack.
-	    // Execution for the thread will proceed through the definition hat
-	    // and on to the main definition of the procedure.
-	    // When that set of blocks finishes executing, it will be popped
-	    // from the stack by the sequencer, returning control to the caller.
-	    thread.pushStack(definition);
-	    // In known warp-mode threads, only yield when time is up.
-	    if (thread.peekStackFrame().warpMode &&
-	        thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
-	        thread.status = Thread.STATUS_YIELD;
-	    } else {
-	        // Look for warp-mode flag on definition, and set the thread
-	        // to warp-mode if needed.
-	        var definitionBlock = thread.target.blocks.getBlock(definition);
-	        var doWarp = definitionBlock.mutation.warp;
-	        if (doWarp) {
-	            thread.peekStackFrame().warpMode = true;
-	        } else {
-	            // In normal-mode threads, yield any time we have a recursive call.
-	            if (isRecursive) {
-	                thread.status = Thread.STATUS_YIELD;
-	            }
-	        }
-	    }
-	};
-
-	/**
-	 * Retire a thread in the middle, without considering further blocks.
-	 * @param {!Thread} thread Thread object to retire.
-	 */
-	Sequencer.prototype.retireThread = function (thread) {
-	    thread.stack = [];
-	    thread.stackFrame = [];
-	    thread.requestScriptGlowInFrame = false;
-	    thread.status = Thread.STATUS_DONE;
-	};
-
-	module.exports = Sequencer;
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports) {
-
-	/**
-	 * @fileoverview
-	 * A utility for accurately measuring time.
-	 * To use:
-	 * ---
-	 * var timer = new Timer();
-	 * timer.start();
-	 * ... pass some time ...
-	 * var timeDifference = timer.timeElapsed();
-	 * ---
-	 * Or, you can use the `time` and `relativeTime`
-	 * to do some measurement yourself.
-	 */
-
-	/**
-	 * @constructor
-	 */
-	var Timer = function () {};
-
-	/**
-	 * Used to store the start time of a timer action.
-	 * Updated when calling `timer.start`.
-	 */
-	Timer.prototype.startTime = 0;
-
-	/**
-	 * Return the currently known absolute time, in ms precision.
-	 * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
-	 */
-	Timer.prototype.time = function () {
-	    if (Date.now) {
-	        return Date.now();
-	    } else {
-	        return new Date().getTime();
-	    }
-	};
-
-	/**
-	 * Returns a time accurate relative to other times produced by this function.
-	 * If possible, will use sub-millisecond precision.
-	 * If not, will use millisecond precision.
-	 * Not guaranteed to produce the same absolute values per-system.
-	 * @returns {number} ms-scale accurate time relative to other relative times.
-	 */
-	Timer.prototype.relativeTime = function () {
-	    if (typeof self !== 'undefined' &&
-	        self.performance && 'now' in self.performance) {
-	        return self.performance.now();
-	    } else {
-	        return this.time();
-	    }
-	};
-
-	/**
-	 * Start a timer for measuring elapsed time,
-	 * at the most accurate precision possible.
-	 */
-	Timer.prototype.start = function () {
-	    this.startTime = this.relativeTime();
-	};
-
-	/**
-	 * Check time elapsed since `timer.start` was called.
-	 * @returns {number} Time elapsed, in ms (possibly sub-ms precision).
-	 */
-	Timer.prototype.timeElapsed = function () {
-	    return this.relativeTime() - this.startTime;
-	};
-
-	module.exports = Timer;
-
-
-/***/ },
-/* 10 */
-/***/ function(module, exports) {
-
-	/**
-	 * A thread is a running stack context and all the metadata needed.
-	 * @param {?string} firstBlock First block to execute in the thread.
-	 * @constructor
-	 */
-	var Thread = function (firstBlock) {
-	    /**
-	     * ID of top block of the thread
-	     * @type {!string}
-	     */
-	    this.topBlock = firstBlock;
-
-	    /**
-	     * Stack for the thread. When the sequencer enters a control structure,
-	     * the block is pushed onto the stack so we know where to exit.
-	     * @type {Array.<string>}
-	     */
-	    this.stack = [];
-
-	    /**
-	     * Stack frames for the thread. Store metadata for the executing blocks.
-	     * @type {Array.<Object>}
-	     */
-	    this.stackFrames = [];
-
-	    /**
-	     * Status of the thread, one of three states (below)
-	     * @type {number}
-	     */
-	    this.status = 0; /* Thread.STATUS_RUNNING */
-
-	    /**
-	     * Target of this thread.
-	     * @type {?Target}
-	     */
-	    this.target = null;
-
-	    /**
-	     * Whether the thread requests its script to glow during this frame.
-	     * @type {boolean}
-	     */
-	    this.requestScriptGlowInFrame = false;
-
-	    /**
-	     * Which block ID should glow during this frame, if any.
-	     * @type {?string}
-	     */
-	    this.blockGlowInFrame = null;
-
-	    /**
-	     * A timer for when the thread enters warp mode.
-	     * Substitutes the sequencer's count toward WORK_TIME on a per-thread basis.
-	     * @type {?Timer}
-	     */
-	    this.warpTimer = null;
-	};
-
-	/**
-	 * Thread status for initialized or running thread.
-	 * This is the default state for a thread - execution should run normally,
-	 * stepping from block to block.
-	 * @const
-	 */
-	Thread.STATUS_RUNNING = 0;
-
-	/**
-	 * Threads are in this state when a primitive is waiting on a promise;
-	 * execution is paused until the promise changes thread status.
-	 * @const
-	 */
-	Thread.STATUS_PROMISE_WAIT = 1;
-
-	/**
-	 * Thread status for yield.
-	 * @const
-	 */
-	Thread.STATUS_YIELD = 2;
-
-	/**
-	 * Thread status for a single-tick yield. This will be cleared when the
-	 * thread is resumed.
-	 * @const
-	 */
-	Thread.STATUS_YIELD_TICK = 3;
-
-	/**
-	 * Thread status for a finished/done thread.
-	 * Thread is in this state when there are no more blocks to execute.
-	 * @const
-	 */
-	Thread.STATUS_DONE = 4;
-
-	/**
-	 * Push stack and update stack frames appropriately.
-	 * @param {string} blockId Block ID to push to stack.
-	 */
-	Thread.prototype.pushStack = function (blockId) {
-	    this.stack.push(blockId);
-	    // Push an empty stack frame, if we need one.
-	    // Might not, if we just popped the stack.
-	    if (this.stack.length > this.stackFrames.length) {
-	        // Copy warp mode from any higher level.
-	        var warpMode = false;
-	        if (this.stackFrames[this.stackFrames.length - 1]) {
-	            warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
-	        }
-	        this.stackFrames.push({
-	            isLoop: false, // Whether this level of the stack is a loop.
-	            warpMode: warpMode, // Whether this level is in warp mode.
-	            reported: {}, // Collects reported input values.
-	            waitingReporter: null, // Name of waiting reporter.
-	            params: {}, // Procedure parameters.
-	            executionContext: {} // A context passed to block implementations.
-	        });
-	    }
-	};
-
-	/**
-	 * Pop last block on the stack and its stack frame.
-	 * @return {string} Block ID popped from the stack.
-	 */
-	Thread.prototype.popStack = function () {
-	    this.stackFrames.pop();
-	    return this.stack.pop();
-	};
-
-	/**
-	 * Get top stack item.
-	 * @return {?string} Block ID on top of stack.
-	 */
-	Thread.prototype.peekStack = function () {
-	    return this.stack[this.stack.length - 1];
-	};
-
-
-	/**
-	 * Get top stack frame.
-	 * @return {?Object} Last stack frame stored on this thread.
-	 */
-	Thread.prototype.peekStackFrame = function () {
-	    return this.stackFrames[this.stackFrames.length - 1];
-	};
-
-	/**
-	 * Get stack frame above the current top.
-	 * @return {?Object} Second to last stack frame stored on this thread.
-	 */
-	Thread.prototype.peekParentStackFrame = function () {
-	    return this.stackFrames[this.stackFrames.length - 2];
-	};
-
-	/**
-	 * Push a reported value to the parent of the current stack frame.
-	 * @param {*} value Reported value to push.
-	 */
-	Thread.prototype.pushReportedValue = function (value) {
-	    var parentStackFrame = this.peekParentStackFrame();
-	    if (parentStackFrame) {
-	        var waitingReporter = parentStackFrame.waitingReporter;
-	        parentStackFrame.reported[waitingReporter] = value;
-	    }
-	};
-
-	/**
-	 * Add a parameter to the stack frame.
-	 * Use when calling a procedure with parameter values.
-	 * @param {!string} paramName Name of parameter.
-	 * @param {*} value Value to set for parameter.
-	 */
-	Thread.prototype.pushParam = function (paramName, value) {
-	    var stackFrame = this.peekStackFrame();
-	    stackFrame.params[paramName] = value;
-	};
-
-	/**
-	 * Get a parameter at the lowest possible level of the stack.
-	 * @param {!string} paramName Name of parameter.
-	 * @return {*} value Value for parameter.
-	 */
-	Thread.prototype.getParam = function (paramName) {
-	    for (var i = this.stackFrames.length - 1; i >= 0; i--) {
-	        var frame = this.stackFrames[i];
-	        if (frame.params.hasOwnProperty(paramName)) {
-	            return frame.params[paramName];
-	        }
-	    }
-	    return null;
-	};
-
-	/**
-	 * Whether the current execution of a thread is at the top of the stack.
-	 * @return {Boolean} True if execution is at top of the stack.
-	 */
-	Thread.prototype.atStackTop = function () {
-	    return this.peekStack() === this.topBlock;
-	};
-
-
-	/**
-	 * Switch the thread to the next block at the current level of the stack.
-	 * For example, this is used in a standard sequence of blocks,
-	 * where execution proceeds from one block to the next.
-	 */
-	Thread.prototype.goToNextBlock = function () {
-	    var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
-	    // Copy warp mode to next block.
-	    var warpMode = this.peekStackFrame().warpMode;
-	    // The current block is on the stack - pop it and push the next.
-	    // Note that this could push `null` - that is handled by the sequencer.
-	    this.popStack();
-	    this.pushStack(nextBlockId);
-	    if (this.peekStackFrame()) {
-	        this.peekStackFrame().warpMode = warpMode;
-	    }
-	};
-
-	/**
-	 * Attempt to determine whether a procedure call is recursive,
-	 * by examining the stack.
-	 * @param {!string} procedureCode Procedure code of procedure being called.
-	 * @return {boolean} True if the call appears recursive.
-	 */
-	Thread.prototype.isRecursiveCall = function (procedureCode) {
-	    var callCount = 5; // Max number of enclosing procedure calls to examine.
-	    var sp = this.stack.length - 1;
-	    for (var i = sp - 1; i >= 0; i--) {
-	        var block = this.target.blocks.getBlock(this.stack[i]);
-	        if (block.opcode === 'procedures_callnoreturn' &&
-	            block.mutation.proccode === procedureCode) {
-	            return true;
-	        }
-	        if (--callCount < 0) return false;
-	    }
-	    return false;
-	};
-
-	module.exports = Thread;
-
-
-/***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var log = __webpack_require__(12);
-	var Thread = __webpack_require__(10);
-
-	/**
-	 * Utility function to determine if a value is a Promise.
-	 * @param {*} value Value to check for a Promise.
-	 * @return {Boolean} True if the value appears to be a Promise.
-	 */
-	var isPromise = function (value) {
-	    return value && value.then && typeof value.then === 'function';
-	};
-
-	/**
-	 * Execute a block.
-	 * @param {!Sequencer} sequencer Which sequencer is executing.
-	 * @param {!Thread} thread Thread which to read and execute.
-	 */
-	var execute = function (sequencer, thread) {
-	    var runtime = sequencer.runtime;
-	    var target = thread.target;
-
-	    // Current block to execute is the one on the top of the stack.
-	    var currentBlockId = thread.peekStack();
-	    var currentStackFrame = thread.peekStackFrame();
-
-	    // Check where the block lives: target blocks or flyout blocks.
-	    var targetHasBlock = (
-	        typeof target.blocks.getBlock(currentBlockId) !== 'undefined'
-	    );
-	    var flyoutHasBlock = (
-	        typeof runtime.flyoutBlocks.getBlock(currentBlockId) !== 'undefined'
-	    );
-
-	    // Stop if block or target no longer exists.
-	    if (!target || (!targetHasBlock && !flyoutHasBlock)) {
-	        // No block found: stop the thread; script no longer exists.
-	        sequencer.retireThread(thread);
-	        return;
-	    }
-
-	    // Query info about the block.
-	    var blockContainer = null;
-	    if (targetHasBlock) {
-	        blockContainer = target.blocks;
-	    } else {
-	        blockContainer = runtime.flyoutBlocks;
-	    }
-	    var opcode = blockContainer.getOpcode(currentBlockId);
-	    var fields = blockContainer.getFields(currentBlockId);
-	    var inputs = blockContainer.getInputs(currentBlockId);
-	    var blockFunction = runtime.getOpcodeFunction(opcode);
-	    var isHat = runtime.getIsHat(opcode);
-
-
-	    if (!opcode) {
-	        log.warn('Could not get opcode for block: ' + currentBlockId);
-	        return;
-	    }
-
-	    /**
-	     * Handle any reported value from the primitive, either directly returned
-	     * or after a promise resolves.
-	     * @param {*} resolvedValue Value eventually returned from the primitive.
-	     */
-	    var handleReport = function (resolvedValue) {
-	        thread.pushReportedValue(resolvedValue);
-	        if (isHat) {
-	            // Hat predicate was evaluated.
-	            if (runtime.getIsEdgeActivatedHat(opcode)) {
-	                // If this is an edge-activated hat, only proceed if
-	                // the value is true and used to be false.
-	                var oldEdgeValue = runtime.updateEdgeActivatedValue(
-	                    currentBlockId,
-	                    resolvedValue
-	                );
-	                var edgeWasActivated = !oldEdgeValue && resolvedValue;
-	                if (!edgeWasActivated) {
-	                    sequencer.retireThread(thread);
-	                }
-	            } else {
-	                // Not an edge-activated hat: retire the thread
-	                // if predicate was false.
-	                if (!resolvedValue) {
-	                    sequencer.retireThread(thread);
-	                }
-	            }
-	        } else {
-	            // In a non-hat, report the value visually if necessary if
-	            // at the top of the thread stack.
-	            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
-	                runtime.visualReport(currentBlockId, resolvedValue);
-	            }
-	            // Finished any yields.
-	            thread.status = Thread.STATUS_RUNNING;
-	        }
-	    };
-
-	    // Hats and single-field shadows are implemented slightly differently
-	    // from regular blocks.
-	    // For hats: if they have an associated block function,
-	    // it's treated as a predicate; if not, execution will proceed as a no-op.
-	    // For single-field shadows: If the block has a single field, and no inputs,
-	    // immediately return the value of the field.
-	    if (!blockFunction) {
-	        if (isHat) {
-	            // Skip through the block (hat with no predicate).
-	            return;
-	        } else {
-	            if (Object.keys(fields).length === 1 &&
-	                Object.keys(inputs).length === 0) {
-	                // One field and no inputs - treat as arg.
-	                for (var fieldKey in fields) { // One iteration.
-	                    handleReport(fields[fieldKey].value);
-	                }
-	            } else {
-	                log.warn('Could not get implementation for opcode: ' +
-	                    opcode);
-	            }
-	            thread.requestScriptGlowInFrame = true;
-	            return;
-	        }
-	    }
-
-	    // Generate values for arguments (inputs).
-	    var argValues = {};
-
-	    // Add all fields on this block to the argValues.
-	    for (var fieldName in fields) {
-	        argValues[fieldName] = fields[fieldName].value;
-	    }
-
-	    // Recursively evaluate input blocks.
-	    for (var inputName in inputs) {
-	        var input = inputs[inputName];
-	        var inputBlockId = input.block;
-	        // Is there no value for this input waiting in the stack frame?
-	        if (typeof currentStackFrame.reported[inputName] === 'undefined' &&
-	            inputBlockId) {
-	            // If there's not, we need to evaluate the block.
-	            // Push to the stack to evaluate the reporter block.
-	            thread.pushStack(inputBlockId);
-	            // Save name of input for `Thread.pushReportedValue`.
-	            currentStackFrame.waitingReporter = inputName;
-	            // Actually execute the block.
-	            execute(sequencer, thread);
-	            if (thread.status === Thread.STATUS_PROMISE_WAIT) {
-	                return;
-	            } else {
-	                // Execution returned immediately,
-	                // and presumably a value was reported, so pop the stack.
-	                currentStackFrame.waitingReporter = null;
-	                thread.popStack();
-	            }
-	        }
-	        argValues[inputName] = currentStackFrame.reported[inputName];
-	    }
-
-	    // Add any mutation to args (e.g., for procedures).
-	    var mutation = blockContainer.getMutation(currentBlockId);
-	    if (mutation) {
-	        argValues.mutation = mutation;
-	    }
-
-	    // If we've gotten this far, all of the input blocks are evaluated,
-	    // and `argValues` is fully populated. So, execute the block primitive.
-	    // First, clear `currentStackFrame.reported`, so any subsequent execution
-	    // (e.g., on return from a branch) gets fresh inputs.
-	    currentStackFrame.reported = {};
-
-	    var primitiveReportedValue = null;
-	    primitiveReportedValue = blockFunction(argValues, {
-	        stackFrame: currentStackFrame.executionContext,
-	        target: target,
-	        yield: function () {
-	            thread.status = Thread.STATUS_YIELD;
-	        },
-	        startBranch: function (branchNum, isLoop) {
-	            sequencer.stepToBranch(thread, branchNum, isLoop);
-	        },
-	        stopAll: function () {
-	            runtime.stopAll();
-	        },
-	        stopOtherTargetThreads: function () {
-	            runtime.stopForTarget(target, thread);
-	        },
-	        stopThread: function () {
-	            sequencer.retireThread(thread);
-	        },
-	        startProcedure: function (procedureCode) {
-	            sequencer.stepToProcedure(thread, procedureCode);
-	        },
-	        getProcedureParamNames: function (procedureCode) {
-	            return blockContainer.getProcedureParamNames(procedureCode);
-	        },
-	        pushParam: function (paramName, paramValue) {
-	            thread.pushParam(paramName, paramValue);
-	        },
-	        getParam: function (paramName) {
-	            return thread.getParam(paramName);
-	        },
-	        startHats: function (requestedHat, optMatchFields, optTarget) {
-	            return (
-	                runtime.startHats(requestedHat, optMatchFields, optTarget)
-	            );
-	        },
-	        ioQuery: function (device, func, args) {
-	            // Find the I/O device and execute the query/function call.
-	            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
-	                var devObject = runtime.ioDevices[device];
-	                // @todo Figure out why eslint complains about no-useless-call
-	                // no-useless-call can't tell if the call is useless for dynamic
-	                // expressions... or something. Not exactly sure why it
-	                // complains here.
-	                // eslint-disable-next-line no-useless-call
-	                return devObject[func].call(devObject, args);
-	            }
-	        }
-	    });
-
-	    if (typeof primitiveReportedValue === 'undefined') {
-	        // No value reported - potentially a command block.
-	        // Edge-activated hats don't request a glow; all commands do.
-	        thread.requestScriptGlowInFrame = true;
-	    }
-
-	    // If it's a promise, wait until promise resolves.
-	    if (isPromise(primitiveReportedValue)) {
-	        if (thread.status === Thread.STATUS_RUNNING) {
-	            // Primitive returned a promise; automatically yield thread.
-	            thread.status = Thread.STATUS_PROMISE_WAIT;
-	        }
-	        // Promise handlers
-	        primitiveReportedValue.then(function (resolvedValue) {
-	            handleReport(resolvedValue);
-	            if (typeof resolvedValue === 'undefined') {
-	                var popped = thread.popStack();
-	                var nextBlockId = thread.target.blocks.getNextBlock(popped);
-	                thread.pushStack(nextBlockId);
-	            } else {
-	                thread.popStack();
-	            }
-	        }, function (rejectionReason) {
-	            // Promise rejected: the primitive had some error.
-	            // Log it and proceed.
-	            log.warn('Primitive rejected promise: ', rejectionReason);
-	            thread.status = Thread.STATUS_RUNNING;
-	            thread.popStack();
-	        });
-	    } else if (thread.status === Thread.STATUS_RUNNING) {
-	        handleReport(primitiveReportedValue);
-	    }
-	};
-
-	module.exports = execute;
-
-
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var minilog = __webpack_require__(13);
-	minilog.enable();
-
-	module.exports = minilog('vm');
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Minilog = __webpack_require__(14);
-
-	var oldEnable = Minilog.enable,
-	    oldDisable = Minilog.disable,
-	    isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-	    console = __webpack_require__(18);
-
-	// Use a more capable logging backend if on Chrome
-	Minilog.defaultBackend = (isChrome ? console.minilog : console);
-
-	// apply enable inputs from localStorage and from the URL
-	if(typeof window != 'undefined') {
-	  try {
-	    Minilog.enable(JSON.parse(window.localStorage['minilogSettings']));
-	  } catch(e) {}
-	  if(window.location && window.location.search) {
-	    var match = RegExp('[?&]minilog=([^&]*)').exec(window.location.search);
-	    match && Minilog.enable(decodeURIComponent(match[1]));
-	  }
-	}
-
-	// Make enable also add to localStorage
-	Minilog.enable = function() {
-	  oldEnable.call(Minilog, true);
-	  try { window.localStorage['minilogSettings'] = JSON.stringify(true); } catch(e) {}
-	  return this;
-	};
-
-	Minilog.disable = function() {
-	  oldDisable.call(Minilog);
-	  try { delete window.localStorage.minilogSettings; } catch(e) {}
-	  return this;
-	};
-
-	exports = module.exports = Minilog;
-
-	exports.backends = {
-	  array: __webpack_require__(22),
-	  browser: Minilog.defaultBackend,
-	  localStorage: __webpack_require__(23),
-	  jQuery: __webpack_require__(24)
-	};
-
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Transform = __webpack_require__(15),
-	    Filter = __webpack_require__(17);
-
-	var log = new Transform(),
-	    slice = Array.prototype.slice;
-
-	exports = module.exports = function create(name) {
-	  var o   = function() { log.write(name, undefined, slice.call(arguments)); return o; };
-	  o.debug = function() { log.write(name, 'debug', slice.call(arguments)); return o; };
-	  o.info  = function() { log.write(name, 'info',  slice.call(arguments)); return o; };
-	  o.warn  = function() { log.write(name, 'warn',  slice.call(arguments)); return o; };
-	  o.error = function() { log.write(name, 'error', slice.call(arguments)); return o; };
-	  o.log   = o.debug; // for interface compliance with Node and browser consoles
-	  o.suggest = exports.suggest;
-	  o.format = log.format;
-	  return o;
-	};
-
-	// filled in separately
-	exports.defaultBackend = exports.defaultFormatter = null;
-
-	exports.pipe = function(dest) {
-	  return log.pipe(dest);
-	};
-
-	exports.end = exports.unpipe = exports.disable = function(from) {
-	  return log.unpipe(from);
-	};
-
-	exports.Transform = Transform;
-	exports.Filter = Filter;
-	// this is the default filter that's applied when .enable() is called normally
-	// you can bypass it completely and set up your own pipes
-	exports.suggest = new Filter();
-
-	exports.enable = function() {
-	  if(exports.defaultFormatter) {
-	    return log.pipe(exports.suggest) // filter
-	              .pipe(exports.defaultFormatter) // formatter
-	              .pipe(exports.defaultBackend); // backend
-	  }
-	  return log.pipe(exports.suggest) // filter
-	            .pipe(exports.defaultBackend); // formatter
-	};
-
-
-
-/***/ },
-/* 15 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var microee = __webpack_require__(16);
-
-	// Implements a subset of Node's stream.Transform - in a cross-platform manner.
-	function Transform() {}
-
-	microee.mixin(Transform);
-
-	// The write() signature is different from Node's
-	// --> makes it much easier to work with objects in logs.
-	// One of the lessons from v1 was that it's better to target
-	// a good browser rather than the lowest common denominator
-	// internally.
-	// If you want to use external streams, pipe() to ./stringify.js first.
-	Transform.prototype.write = function(name, level, args) {
-	  this.emit('item', name, level, args);
-	};
-
-	Transform.prototype.end = function() {
-	  this.emit('end');
-	  this.removeAllListeners();
-	};
-
-	Transform.prototype.pipe = function(dest) {
-	  var s = this;
-	  // prevent double piping
-	  s.emit('unpipe', dest);
-	  // tell the dest that it's being piped to
-	  dest.emit('pipe', s);
-
-	  function onItem() {
-	    dest.write.apply(dest, Array.prototype.slice.call(arguments));
-	  }
-	  function onEnd() { !dest._isStdio && dest.end(); }
-
-	  s.on('item', onItem);
-	  s.on('end', onEnd);
-
-	  s.when('unpipe', function(from) {
-	    var match = (from === dest) || typeof from == 'undefined';
-	    if(match) {
-	      s.removeListener('item', onItem);
-	      s.removeListener('end', onEnd);
-	      dest.emit('unpipe');
-	    }
-	    return match;
-	  });
-
-	  return dest;
-	};
-
-	Transform.prototype.unpipe = function(from) {
-	  this.emit('unpipe', from);
-	  return this;
-	};
-
-	Transform.prototype.format = function(dest) {
-	  throw new Error([
-	    'Warning: .format() is deprecated in Minilog v2! Use .pipe() instead. For example:',
-	    'var Minilog = require(\'minilog\');',
-	    'Minilog',
-	    '  .pipe(Minilog.backends.console.formatClean)',
-	    '  .pipe(Minilog.backends.console);'].join('\n'));
-	};
-
-	Transform.mixin = function(dest) {
-	  var o = Transform.prototype, k;
-	  for (k in o) {
-	    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
-	  }
-	};
-
-	module.exports = Transform;
-
-
-/***/ },
-/* 16 */
-/***/ function(module, exports) {
-
-	function M() { this._events = {}; }
-	M.prototype = {
-	  on: function(ev, cb) {
-	    this._events || (this._events = {});
-	    var e = this._events;
-	    (e[ev] || (e[ev] = [])).push(cb);
-	    return this;
-	  },
-	  removeListener: function(ev, cb) {
-	    var e = this._events[ev] || [], i;
-	    for(i = e.length-1; i >= 0 && e[i]; i--){
-	      if(e[i] === cb || e[i].cb === cb) { e.splice(i, 1); }
-	    }
-	  },
-	  removeAllListeners: function(ev) {
-	    if(!ev) { this._events = {}; }
-	    else { this._events[ev] && (this._events[ev] = []); }
-	  },
-	  emit: function(ev) {
-	    this._events || (this._events = {});
-	    var args = Array.prototype.slice.call(arguments, 1), i, e = this._events[ev] || [];
-	    for(i = e.length-1; i >= 0 && e[i]; i--){
-	      e[i].apply(this, args);
-	    }
-	    return this;
-	  },
-	  when: function(ev, cb) {
-	    return this.once(ev, cb, true);
-	  },
-	  once: function(ev, cb, when) {
-	    if(!cb) return this;
-	    function c() {
-	      if(!when) this.removeListener(ev, c);
-	      if(cb.apply(this, arguments) && when) this.removeListener(ev, c);
-	    }
-	    c.cb = cb;
-	    this.on(ev, c);
-	    return this;
-	  }
-	};
-	M.mixin = function(dest) {
-	  var o = M.prototype, k;
-	  for (k in o) {
-	    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
-	  }
-	};
-	module.exports = M;
-
-
-/***/ },
-/* 17 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// default filter
-	var Transform = __webpack_require__(15);
-
-	var levelMap = { debug: 1, info: 2, warn: 3, error: 4 };
-
-	function Filter() {
-	  this.enabled = true;
-	  this.defaultResult = true;
-	  this.clear();
-	}
-
-	Transform.mixin(Filter);
-
-	// allow all matching, with level >= given level
-	Filter.prototype.allow = function(name, level) {
-	  this._white.push({ n: name, l: levelMap[level] });
-	  return this;
-	};
-
-	// deny all matching, with level <= given level
-	Filter.prototype.deny = function(name, level) {
-	  this._black.push({ n: name, l: levelMap[level] });
-	  return this;
-	};
-
-	Filter.prototype.clear = function() {
-	  this._white = [];
-	  this._black = [];
-	  return this;
-	};
-
-	function test(rule, name) {
-	  // use .test for RegExps
-	  return (rule.n.test ? rule.n.test(name) : rule.n == name);
-	};
-
-	Filter.prototype.test = function(name, level) {
-	  var i, len = Math.max(this._white.length, this._black.length);
-	  for(i = 0; i < len; i++) {
-	    if(this._white[i] && test(this._white[i], name) && levelMap[level] >= this._white[i].l) {
-	      return true;
-	    }
-	    if(this._black[i] && test(this._black[i], name) && levelMap[level] < this._black[i].l) {
-	      return false;
-	    }
-	  }
-	  return this.defaultResult;
-	};
-
-	Filter.prototype.write = function(name, level, args) {
-	  if(!this.enabled || this.test(name, level)) {
-	    return this.emit('item', name, level, args);
-	  }
-	};
-
-	module.exports = Filter;
-
-
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Transform = __webpack_require__(15);
-
-	var newlines = /\n+$/,
-	    logger = new Transform();
-
-	logger.write = function(name, level, args) {
-	  var i = args.length-1;
-	  if (typeof console === 'undefined' || !console.log) {
-	    return;
-	  }
-	  if(console.log.apply) {
-	    return console.log.apply(console, [name, level].concat(args));
-	  } else if(JSON && JSON.stringify) {
-	    // console.log.apply is undefined in IE8 and IE9
-	    // for IE8/9: make console.log at least a bit less awful
-	    if(args[i] && typeof args[i] == 'string') {
-	      args[i] = args[i].replace(newlines, '');
-	    }
-	    try {
-	      for(i = 0; i < args.length; i++) {
-	        args[i] = JSON.stringify(args[i]);
-	      }
-	    } catch(e) {}
-	    console.log(args.join(' '));
-	  }
-	};
-
-	logger.formatters = ['color', 'minilog'];
-	logger.color = __webpack_require__(19);
-	logger.minilog = __webpack_require__(21);
-
-	module.exports = logger;
-
-
-/***/ },
-/* 19 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Transform = __webpack_require__(15),
-	    color = __webpack_require__(20);
-
-	var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
-	    logger = new Transform();
-
-	logger.write = function(name, level, args) {
-	  var fn = console.log;
-	  if(console[level] && console[level].apply) {
-	    fn = console[level];
-	    fn.apply(console, [ '%c'+name+' %c'+level, color('gray'), color.apply(color, colors[level])].concat(args));
-	  }
-	};
-
-	// NOP, because piping the formatted logs can only cause trouble.
-	logger.pipe = function() { };
-
-	module.exports = logger;
-
-
-/***/ },
-/* 20 */
-/***/ function(module, exports) {
-
-	var hex = {
-	  black: '#000',
-	  red: '#c23621',
-	  green: '#25bc26',
-	  yellow: '#bbbb00',
-	  blue:  '#492ee1',
-	  magenta: '#d338d3',
-	  cyan: '#33bbc8',
-	  gray: '#808080',
-	  purple: '#708'
-	};
-	function color(fg, isInverse) {
-	  if(isInverse) {
-	    return 'color: #fff; background: '+hex[fg]+';';
-	  } else {
-	    return 'color: '+hex[fg]+';';
-	  }
-	}
-
-	module.exports = color;
-
-
-/***/ },
-/* 21 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Transform = __webpack_require__(15),
-	    color = __webpack_require__(20),
-	    colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
-	    logger = new Transform();
-
-	logger.write = function(name, level, args) {
-	  var fn = console.log;
-	  if(level != 'debug' && console[level]) {
-	    fn = console[level];
-	  }
-
-	  var subset = [], i = 0;
-	  if(level != 'info') {
-	    for(; i < args.length; i++) {
-	      if(typeof args[i] != 'string') break;
-	    }
-	    fn.apply(console, [ '%c'+name +' '+ args.slice(0, i).join(' '), color.apply(color, colors[level]) ].concat(args.slice(i)));
-	  } else {
-	    fn.apply(console, [ '%c'+name, color.apply(color, colors[level]) ].concat(args));
-	  }
-	};
-
-	// NOP, because piping the formatted logs can only cause trouble.
-	logger.pipe = function() { };
-
-	module.exports = logger;
-
-
-/***/ },
-/* 22 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Transform = __webpack_require__(15),
-	    cache = [ ];
-
-	var logger = new Transform();
-
-	logger.write = function(name, level, args) {
-	  cache.push([ name, level, args ]);
-	};
-
-	// utility functions
-	logger.get = function() { return cache; };
-	logger.empty = function() { cache = []; };
-
-	module.exports = logger;
-
-
-/***/ },
-/* 23 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Transform = __webpack_require__(15),
-	    cache = false;
-
-	var logger = new Transform();
-
-	logger.write = function(name, level, args) {
-	  if(typeof window == 'undefined' || typeof JSON == 'undefined' || !JSON.stringify || !JSON.parse) return;
-	  try {
-	    if(!cache) { cache = (window.localStorage.minilog ? JSON.parse(window.localStorage.minilog) : []); }
-	    cache.push([ new Date().toString(), name, level, args ]);
-	    window.localStorage.minilog = JSON.stringify(cache);
-	  } catch(e) {}
-	};
-
-	module.exports = logger;
-
-/***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Transform = __webpack_require__(15);
-
-	var cid = new Date().valueOf().toString(36);
-
-	function AjaxLogger(options) {
-	  this.url = options.url || '';
-	  this.cache = [];
-	  this.timer = null;
-	  this.interval = options.interval || 30*1000;
-	  this.enabled = true;
-	  this.jQuery = window.jQuery;
-	  this.extras = {};
-	}
-
-	Transform.mixin(AjaxLogger);
-
-	AjaxLogger.prototype.write = function(name, level, args) {
-	  if(!this.timer) { this.init(); }
-	  this.cache.push([name, level].concat(args));
-	};
-
-	AjaxLogger.prototype.init = function() {
-	  if(!this.enabled || !this.jQuery) return;
-	  var self = this;
-	  this.timer = setTimeout(function() {
-	    var i, logs = [], ajaxData, url = self.url;
-	    if(self.cache.length == 0) return self.init();
-	    // Test each log line and only log the ones that are valid (e.g. don't have circular references).
-	    // Slight performance hit but benefit is we log all valid lines.
-	    for(i = 0; i < self.cache.length; i++) {
-	      try {
-	        JSON.stringify(self.cache[i]);
-	        logs.push(self.cache[i]);
-	      } catch(e) { }
-	    }
-	    if(self.jQuery.isEmptyObject(self.extras)) {
-	        ajaxData = JSON.stringify({ logs: logs });
-	        url = self.url + '?client_id=' + cid;
-	    } else {
-	        ajaxData = JSON.stringify(self.jQuery.extend({logs: logs}, self.extras));
-	    }
-
-	    self.jQuery.ajax(url, {
-	      type: 'POST',
-	      cache: false,
-	      processData: false,
-	      data: ajaxData,
-	      contentType: 'application/json',
-	      timeout: 10000
-	    }).success(function(data, status, jqxhr) {
-	      if(data.interval) {
-	        self.interval = Math.max(1000, data.interval);
-	      }
-	    }).error(function() {
-	      self.interval = 30000;
-	    }).always(function() {
-	      self.init();
-	    });
-	    self.cache = [];
-	  }, this.interval);
-	};
-
-	AjaxLogger.prototype.end = function() {};
-
-	// wait until jQuery is defined. Useful if you don't control the load order.
-	AjaxLogger.jQueryWait = function(onDone) {
-	  if(typeof window !== 'undefined' && (window.jQuery || window.$)) {
-	    return onDone(window.jQuery || window.$);
-	  } else if (typeof window !== 'undefined') {
-	    setTimeout(function() { AjaxLogger.jQueryWait(onDone); }, 200);
-	  }
-	};
-
-	module.exports = AjaxLogger;
-
-
-/***/ },
-/* 25 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var adapter = __webpack_require__(26);
-	var mutationAdapter = __webpack_require__(27);
-	var xmlEscape = __webpack_require__(78);
+	var adapter = __webpack_require__(8);
+	var mutationAdapter = __webpack_require__(9);
+	var xmlEscape = __webpack_require__(60);
 
 	/**
 	 * @fileoverview
@@ -4206,11 +2109,11 @@
 
 
 /***/ },
-/* 26 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var mutationAdapter = __webpack_require__(27);
-	var html = __webpack_require__(28);
+	var mutationAdapter = __webpack_require__(9);
+	var html = __webpack_require__(10);
 
 	/**
 	 * Convert outer blocks DOM from a Blockly CREATE event
@@ -4362,10 +2265,10 @@
 
 
 /***/ },
-/* 27 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var html = __webpack_require__(28);
+	var html = __webpack_require__(10);
 
 	/**
 	 * Convert a part of a mutation DOM to a mutation VM object, recursively.
@@ -4409,11 +2312,11 @@
 
 
 /***/ },
-/* 28 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Parser = __webpack_require__(29),
-	    DomHandler = __webpack_require__(36);
+	var Parser = __webpack_require__(11),
+	    DomHandler = __webpack_require__(18);
 
 	function defineProp(name, value){
 		delete module.exports[name];
@@ -4423,26 +2326,26 @@
 
 	module.exports = {
 		Parser: Parser,
-		Tokenizer: __webpack_require__(30),
-		ElementType: __webpack_require__(37),
+		Tokenizer: __webpack_require__(12),
+		ElementType: __webpack_require__(19),
 		DomHandler: DomHandler,
 		get FeedHandler(){
-			return defineProp("FeedHandler", __webpack_require__(40));
+			return defineProp("FeedHandler", __webpack_require__(22));
 		},
 		get Stream(){
-			return defineProp("Stream", __webpack_require__(41));
+			return defineProp("Stream", __webpack_require__(23));
 		},
 		get WritableStream(){
-			return defineProp("WritableStream", __webpack_require__(42));
+			return defineProp("WritableStream", __webpack_require__(24));
 		},
 		get ProxyHandler(){
-			return defineProp("ProxyHandler", __webpack_require__(64));
+			return defineProp("ProxyHandler", __webpack_require__(46));
 		},
 		get DomUtils(){
-			return defineProp("DomUtils", __webpack_require__(65));
+			return defineProp("DomUtils", __webpack_require__(47));
 		},
 		get CollectingHandler(){
-			return defineProp("CollectingHandler", __webpack_require__(77));
+			return defineProp("CollectingHandler", __webpack_require__(59));
 		},
 		// For legacy support
 		DefaultHandler: DomHandler,
@@ -4483,10 +2386,10 @@
 
 
 /***/ },
-/* 29 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Tokenizer = __webpack_require__(30);
+	var Tokenizer = __webpack_require__(12);
 
 	/*
 		Options:
@@ -4841,15 +2744,15 @@
 
 
 /***/ },
-/* 30 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Tokenizer;
 
-	var decodeCodePoint = __webpack_require__(31),
-	    entityMap = __webpack_require__(33),
-	    legacyMap = __webpack_require__(34),
-	    xmlMap    = __webpack_require__(35),
+	var decodeCodePoint = __webpack_require__(13),
+	    entityMap = __webpack_require__(15),
+	    legacyMap = __webpack_require__(16),
+	    xmlMap    = __webpack_require__(17),
 
 	    i = 0,
 
@@ -5753,10 +3656,10 @@
 
 
 /***/ },
-/* 31 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var decodeMap = __webpack_require__(32);
+	var decodeMap = __webpack_require__(14);
 
 	module.exports = decodeCodePoint;
 
@@ -5785,7 +3688,7 @@
 
 
 /***/ },
-/* 32 */
+/* 14 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -5820,7 +3723,7 @@
 	};
 
 /***/ },
-/* 33 */
+/* 15 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -7952,7 +5855,7 @@
 	};
 
 /***/ },
-/* 34 */
+/* 16 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -8065,7 +5968,7 @@
 	};
 
 /***/ },
-/* 35 */
+/* 17 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -8077,14 +5980,14 @@
 	};
 
 /***/ },
-/* 36 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(37);
+	var ElementType = __webpack_require__(19);
 
 	var re_whitespace = /\s+/g;
-	var NodePrototype = __webpack_require__(38);
-	var ElementPrototype = __webpack_require__(39);
+	var NodePrototype = __webpack_require__(20);
+	var ElementPrototype = __webpack_require__(21);
 
 	function DomHandler(callback, options, elementCB){
 		if(typeof callback === "object"){
@@ -8265,7 +6168,7 @@
 
 
 /***/ },
-/* 37 */
+/* 19 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -8286,7 +6189,7 @@
 
 
 /***/ },
-/* 38 */
+/* 20 */
 /***/ function(module, exports) {
 
 	// This object will be used as the prototype for Nodes when creating a
@@ -8336,11 +6239,11 @@
 
 
 /***/ },
-/* 39 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// DOM-Level-1-compliant structure
-	var NodePrototype = __webpack_require__(38);
+	var NodePrototype = __webpack_require__(20);
 	var ElementPrototype = module.exports = Object.create(NodePrototype);
 
 	var domLvl1 = {
@@ -8362,10 +6265,10 @@
 
 
 /***/ },
-/* 40 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var index = __webpack_require__(28),
+	var index = __webpack_require__(10),
 	    DomHandler = index.DomHandler,
 		DomUtils = index.DomUtils;
 
@@ -8463,12 +6366,12 @@
 
 
 /***/ },
-/* 41 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(42);
+	var Parser = __webpack_require__(24);
 
 	function Stream(options){
 		Parser.call(this, new Cbs(this), options);
@@ -8482,7 +6385,7 @@
 		this.scope = scope;
 	}
 
-	var EVENTS = __webpack_require__(28).EVENTS;
+	var EVENTS = __webpack_require__(10).EVENTS;
 
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
@@ -8503,13 +6406,13 @@
 	});
 
 /***/ },
-/* 42 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(29),
-	    WritableStream = __webpack_require__(43).Writable || __webpack_require__(63).Writable;
+	var Parser = __webpack_require__(11),
+	    WritableStream = __webpack_require__(25).Writable || __webpack_require__(45).Writable;
 
 	function Stream(cbs, options){
 		var parser = this._parser = new Parser(cbs, options);
@@ -8529,7 +6432,7 @@
 	};
 
 /***/ },
-/* 43 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -8556,14 +6459,14 @@
 	module.exports = Stream;
 
 	var EE = __webpack_require__(2).EventEmitter;
-	var inherits = __webpack_require__(44);
+	var inherits = __webpack_require__(26);
 
 	inherits(Stream, EE);
-	Stream.Readable = __webpack_require__(45);
-	Stream.Writable = __webpack_require__(59);
-	Stream.Duplex = __webpack_require__(60);
-	Stream.Transform = __webpack_require__(61);
-	Stream.PassThrough = __webpack_require__(62);
+	Stream.Readable = __webpack_require__(27);
+	Stream.Writable = __webpack_require__(41);
+	Stream.Duplex = __webpack_require__(42);
+	Stream.Transform = __webpack_require__(43);
+	Stream.PassThrough = __webpack_require__(44);
 
 	// Backwards-compat with node 0.4.x
 	Stream.Stream = Stream;
@@ -8662,7 +6565,7 @@
 
 
 /***/ },
-/* 44 */
+/* 26 */
 /***/ function(module, exports) {
 
 	if (typeof Object.create === 'function') {
@@ -8691,24 +6594,24 @@
 
 
 /***/ },
-/* 45 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(46);
-	exports.Stream = __webpack_require__(43);
+	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(28);
+	exports.Stream = __webpack_require__(25);
 	exports.Readable = exports;
-	exports.Writable = __webpack_require__(55);
-	exports.Duplex = __webpack_require__(54);
-	exports.Transform = __webpack_require__(57);
-	exports.PassThrough = __webpack_require__(58);
+	exports.Writable = __webpack_require__(37);
+	exports.Duplex = __webpack_require__(36);
+	exports.Transform = __webpack_require__(39);
+	exports.PassThrough = __webpack_require__(40);
 	if (!process.browser && process.env.READABLE_STREAM === 'disable') {
-	  module.exports = __webpack_require__(43);
+	  module.exports = __webpack_require__(25);
 	}
 
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
-/* 46 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -8735,12 +6638,12 @@
 	module.exports = Readable;
 
 	/*<replacement>*/
-	var isArray = __webpack_require__(47);
+	var isArray = __webpack_require__(29);
 	/*</replacement>*/
 
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(48).Buffer;
+	var Buffer = __webpack_require__(30).Buffer;
 	/*</replacement>*/
 
 	Readable.ReadableState = ReadableState;
@@ -8753,18 +6656,18 @@
 	};
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(43);
+	var Stream = __webpack_require__(25);
 
 	/*<replacement>*/
-	var util = __webpack_require__(52);
-	util.inherits = __webpack_require__(44);
+	var util = __webpack_require__(34);
+	util.inherits = __webpack_require__(26);
 	/*</replacement>*/
 
 	var StringDecoder;
 
 
 	/*<replacement>*/
-	var debug = __webpack_require__(53);
+	var debug = __webpack_require__(35);
 	if (debug && debug.debuglog) {
 	  debug = debug.debuglog('stream');
 	} else {
@@ -8776,7 +6679,7 @@
 	util.inherits(Readable, Stream);
 
 	function ReadableState(options, stream) {
-	  var Duplex = __webpack_require__(54);
+	  var Duplex = __webpack_require__(36);
 
 	  options = options || {};
 
@@ -8837,14 +6740,14 @@
 	  this.encoding = null;
 	  if (options.encoding) {
 	    if (!StringDecoder)
-	      StringDecoder = __webpack_require__(56).StringDecoder;
+	      StringDecoder = __webpack_require__(38).StringDecoder;
 	    this.decoder = new StringDecoder(options.encoding);
 	    this.encoding = options.encoding;
 	  }
 	}
 
 	function Readable(options) {
-	  var Duplex = __webpack_require__(54);
+	  var Duplex = __webpack_require__(36);
 
 	  if (!(this instanceof Readable))
 	    return new Readable(options);
@@ -8947,7 +6850,7 @@
 	// backwards compatibility.
 	Readable.prototype.setEncoding = function(enc) {
 	  if (!StringDecoder)
-	    StringDecoder = __webpack_require__(56).StringDecoder;
+	    StringDecoder = __webpack_require__(38).StringDecoder;
 	  this._readableState.decoder = new StringDecoder(enc);
 	  this._readableState.encoding = enc;
 	  return this;
@@ -9666,7 +7569,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
-/* 47 */
+/* 29 */
 /***/ function(module, exports) {
 
 	module.exports = Array.isArray || function (arr) {
@@ -9675,7 +7578,7 @@
 
 
 /***/ },
-/* 48 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -9688,9 +7591,9 @@
 
 	'use strict'
 
-	var base64 = __webpack_require__(49)
-	var ieee754 = __webpack_require__(50)
-	var isArray = __webpack_require__(51)
+	var base64 = __webpack_require__(31)
+	var ieee754 = __webpack_require__(32)
+	var isArray = __webpack_require__(33)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -11468,10 +9371,10 @@
 	  return val !== val // eslint-disable-line no-self-compare
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(48).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 49 */
+/* 31 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -11591,7 +9494,7 @@
 
 
 /***/ },
-/* 50 */
+/* 32 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -11681,7 +9584,7 @@
 
 
 /***/ },
-/* 51 */
+/* 33 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -11692,7 +9595,7 @@
 
 
 /***/ },
-/* 52 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11803,16 +9706,16 @@
 	  return Object.prototype.toString.call(o);
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(48).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30).Buffer))
 
 /***/ },
-/* 53 */
+/* 35 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 54 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11853,12 +9756,12 @@
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(52);
-	util.inherits = __webpack_require__(44);
+	var util = __webpack_require__(34);
+	util.inherits = __webpack_require__(26);
 	/*</replacement>*/
 
-	var Readable = __webpack_require__(46);
-	var Writable = __webpack_require__(55);
+	var Readable = __webpack_require__(28);
+	var Writable = __webpack_require__(37);
 
 	util.inherits(Duplex, Readable);
 
@@ -11908,7 +9811,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
-/* 55 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11939,18 +9842,18 @@
 	module.exports = Writable;
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(48).Buffer;
+	var Buffer = __webpack_require__(30).Buffer;
 	/*</replacement>*/
 
 	Writable.WritableState = WritableState;
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(52);
-	util.inherits = __webpack_require__(44);
+	var util = __webpack_require__(34);
+	util.inherits = __webpack_require__(26);
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(43);
+	var Stream = __webpack_require__(25);
 
 	util.inherits(Writable, Stream);
 
@@ -11961,7 +9864,7 @@
 	}
 
 	function WritableState(options, stream) {
-	  var Duplex = __webpack_require__(54);
+	  var Duplex = __webpack_require__(36);
 
 	  options = options || {};
 
@@ -12049,7 +9952,7 @@
 	}
 
 	function Writable(options) {
-	  var Duplex = __webpack_require__(54);
+	  var Duplex = __webpack_require__(36);
 
 	  // Writable ctor is applied to Duplexes, though they're not
 	  // instanceof Writable, they're instanceof Readable.
@@ -12392,7 +10295,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
-/* 56 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -12416,7 +10319,7 @@
 	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 	// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-	var Buffer = __webpack_require__(48).Buffer;
+	var Buffer = __webpack_require__(30).Buffer;
 
 	var isBufferEncoding = Buffer.isEncoding
 	  || function(encoding) {
@@ -12619,7 +10522,7 @@
 
 
 /***/ },
-/* 57 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -12688,11 +10591,11 @@
 
 	module.exports = Transform;
 
-	var Duplex = __webpack_require__(54);
+	var Duplex = __webpack_require__(36);
 
 	/*<replacement>*/
-	var util = __webpack_require__(52);
-	util.inherits = __webpack_require__(44);
+	var util = __webpack_require__(34);
+	util.inherits = __webpack_require__(26);
 	/*</replacement>*/
 
 	util.inherits(Transform, Duplex);
@@ -12834,7 +10737,7 @@
 
 
 /***/ },
-/* 58 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -12864,11 +10767,11 @@
 
 	module.exports = PassThrough;
 
-	var Transform = __webpack_require__(57);
+	var Transform = __webpack_require__(39);
 
 	/*<replacement>*/
-	var util = __webpack_require__(52);
-	util.inherits = __webpack_require__(44);
+	var util = __webpack_require__(34);
+	util.inherits = __webpack_require__(26);
 	/*</replacement>*/
 
 	util.inherits(PassThrough, Transform);
@@ -12886,41 +10789,41 @@
 
 
 /***/ },
-/* 59 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(55)
+	module.exports = __webpack_require__(37)
 
 
 /***/ },
-/* 60 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(54)
+	module.exports = __webpack_require__(36)
 
 
 /***/ },
-/* 61 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(57)
+	module.exports = __webpack_require__(39)
 
 
 /***/ },
-/* 62 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(58)
+	module.exports = __webpack_require__(40)
 
 
 /***/ },
-/* 63 */
+/* 45 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 64 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = ProxyHandler;
@@ -12929,7 +10832,7 @@
 		this._cbs = cbs || {};
 	}
 
-	var EVENTS = __webpack_require__(28).EVENTS;
+	var EVENTS = __webpack_require__(10).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -12952,18 +10855,18 @@
 	});
 
 /***/ },
-/* 65 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var DomUtils = module.exports;
 
 	[
-		__webpack_require__(66),
-		__webpack_require__(72),
-		__webpack_require__(73),
-		__webpack_require__(74),
-		__webpack_require__(75),
-		__webpack_require__(76)
+		__webpack_require__(48),
+		__webpack_require__(54),
+		__webpack_require__(55),
+		__webpack_require__(56),
+		__webpack_require__(57),
+		__webpack_require__(58)
 	].forEach(function(ext){
 		Object.keys(ext).forEach(function(key){
 			DomUtils[key] = ext[key].bind(DomUtils);
@@ -12972,11 +10875,11 @@
 
 
 /***/ },
-/* 66 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(37),
-	    getOuterHTML = __webpack_require__(67),
+	var ElementType = __webpack_require__(19),
+	    getOuterHTML = __webpack_require__(49),
 	    isTag = ElementType.isTag;
 
 	module.exports = {
@@ -13000,14 +10903,14 @@
 
 
 /***/ },
-/* 67 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
 	  Module dependencies
 	*/
-	var ElementType = __webpack_require__(68);
-	var entities = __webpack_require__(69);
+	var ElementType = __webpack_require__(50);
+	var entities = __webpack_require__(51);
 
 	/*
 	  Boolean Attributes
@@ -13184,7 +11087,7 @@
 
 
 /***/ },
-/* 68 */
+/* 50 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -13203,11 +11106,11 @@
 	};
 
 /***/ },
-/* 69 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var encode = __webpack_require__(70),
-	    decode = __webpack_require__(71);
+	var encode = __webpack_require__(52),
+	    decode = __webpack_require__(53);
 
 	exports.decode = function(data, level){
 		return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -13242,15 +11145,15 @@
 
 
 /***/ },
-/* 70 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var inverseXML = getInverseObj(__webpack_require__(35)),
+	var inverseXML = getInverseObj(__webpack_require__(17)),
 	    xmlReplacer = getInverseReplacer(inverseXML);
 
 	exports.XML = getInverse(inverseXML, xmlReplacer);
 
-	var inverseHTML = getInverseObj(__webpack_require__(33)),
+	var inverseHTML = getInverseObj(__webpack_require__(15)),
 	    htmlReplacer = getInverseReplacer(inverseHTML);
 
 	exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -13321,13 +11224,13 @@
 
 
 /***/ },
-/* 71 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var entityMap = __webpack_require__(33),
-	    legacyMap = __webpack_require__(34),
-	    xmlMap    = __webpack_require__(35),
-	    decodeCodePoint = __webpack_require__(31);
+	var entityMap = __webpack_require__(15),
+	    legacyMap = __webpack_require__(16),
+	    xmlMap    = __webpack_require__(17),
+	    decodeCodePoint = __webpack_require__(13);
 
 	var decodeXMLStrict  = getStrictDecoder(xmlMap),
 	    decodeHTMLStrict = getStrictDecoder(entityMap);
@@ -13398,7 +11301,7 @@
 	};
 
 /***/ },
-/* 72 */
+/* 54 */
 /***/ function(module, exports) {
 
 	var getChildren = exports.getChildren = function(elem){
@@ -13428,7 +11331,7 @@
 
 
 /***/ },
-/* 73 */
+/* 55 */
 /***/ function(module, exports) {
 
 	exports.removeElement = function(elem){
@@ -13511,10 +11414,10 @@
 
 
 /***/ },
-/* 74 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isTag = __webpack_require__(37).isTag;
+	var isTag = __webpack_require__(19).isTag;
 
 	module.exports = {
 		filter: filter,
@@ -13611,10 +11514,10 @@
 
 
 /***/ },
-/* 75 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(37);
+	var ElementType = __webpack_require__(19);
 	var isTag = exports.isTag = ElementType.isTag;
 
 	exports.testElement = function(options, element){
@@ -13704,7 +11607,7 @@
 
 
 /***/ },
-/* 76 */
+/* 58 */
 /***/ function(module, exports) {
 
 	// removeSubsets
@@ -13851,7 +11754,7 @@
 
 
 /***/ },
-/* 77 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = CollectingHandler;
@@ -13861,7 +11764,7 @@
 		this.events = [];
 	}
 
-	var EVENTS = __webpack_require__(28).EVENTS;
+	var EVENTS = __webpack_require__(10).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -13912,7 +11815,7 @@
 
 
 /***/ },
-/* 78 */
+/* 60 */
 /***/ function(module, exports) {
 
 	/**
@@ -13939,2427 +11842,100 @@
 
 
 /***/ },
-/* 79 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Timer = __webpack_require__(9);
+	var RenderedTarget = __webpack_require__(62);
+	var Blocks = __webpack_require__(7);
 
-	var Clock = function (runtime) {
-	    this._projectTimer = new Timer();
-	    this._projectTimer.start();
-	    this._pausedTime = null;
-	    this._paused = false;
-	    /**
-	     * Reference to the owning Runtime.
-	     * @type{!Runtime}
-	     */
+	/**
+	 * Sprite to be used on the Scratch stage.
+	 * All clones of a sprite have shared blocks, shared costumes, shared variables.
+	 * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
+	 * @param {Runtime} runtime Reference to the runtime.
+	 * @constructor
+	 */
+	var Sprite = function (blocks, runtime) {
 	    this.runtime = runtime;
-	};
-
-	Clock.prototype.projectTimer = function () {
-	    if (this._paused) {
-	        return this._pausedTime / 1000;
+	    if (!blocks) {
+	        // Shared set of blocks for all clones.
+	        blocks = new Blocks();
 	    }
-	    return this._projectTimer.timeElapsed() / 1000;
-	};
-
-	Clock.prototype.pause = function () {
-	    this._paused = true;
-	    this._pausedTime = this._projectTimer.timeElapsed();
-	};
-
-	Clock.prototype.resume = function () {
-	    this._paused = false;
-	    var dt = this._projectTimer.timeElapsed() - this._pausedTime;
-	    this._projectTimer.startTime += dt;
-	};
-
-	Clock.prototype.resetProjectTimer = function () {
-	    this._projectTimer.start();
-	};
-
-	module.exports = Clock;
-
-
-/***/ },
-/* 80 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(81);
-
-	var Keyboard = function (runtime) {
+	    this.blocks = blocks;
 	    /**
-	     * List of currently pressed keys.
-	     * @type{Array.<number>}
+	     * Human-readable name for this sprite (and all clones).
+	     * @type {string}
 	     */
-	    this._keysPressed = [];
+	    this.name = '';
 	    /**
-	     * Reference to the owning Runtime.
-	     * Can be used, for example, to activate hats.
-	     * @type{!Runtime}
+	     * List of costumes for this sprite.
+	     * Each entry is an object, e.g.,
+	     * {
+	     *      skin: "costume.svg",
+	     *      name: "Costume Name",
+	     *      bitmapResolution: 2,
+	     *      rotationCenterX: 0,
+	     *      rotationCenterY: 0
+	     * }
+	     * @type {Array.<!Object>}
 	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Convert a Scratch key name to a DOM keyCode.
-	 * @param {Any} keyName Scratch key argument.
-	 * @return {number} Key code corresponding to a DOM event.
-	 * @private
-	 */
-	Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
-	    if (typeof keyName === 'number') {
-	        // Key codes placed in with number blocks.
-	        return keyName;
-	    }
-	    var keyString = Cast.toString(keyName);
-	    switch (keyString) {
-	    case 'space': return 32;
-	    case 'left arrow': return 37;
-	    case 'up arrow': return 38;
-	    case 'right arrow': return 39;
-	    case 'down arrow': return 40;
-	    // @todo: Consider adding other special keys here.
-	    }
-	    // Keys reported by DOM keyCode are upper case.
-	    return keyString.toUpperCase().charCodeAt(0);
-	};
-
-	/**
-	 * Convert a DOM keyCode into a Scratch key name.
-	 * @param  {number} keyCode Key code from DOM event.
-	 * @return {Any} Scratch key argument.
-	 * @private
-	 */
-	Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
-	    if (keyCode >= 48 && keyCode <= 90) {
-	        // Standard letter.
-	        return String.fromCharCode(keyCode).toLowerCase();
-	    }
-	    switch (keyCode) {
-	    case 32: return 'space';
-	    case 37: return 'left arrow';
-	    case 38: return 'up arrow';
-	    case 39: return 'right arrow';
-	    case 40: return 'down arrow';
-	    }
-	    return null;
-	};
-
-	/**
-	 * Keyboard DOM event handler.
-	 * @param  {object} data Data from DOM event.
-	 */
-	Keyboard.prototype.postData = function (data) {
-	    if (data.keyCode) {
-	        var index = this._keysPressed.indexOf(data.keyCode);
-	        if (data.isDown) {
-	            // If not already present, add to the list.
-	            if (index < 0) {
-	                this._keysPressed.push(data.keyCode);
-	            }
-	            // Always trigger hats, even if it was already pressed.
-	            this.runtime.startHats('event_whenkeypressed', {
-	                KEY_OPTION: this._keyCodeToScratchKey(data.keyCode)
-	            });
-	            this.runtime.startHats('event_whenkeypressed', {
-	                KEY_OPTION: 'any'
-	            });
-	        } else if (index > -1) {
-	            // If already present, remove from the list.
-	            this._keysPressed.splice(index, 1);
-	        }
-	    }
-	};
-
-	/**
-	 * Get key down state for a specified Scratch key name.
-	 * @param  {Any} key Scratch key argument.
-	 * @return {boolean} Is the specified key down?
-	 */
-	Keyboard.prototype.getKeyIsDown = function (key) {
-	    if (key === 'any') {
-	        return this._keysPressed.length > 0;
-	    }
-	    var keyCode = this._scratchKeyToKeyCode(key);
-	    return this._keysPressed.indexOf(keyCode) > -1;
-	};
-
-	module.exports = Keyboard;
-
-
-/***/ },
-/* 81 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Color = __webpack_require__(82);
-
-	var Cast = function () {};
-
-	/**
-	 * @fileoverview
-	 * Utilities for casting and comparing Scratch data-types.
-	 * Scratch behaves slightly differently from JavaScript in many respects,
-	 * and these differences should be encapsulated below.
-	 * For example, in Scratch, add(1, join("hello", world")) -> 1.
-	 * This is because "hello world" is cast to 0.
-	 * In JavaScript, 1 + Number("hello" + "world") would give you NaN.
-	 * Use when coercing a value before computation.
-	 */
-
-	/**
-	 * Scratch cast to number.
-	 * Treats NaN as 0.
-	 * In Scratch 2.0, this is captured by `interp.numArg.`
-	 * @param {*} value Value to cast to number.
-	 * @return {number} The Scratch-casted number value.
-	 */
-	Cast.toNumber = function (value) {
-	    var n = Number(value);
-	    if (isNaN(n)) {
-	        // Scratch treats NaN as 0, when needed as a number.
-	        // E.g., 0 + NaN -> 0.
-	        return 0;
-	    }
-	    return n;
-	};
-
-	/**
-	 * Scratch cast to boolean.
-	 * In Scratch 2.0, this is captured by `interp.boolArg.`
-	 * Treats some string values differently from JavaScript.
-	 * @param {*} value Value to cast to boolean.
-	 * @return {boolean} The Scratch-casted boolean value.
-	 */
-	Cast.toBoolean = function (value) {
-	    // Already a boolean?
-	    if (typeof value === 'boolean') {
-	        return value;
-	    }
-	    if (typeof value === 'string') {
-	        // These specific strings are treated as false in Scratch.
-	        if ((value === '') ||
-	            (value === '0') ||
-	            (value.toLowerCase() === 'false')) {
-	            return false;
-	        }
-	        // All other strings treated as true.
-	        return true;
-	    }
-	    // Coerce other values and numbers.
-	    return Boolean(value);
-	};
-
-	/**
-	 * Scratch cast to string.
-	 * @param {*} value Value to cast to string.
-	 * @return {string} The Scratch-casted string value.
-	 */
-	Cast.toString = function (value) {
-	    return String(value);
-	};
-
-	/**
-	 * Cast any Scratch argument to an RGB color object to be used for the renderer.
-	 * @param {*} value Value to convert to RGB color object.
-	 * @return {Array.<number>} [r,g,b], values between 0-255.
-	 */
-	Cast.toRgbColorList = function (value) {
-	    var color;
-	    if (typeof value === 'string' && value.substring(0, 1) === '#') {
-	        color = Color.hexToRgb(value);
-	    } else {
-	        color = Color.decimalToRgb(Cast.toNumber(value));
-	    }
-	    return [color.r, color.g, color.b];
-	};
-
-	/**
-	 * Compare two values, using Scratch cast, case-insensitive string compare, etc.
-	 * In Scratch 2.0, this is captured by `interp.compare.`
-	 * @param {*} v1 First value to compare.
-	 * @param {*} v2 Second value to compare.
-	 * @returns {Number} Negative number if v1 < v2; 0 if equal; positive otherwise.
-	 */
-	Cast.compare = function (v1, v2) {
-	    var n1 = Number(v1);
-	    var n2 = Number(v2);
-	    if (isNaN(n1) || isNaN(n2)) {
-	        // At least one argument can't be converted to a number.
-	        // Scratch compares strings as case insensitive.
-	        var s1 = String(v1).toLowerCase();
-	        var s2 = String(v2).toLowerCase();
-	        return s1.localeCompare(s2);
-	    } else {
-	        // Compare as numbers.
-	        return n1 - n2;
-	    }
-	};
-
-	/**
-	 * Determine if a Scratch argument number represents a round integer.
-	 * @param {*} val Value to check.
-	 * @return {boolean} True if number looks like an integer.
-	 */
-	Cast.isInt = function (val) {
-	    // Values that are already numbers.
-	    if (typeof val === 'number') {
-	        if (isNaN(val)) { // NaN is considered an integer.
-	            return true;
-	        }
-	        // True if it's "round" (e.g., 2.0 and 2).
-	        return val === parseInt(val, 10);
-	    } else if (typeof val === 'boolean') {
-	        // `True` and `false` always represent integer after Scratch cast.
-	        return true;
-	    } else if (typeof val === 'string') {
-	        // If it contains a decimal point, don't consider it an int.
-	        return val.indexOf('.') < 0;
-	    }
-	    return false;
-	};
-
-	Cast.LIST_INVALID = 'INVALID';
-	Cast.LIST_ALL = 'ALL';
-	/**
-	 * Compute a 1-based index into a list, based on a Scratch argument.
-	 * Two special cases may be returned:
-	 * LIST_ALL: if the block is referring to all of the items in the list.
-	 * LIST_INVALID: if the index was invalid in any way.
-	 * @param {*} index Scratch arg, including 1-based numbers or special cases.
-	 * @param {number} length Length of the list.
-	 * @return {(number|string)} 1-based index for list, LIST_ALL, or LIST_INVALID.
-	 */
-	Cast.toListIndex = function (index, length) {
-	    if (typeof index !== 'number') {
-	        if (index === 'all') {
-	            return Cast.LIST_ALL;
-	        }
-	        if (index === 'last') {
-	            if (length > 0) {
-	                return length;
-	            }
-	            return Cast.LIST_INVALID;
-	        } else if (index === 'random' || index === 'any') {
-	            if (length > 0) {
-	                return 1 + Math.floor(Math.random() * length);
-	            }
-	            return Cast.LIST_INVALID;
-	        }
-	    }
-	    index = Math.floor(Cast.toNumber(index));
-	    if (index < 1 || index > length) {
-	        return Cast.LIST_INVALID;
-	    }
-	    return index;
-	};
-
-	module.exports = Cast;
-
-
-/***/ },
-/* 82 */
-/***/ function(module, exports) {
-
-	var Color = function () {};
-
-	/**
-	 * Convert a Scratch decimal color to a hex string, #RRGGBB.
-	 * @param {number} decimal RGB color as a decimal.
-	 * @return {string} RGB color as #RRGGBB hex string.
-	 */
-	Color.decimalToHex = function (decimal) {
-	    if (decimal < 0) {
-	        decimal += 0xFFFFFF + 1;
-	    }
-	    var hex = Number(decimal).toString(16);
-	    hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
-	    return hex;
-	};
-
-	/**
-	 * Convert a Scratch decimal color to an RGB color object.
-	 * @param {number} decimal RGB color as decimal.
-	 * @returns {Object} {r: R, g: G, b: B}, values between 0-255
-	 */
-	Color.decimalToRgb = function (decimal) {
-	    var r = (decimal >> 16) & 0xFF;
-	    var g = (decimal >> 8) & 0xFF;
-	    var b = decimal & 0xFF;
-	    return {r: r, g: g, b: b};
-	};
-
-	/**
-	 * Convert a hex color (e.g., F00, #03F, #0033FF) to an RGB color object.
-	 * CC-BY-SA Tim Down:
-	 * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-	 * @param {!string} hex Hex representation of the color.
-	 * @return {Object} {r: R, g: G, b: B}, 0-255, or null.
-	 */
-	Color.hexToRgb = function (hex) {
-	    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-	    hex = hex.replace(shorthandRegex, function (m, r, g, b) {
-	        return r + r + g + g + b + b;
-	    });
-	    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-	    return result ? {
-	        r: parseInt(result[1], 16),
-	        g: parseInt(result[2], 16),
-	        b: parseInt(result[3], 16)
-	    } : null;
-	};
-
-	/**
-	 * Convert an RGB color object to a hex color.
-	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
-	 * @return {!string} Hex representation of the color.
-	 */
-	Color.rgbToHex = function (rgb) {
-	    return Color.decimalToHex(Color.rgbToDecimal(rgb));
-	};
-
-	/**
-	 * Convert an RGB color object to a Scratch decimal color.
-	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
-	 * @return {!number} Number representing the color.
-	 */
-	Color.rgbToDecimal = function (rgb) {
-	    return (rgb.r << 16) + (rgb.g << 8) + rgb.b;
-	};
-
-	/**
-	* Convert a hex color (e.g., F00, #03F, #0033FF) to a decimal color number.
-	* @param {!string} hex Hex representation of the color.
-	* @return {!number} Number representing the color.
-	*/
-	Color.hexToDecimal = function (hex) {
-	    return Color.rgbToDecimal(Color.hexToRgb(hex));
-	};
-
-	module.exports = Color;
-
-
-/***/ },
-/* 83 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var MathUtil = __webpack_require__(84);
-
-	var Mouse = function (runtime) {
-	    this._x = 0;
-	    this._y = 0;
-	    this._isDown = false;
+	    this.costumes = [];
 	    /**
-	     * Reference to the owning Runtime.
-	     * Can be used, for example, to activate hats.
-	     * @type{!Runtime}
+	     * List of clones for this sprite, including the original.
+	     * @type {Array.<!RenderedTarget>}
 	     */
-	    this.runtime = runtime;
+	    this.clones = [];
 	};
 
 	/**
-	 * Activate "event_whenthisspriteclicked" hats if needed.
-	 * @param  {number} x X position to be sent to the renderer.
-	 * @param  {number} y Y position to be sent to the renderer.
-	 * @private
+	 * Create a clone of this sprite.
+	 * @returns {!Clone} Newly created clone.
 	 */
-	Mouse.prototype._activateClickHats = function (x, y) {
-	    if (this.runtime.renderer) {
-	        var drawableID = this.runtime.renderer.pick(x, y);
-	        for (var i = 0; i < this.runtime.targets.length; i++) {
-	            var target = this.runtime.targets[i];
-	            if (target.hasOwnProperty('drawableID') &&
-	                target.drawableID === drawableID) {
-	                this.runtime.startHats('event_whenthisspriteclicked',
-	                    null, target);
-	                return;
+	Sprite.prototype.createClone = function () {
+	    var newClone = new RenderedTarget(this, this.runtime);
+	    newClone.isOriginal = this.clones.length === 0;
+	    this.clones.push(newClone);
+	    if (newClone.isOriginal) {
+	        newClone.initDrawable();
+	    }
+	    return newClone;
+	};
+
+	Sprite.prototype.export = function () {
+	    var result = new Object();
+	    var notSaved = ['clones', 'runtime'];
+	    var x = null;
+	    for (x in this) {
+	        if (typeof this[x] === 'function') {
+	            continue;
+	            if (this.runtime.targets.testing == true) {
+	                console.log('Ignoring ' + x);
 	            }
 	        }
-	    }
-	};
-
-	/**
-	 * Mouse DOM event handler.
-	 * @param  {object} data Data from DOM event.
-	 */
-	Mouse.prototype.postData = function (data) {
-	    if (data.x) {
-	        this._x = data.x - data.canvasWidth / 2;
-	    }
-	    if (data.y) {
-	        this._y = data.y - data.canvasHeight / 2;
-	    }
-	    if (typeof data.isDown !== 'undefined') {
-	        this._isDown = data.isDown;
-	        if (this._isDown) {
-	            this._activateClickHats(data.x, data.y);
-	        }
-	    }
-	};
-
-	/**
-	 * Get the X position of the mouse.
-	 * @return {number} Clamped X position of the mouse cursor.
-	 */
-	Mouse.prototype.getX = function () {
-	    return MathUtil.clamp(this._x, -240, 240);
-	};
-
-	/**
-	 * Get the Y position of the mouse.
-	 * @return {number} Clamped Y position of the mouse cursor.
-	 */
-	Mouse.prototype.getY = function () {
-	    return MathUtil.clamp(-this._y, -180, 180);
-	};
-
-	/**
-	 * Get the down state of the mouse.
-	 * @return {boolean} Is the mouse down?
-	 */
-	Mouse.prototype.getIsDown = function () {
-	    return this._isDown;
-	};
-
-	module.exports = Mouse;
-
-
-/***/ },
-/* 84 */
-/***/ function(module, exports) {
-
-	var MathUtil = function () {};
-
-	/**
-	 * Convert a value from degrees to radians.
-	 * @param {!number} deg Value in degrees.
-	 * @return {!number} Equivalent value in radians.
-	 */
-	MathUtil.degToRad = function (deg) {
-	    return deg * Math.PI / 180;
-	};
-
-	/**
-	 * Convert a value from radians to degrees.
-	 * @param {!number} rad Value in radians.
-	 * @return {!number} Equivalent value in degrees.
-	 */
-	MathUtil.radToDeg = function (rad) {
-	    return rad * 180 / Math.PI;
-	};
-
-	/**
-	 * Clamp a number between two limits.
-	 * If n < min, return min. If n > max, return max. Else, return n.
-	 * @param {!number} n Number to clamp.
-	 * @param {!number} min Minimum limit.
-	 * @param {!number} max Maximum limit.
-	 * @return {!number} Value of n clamped to min and max.
-	 */
-	MathUtil.clamp = function (n, min, max) {
-	    return Math.min(Math.max(n, min), max);
-	};
-
-	/**
-	 * Keep a number between two limits, wrapping "extra" into the range.
-	 * e.g., wrapClamp(7, 1, 5) == 2
-	 * wrapClamp(0, 1, 5) == 5
-	 * wrapClamp(-11, -10, 6) == 6, etc.
-	 * @param {!number} n Number to wrap.
-	 * @param {!number} min Minimum limit.
-	 * @param {!number} max Maximum limit.
-	 * @return {!number} Value of n wrapped between min and max.
-	 */
-	MathUtil.wrapClamp = function (n, min, max) {
-	    var range = (max - min) + 1;
-	    return n - (Math.floor((n - min) / range) * range);
-	};
-
-	module.exports = MathUtil;
-
-
-/***/ },
-/* 85 */
-/***/ function(module, exports) {
-
-	/**
-	 * Created by Riven on 2016/10/3.
-	 */
-
-	function Serial (runtime) {
-
-	    /**
-	     * Reference to the owning Runtime.
-	     * Can be used, for example, to activate hats.
-	     * @type{!Runtime}
-	     */
-	    this.runtime = runtime;
-	    // call back for send msg
-	    this.sendMsg = null;
-	    this.sendBuff = null;
-	    // call back for data query
-	    this.query = null;
-	    // promise cb for each command
-	    this._resolves = {};
-	}
-
-	Serial.prototype.postData = function (data) {
-	    var slot = data.slot;
-	    var report = data.report;
-	    if(slot in this._resolves){
-	        if(report!=null){
-	            this._resolves[slot](report);
-	        }else{
-	            this._resolves[slot]();
-	        }
-	    }
-
-	};
-
-	Serial.prototype.sendBuff = function(data){
-	    if(this.sendBuff){
-	        this.sendBuff(data);
-	    }
-	};
-
-	Serial.prototype.sendMsg = function(data){
-	    if(this.sendMsg){
-	        this.sendMsg(data);
-	    }
-	};
-
-	Serial.prototype.queryData = function(data){
-	    if(this.query){
-	        return this.query(data);
-	    }
-	    return null;
-	};
-
-	Serial.prototype.regSendMsg = function(cb){
-	    this.sendMsg = cb;
-	};
-
-	Serial.prototype.regQueryData = function(cb){
-	    this.query = cb;
-	};
-
-	Serial.prototype.regResolve = function(data){
-	    var slot = data["slot"];
-	    var cb = data["resolve"];
-	    this._resolves[slot] = cb;
-	};
-
-
-	module.exports = Serial;
-
-
-/***/ },
-/* 86 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(81);
-	var Timer = __webpack_require__(9);
-
-	var Scratch3ControlBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3ControlBlocks.prototype.getPrimitives = function () {
-	    return {
-	        control_repeat: this.repeat,
-	        control_repeat_until: this.repeatUntil,
-	        control_forever: this.forever,
-	        control_wait: this.wait,
-	        control_wait_until: this.waitUntil,
-	        control_if: this.if,
-	        control_if_else: this.ifElse,
-	        control_stop: this.stop,
-	        control_create_clone_of: this.createClone,
-	        control_delete_this_clone: this.deleteClone
-	    };
-	};
-
-	Scratch3ControlBlocks.prototype.getHats = function () {
-	    return {
-	        control_start_as_clone: {
-	            restartExistingThreads: false
-	        }
-	    };
-	};
-
-	Scratch3ControlBlocks.prototype.repeat = function (args, util) {
-	    var times = Math.floor(Cast.toNumber(args.TIMES));
-	    // Initialize loop
-	    if (typeof util.stackFrame.loopCounter === 'undefined') {
-	        util.stackFrame.loopCounter = times;
-	    }
-	    // Only execute once per frame.
-	    // When the branch finishes, `repeat` will be executed again and
-	    // the second branch will be taken, yielding for the rest of the frame.
-	    // Decrease counter
-	    util.stackFrame.loopCounter--;
-	    // If we still have some left, start the branch.
-	    if (util.stackFrame.loopCounter >= 0) {
-	        util.startBranch(1, true);
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.repeatUntil = function (args, util) {
-	    var condition = Cast.toBoolean(args.CONDITION);
-	    // If the condition is true, start the branch.
-	    if (!condition) {
-	        util.startBranch(1, true);
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.waitUntil = function (args, util) {
-	    var condition = Cast.toBoolean(args.CONDITION);
-	    if (!condition) {
-	        util.yield();
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.forever = function (args, util) {
-	    util.startBranch(1, true);
-	};
-
-	Scratch3ControlBlocks.prototype.wait = function (args, util) {
-	    if (!util.stackFrame.timer) {
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	        this.runtime.requestRedraw();
-	    } else {
-	        var duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
-	        if (util.stackFrame.timer.timeElapsed() < duration) {
-	            util.yield();
-	        }
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.if = function (args, util) {
-	    var condition = Cast.toBoolean(args.CONDITION);
-	    if (condition) {
-	        util.startBranch(1, false);
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.ifElse = function (args, util) {
-	    var condition = Cast.toBoolean(args.CONDITION);
-	    if (condition) {
-	        util.startBranch(1, false);
-	    } else {
-	        util.startBranch(2, false);
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.stop = function (args, util) {
-	    var option = args.STOP_OPTION;
-	    if (option === 'all') {
-	        util.stopAll();
-	    } else if (option === 'other scripts in sprite' ||
-	        option === 'other scripts in stage') {
-	        util.stopOtherTargetThreads();
-	    } else if (option === 'this script') {
-	        util.stopThread();
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.createClone = function (args, util) {
-	    var cloneTarget;
-	    if (args.CLONE_OPTION === '_myself_') {
-	        cloneTarget = util.target;
-	    } else {
-	        cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
-	    }
-	    if (!cloneTarget) {
-	        return;
-	    }
-	    var newClone = cloneTarget.makeClone();
-	    if (newClone) {
-	        this.runtime.targets.push(newClone);
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
-	    if (util.target.isOriginal) return;
-	    this.runtime.disposeTarget(util.target);
-	    this.runtime.stopForTarget(util.target);
-	};
-
-	module.exports = Scratch3ControlBlocks;
-
-
-/***/ },
-/* 87 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(81);
-
-	var Scratch3EventBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3EventBlocks.prototype.getPrimitives = function () {
-	    return {
-	        event_broadcast: this.broadcast,
-	        event_broadcastandwait: this.broadcastAndWait,
-	        event_whengreaterthan: this.hatGreaterThanPredicate
-	    };
-	};
-
-	Scratch3EventBlocks.prototype.getHats = function () {
-	    return {
-	        event_whenflagclicked: {
-	            restartExistingThreads: true
-	        },
-	        event_whenkeypressed: {
-	            restartExistingThreads: false
-	        },
-	        event_whenthisspriteclicked: {
-	            restartExistingThreads: true
-	        },
-	        event_whenbackdropswitchesto: {
-	            restartExistingThreads: true
-	        },
-	        event_whengreaterthan: {
-	            restartExistingThreads: false,
-	            edgeActivated: true
-	        },
-	        event_whenbroadcastreceived: {
-	            restartExistingThreads: true
-	        }
-	    };
-	};
-
-	Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
-	    var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
-	    var value = Cast.toNumber(args.VALUE);
-	    // @todo: Other cases :)
-	    if (option === 'timer') {
-	        return util.ioQuery('clock', 'projectTimer') > value;
-	    }
-	    return false;
-	};
-
-	Scratch3EventBlocks.prototype.broadcast = function (args, util) {
-	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
-	    util.startHats('event_whenbroadcastreceived', {
-	        BROADCAST_OPTION: broadcastOption
-	    });
-	};
-
-	Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
-	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
-	    // Have we run before, starting threads?
-	    if (!util.stackFrame.startedThreads) {
-	        // No - start hats for this broadcast.
-	        util.stackFrame.startedThreads = util.startHats(
-	            'event_whenbroadcastreceived', {
-	                BROADCAST_OPTION: broadcastOption
+	        if (notSaved.indexOf(x) === -1) {
+	            result[x] = this[x];
+	            if (this.runtime.targets.testing == true) {
+	                console.log('Exporting ' + x);
 	            }
-	        );
-	        if (util.stackFrame.startedThreads.length === 0) {
-	            // Nothing was started.
-	            return;
+	        } else if (this.runtime.targets.testing == true) {
+	            console.log('Ignoring ' + x);
 	        }
 	    }
-	    // We've run before; check if the wait is still going on.
-	    var instance = this;
-	    var waiting = util.stackFrame.startedThreads.some(function (thread) {
-	        return instance.runtime.isActiveThread(thread);
-	    });
-	    if (waiting) {
-	        util.yield();
-	    }
-	};
-
-	module.exports = Scratch3EventBlocks;
-
-
-/***/ },
-/* 88 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(81);
-
-	var Scratch3LooksBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3LooksBlocks.prototype.getPrimitives = function () {
-	    return {
-	        looks_say: this.say,
-	        looks_sayforsecs: this.sayforsecs,
-	        looks_think: this.think,
-	        looks_thinkforsecs: this.sayforsecs,
-	        looks_show: this.show,
-	        looks_hide: this.hide,
-	        looks_switchcostumeto: this.switchCostume,
-	        looks_switchbackdropto: this.switchBackdrop,
-	        looks_switchbackdroptoandwait: this.switchBackdropAndWait,
-	        looks_nextcostume: this.nextCostume,
-	        looks_nextbackdrop: this.nextBackdrop,
-	        looks_changeeffectby: this.changeEffect,
-	        looks_seteffectto: this.setEffect,
-	        looks_cleargraphiceffects: this.clearEffects,
-	        looks_changesizeby: this.changeSize,
-	        looks_setsizeto: this.setSize,
-	        looks_gotofront: this.goToFront,
-	        looks_gobacklayers: this.goBackLayers,
-	        looks_size: this.getSize,
-	        looks_costumeorder: this.getCostumeIndex,
-	        looks_backdroporder: this.getBackdropIndex,
-	        looks_backdropname: this.getBackdropName
-	    };
-	};
-
-	Scratch3LooksBlocks.prototype.say = function (args, util) {
-	    util.target.setSay('say', args.MESSAGE);
-	};
-
-	Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
-	    util.target.setSay('say', args.MESSAGE);
-	    return new Promise(function (resolve) {
-	        setTimeout(function () {
-	            // Clear say bubble and proceed.
-	            util.target.setSay();
-	            resolve();
-	        }, 1000 * args.SECS);
-	    });
-	};
-
-	Scratch3LooksBlocks.prototype.think = function (args, util) {
-	    util.target.setSay('think', args.MESSAGE);
-	};
-
-	Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
-	    util.target.setSay('think', args.MESSAGE);
-	    return new Promise(function (resolve) {
-	        setTimeout(function () {
-	            // Clear say bubble and proceed.
-	            util.target.setSay();
-	            resolve();
-	        }, 1000 * args.SECS);
-	    });
-	};
-
-	Scratch3LooksBlocks.prototype.show = function (args, util) {
-	    util.target.setVisible(true);
-	};
-
-	Scratch3LooksBlocks.prototype.hide = function (args, util) {
-	    util.target.setVisible(false);
-	};
-
-	/**
-	 * Utility function to set the costume or backdrop of a target.
-	 * Matches the behavior of Scratch 2.0 for different types of arguments.
-	 * @param {!Target} target Target to set costume/backdrop to.
-	 * @param {Any} requestedCostume Costume requested, e.g., 0, 'name', etc.
-	 * @param {boolean=} optZeroIndex Set to zero-index the requestedCostume.
-	 * @return {Array.<!Thread>} Any threads started by this switch.
-	 */
-	Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
-	        requestedCostume, optZeroIndex) {
-	    if (typeof requestedCostume === 'number') {
-	        target.setCostume(optZeroIndex ?
-	            requestedCostume : requestedCostume - 1);
-	    } else {
-	        var costumeIndex = target.getCostumeIndexByName(requestedCostume);
-	        if (costumeIndex > -1) {
-	            target.setCostume(costumeIndex);
-	        } else if (requestedCostume === 'previous costume' ||
-	                   requestedCostume === 'previous backdrop') {
-	            target.setCostume(target.currentCostume - 1);
-	        } else if (requestedCostume === 'next costume' ||
-	                   requestedCostume === 'next backdrop') {
-	            target.setCostume(target.currentCostume + 1);
-	        } else {
-	            var forcedNumber = Cast.toNumber(requestedCostume);
-	            if (!isNaN(forcedNumber)) {
-	                target.setCostume(optZeroIndex ?
-	                    forcedNumber : forcedNumber - 1);
-	            }
-	        }
-	    }
-	    if (target === this.runtime.getTargetForStage()) {
-	        // Target is the stage - start hats.
-	        var newName = target.sprite.costumes[target.currentCostume].name;
-	        return this.runtime.startHats('event_whenbackdropswitchesto', {
-	            BACKDROP: newName
-	        });
-	    }
-	    return [];
-	};
-
-	Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
-	    this._setCostumeOrBackdrop(util.target, args.COSTUME);
-	};
-
-	Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
-	    this._setCostumeOrBackdrop(
-	        util.target, util.target.currentCostume + 1, true
-	    );
-	};
-
-	Scratch3LooksBlocks.prototype.switchBackdrop = function (args) {
-	    this._setCostumeOrBackdrop(this.runtime.getTargetForStage(), args.BACKDROP);
-	};
-
-	Scratch3LooksBlocks.prototype.switchBackdropAndWait = function (args, util) {
-	    // Have we run before, starting threads?
-	    if (!util.stackFrame.startedThreads) {
-	        // No - switch the backdrop.
-	        util.stackFrame.startedThreads = (
-	            this._setCostumeOrBackdrop(
-	                this.runtime.getTargetForStage(),
-	                args.BACKDROP
-	            )
-	        );
-	        if (util.stackFrame.startedThreads.length === 0) {
-	            // Nothing was started.
-	            return;
-	        }
-	    }
-	    // We've run before; check if the wait is still going on.
-	    var instance = this;
-	    var waiting = util.stackFrame.startedThreads.some(function (thread) {
-	        return instance.runtime.isActiveThread(thread);
-	    });
-	    if (waiting) {
-	        util.yield();
-	    }
-	};
-
-	Scratch3LooksBlocks.prototype.nextBackdrop = function () {
-	    var stage = this.runtime.getTargetForStage();
-	    this._setCostumeOrBackdrop(
-	        stage, stage.currentCostume + 1, true
-	    );
-	};
-
-	Scratch3LooksBlocks.prototype.changeEffect = function (args, util) {
-	    var effect = Cast.toString(args.EFFECT).toLowerCase();
-	    var change = Cast.toNumber(args.CHANGE);
-	    if (!util.target.effects.hasOwnProperty(effect)) return;
-	    var newValue = change + util.target.effects[effect];
-	    util.target.setEffect(effect, newValue);
-	};
-
-	Scratch3LooksBlocks.prototype.setEffect = function (args, util) {
-	    var effect = Cast.toString(args.EFFECT).toLowerCase();
-	    var value = Cast.toNumber(args.VALUE);
-	    util.target.setEffect(effect, value);
-	};
-
-	Scratch3LooksBlocks.prototype.clearEffects = function (args, util) {
-	    util.target.clearEffects();
-	};
-
-	Scratch3LooksBlocks.prototype.changeSize = function (args, util) {
-	    var change = Cast.toNumber(args.CHANGE);
-	    util.target.setSize(util.target.size + change);
-	};
-
-	Scratch3LooksBlocks.prototype.setSize = function (args, util) {
-	    var size = Cast.toNumber(args.SIZE);
-	    util.target.setSize(size);
-	};
-
-	Scratch3LooksBlocks.prototype.goToFront = function (args, util) {
-	    util.target.goToFront();
-	};
-
-	Scratch3LooksBlocks.prototype.goBackLayers = function (args, util) {
-	    util.target.goBackLayers(args.NUM);
-	};
-
-	Scratch3LooksBlocks.prototype.getSize = function (args, util) {
-	    return util.target.size;
-	};
-
-	Scratch3LooksBlocks.prototype.getBackdropIndex = function () {
-	    var stage = this.runtime.getTargetForStage();
-	    return stage.currentCostume + 1;
-	};
-
-	Scratch3LooksBlocks.prototype.getBackdropName = function () {
-	    var stage = this.runtime.getTargetForStage();
-	    return stage.sprite.costumes[stage.currentCostume].name;
-	};
-
-	Scratch3LooksBlocks.prototype.getCostumeIndex = function (args, util) {
-	    return util.target.currentCostume + 1;
-	};
-
-	module.exports = Scratch3LooksBlocks;
-
-
-/***/ },
-/* 89 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(81);
-	var MathUtil = __webpack_require__(84);
-	var Timer = __webpack_require__(9);
-
-	var Scratch3MotionBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3MotionBlocks.prototype.getPrimitives = function () {
-	    return {
-	        motion_movesteps: this.moveSteps,
-	        motion_gotoxy: this.goToXY,
-	        motion_goto: this.goTo,
-	        motion_turnright: this.turnRight,
-	        motion_turnleft: this.turnLeft,
-	        motion_pointindirection: this.pointInDirection,
-	        motion_pointtowards: this.pointTowards,
-	        motion_glidesecstoxy: this.glide,
-	        motion_ifonedgebounce: this.ifOnEdgeBounce,
-	        motion_setrotationstyle: this.setRotationStyle,
-	        motion_changexby: this.changeX,
-	        motion_setx: this.setX,
-	        motion_changeyby: this.changeY,
-	        motion_sety: this.setY,
-	        motion_xposition: this.getX,
-	        motion_yposition: this.getY,
-	        motion_direction: this.getDirection
-	    };
-	};
-
-	Scratch3MotionBlocks.prototype.moveSteps = function (args, util) {
-	    var steps = Cast.toNumber(args.STEPS);
-	    var radians = MathUtil.degToRad(90 - util.target.direction);
-	    var dx = steps * Math.cos(radians);
-	    var dy = steps * Math.sin(radians);
-	    util.target.setXY(util.target.x + dx, util.target.y + dy);
-	};
-
-	Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
-	    var x = Cast.toNumber(args.X);
-	    var y = Cast.toNumber(args.Y);
-	    util.target.setXY(x, y);
-	};
-
-	Scratch3MotionBlocks.prototype.goTo = function (args, util) {
-	    var targetX = 0;
-	    var targetY = 0;
-	    if (args.TO === '_mouse_') {
-	        targetX = util.ioQuery('mouse', 'getX');
-	        targetY = util.ioQuery('mouse', 'getY');
-	    } else if (args.TO === '_random_') {
-	        var stageWidth = this.runtime.constructor.STAGE_WIDTH;
-	        var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-	        targetX = Math.round(stageWidth * (Math.random() - 0.5));
-	        targetY = Math.round(stageHeight * (Math.random() - 0.5));
-	    } else {
-	        var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
-	        if (!goToTarget) return;
-	        targetX = goToTarget.x;
-	        targetY = goToTarget.y;
-	    }
-	    util.target.setXY(targetX, targetY);
-	};
-
-	Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
-	    var degrees = Cast.toNumber(args.DEGREES);
-	    util.target.setDirection(util.target.direction + degrees);
-	};
-
-	Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
-	    var degrees = Cast.toNumber(args.DEGREES);
-	    util.target.setDirection(util.target.direction - degrees);
-	};
-
-	Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
-	    var direction = Cast.toNumber(args.DIRECTION);
-	    util.target.setDirection(direction);
-	};
-
-	Scratch3MotionBlocks.prototype.pointTowards = function (args, util) {
-	    var targetX = 0;
-	    var targetY = 0;
-	    if (args.TOWARDS === '_mouse_') {
-	        targetX = util.ioQuery('mouse', 'getX');
-	        targetY = util.ioQuery('mouse', 'getY');
-	    } else {
-	        var pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
-	        if (!pointTarget) return;
-	        targetX = pointTarget.x;
-	        targetY = pointTarget.y;
-	    }
-
-	    var dx = targetX - util.target.x;
-	    var dy = targetY - util.target.y;
-	    var direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
-	    util.target.setDirection(direction);
-	};
-
-	Scratch3MotionBlocks.prototype.glide = function (args, util) {
-	    if (!util.stackFrame.timer) {
-	        // First time: save data for future use.
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.stackFrame.duration = Cast.toNumber(args.SECS);
-	        util.stackFrame.startX = util.target.x;
-	        util.stackFrame.startY = util.target.y;
-	        util.stackFrame.endX = Cast.toNumber(args.X);
-	        util.stackFrame.endY = Cast.toNumber(args.Y);
-	        if (util.stackFrame.duration <= 0) {
-	            // Duration too short to glide.
-	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
-	            return;
-	        }
-	        util.yield();
-	    } else {
-	        var timeElapsed = util.stackFrame.timer.timeElapsed();
-	        if (timeElapsed < util.stackFrame.duration * 1000) {
-	            // In progress: move to intermediate position.
-	            var frac = timeElapsed / (util.stackFrame.duration * 1000);
-	            var dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
-	            var dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
-	            util.target.setXY(
-	                util.stackFrame.startX + dx,
-	                util.stackFrame.startY + dy
-	            );
-	            util.yield();
-	        } else {
-	            // Finished: move to final position.
-	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
-	        }
-	    }
-	};
-
-	Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
-	    var bounds = util.target.getBounds();
-	    if (!bounds) {
-	        return;
-	    }
-	    // Measure distance to edges.
-	    // Values are positive when the sprite is far away,
-	    // and clamped to zero when the sprite is beyond.
-	    var stageWidth = this.runtime.constructor.STAGE_WIDTH;
-	    var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-	    var distLeft = Math.max(0, (stageWidth / 2) + bounds.left);
-	    var distTop = Math.max(0, (stageHeight / 2) - bounds.top);
-	    var distRight = Math.max(0, (stageWidth / 2) - bounds.right);
-	    var distBottom = Math.max(0, (stageHeight / 2) + bounds.bottom);
-	    // Find the nearest edge.
-	    var nearestEdge = '';
-	    var minDist = Infinity;
-	    if (distLeft < minDist) {
-	        minDist = distLeft;
-	        nearestEdge = 'left';
-	    }
-	    if (distTop < minDist) {
-	        minDist = distTop;
-	        nearestEdge = 'top';
-	    }
-	    if (distRight < minDist) {
-	        minDist = distRight;
-	        nearestEdge = 'right';
-	    }
-	    if (distBottom < minDist) {
-	        minDist = distBottom;
-	        nearestEdge = 'bottom';
-	    }
-	    if (minDist > 0) {
-	        return; // Not touching any edge.
-	    }
-	    // Point away from the nearest edge.
-	    var radians = MathUtil.degToRad(90 - util.target.direction);
-	    var dx = Math.cos(radians);
-	    var dy = -Math.sin(radians);
-	    if (nearestEdge === 'left') {
-	        dx = Math.max(0.2, Math.abs(dx));
-	    } else if (nearestEdge === 'top') {
-	        dy = Math.max(0.2, Math.abs(dy));
-	    } else if (nearestEdge === 'right') {
-	        dx = 0 - Math.max(0.2, Math.abs(dx));
-	    } else if (nearestEdge === 'bottom') {
-	        dy = 0 - Math.max(0.2, Math.abs(dy));
-	    }
-	    var newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;
-	    util.target.setDirection(newDirection);
-	    // Keep within the stage.
-	    var fencedPosition = util.target.keepInFence(util.target.x, util.target.y);
-	    util.target.setXY(fencedPosition[0], fencedPosition[1]);
-	};
-
-	Scratch3MotionBlocks.prototype.setRotationStyle = function (args, util) {
-	    util.target.setRotationStyle(args.STYLE);
-	};
-
-	Scratch3MotionBlocks.prototype.changeX = function (args, util) {
-	    var dx = Cast.toNumber(args.DX);
-	    util.target.setXY(util.target.x + dx, util.target.y);
-	};
-
-	Scratch3MotionBlocks.prototype.setX = function (args, util) {
-	    var x = Cast.toNumber(args.X);
-	    util.target.setXY(x, util.target.y);
-	};
-
-	Scratch3MotionBlocks.prototype.changeY = function (args, util) {
-	    var dy = Cast.toNumber(args.DY);
-	    util.target.setXY(util.target.x, util.target.y + dy);
-	};
-
-	Scratch3MotionBlocks.prototype.setY = function (args, util) {
-	    var y = Cast.toNumber(args.Y);
-	    util.target.setXY(util.target.x, y);
-	};
-
-	Scratch3MotionBlocks.prototype.getX = function (args, util) {
-	    return util.target.x;
-	};
-
-	Scratch3MotionBlocks.prototype.getY = function (args, util) {
-	    return util.target.y;
-	};
-
-	Scratch3MotionBlocks.prototype.getDirection = function (args, util) {
-	    return util.target.direction;
-	};
-
-	module.exports = Scratch3MotionBlocks;
-
-
-/***/ },
-/* 90 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(81);
-
-	var Scratch3OperatorsBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3OperatorsBlocks.prototype.getPrimitives = function () {
-	    return {
-	        operator_add: this.add,
-	        operator_subtract: this.subtract,
-	        operator_multiply: this.multiply,
-	        operator_divide: this.divide,
-	        operator_lt: this.lt,
-	        operator_equals: this.equals,
-	        operator_gt: this.gt,
-	        operator_and: this.and,
-	        operator_or: this.or,
-	        operator_not: this.not,
-	        operator_random: this.random,
-	        operator_join: this.join,
-	        operator_letter_of: this.letterOf,
-	        operator_length: this.length,
-	        operator_mod: this.mod,
-	        operator_round: this.round,
-	        operator_mathop: this.mathop
-	    };
-	};
-
-	Scratch3OperatorsBlocks.prototype.add = function (args) {
-	    return Cast.toNumber(args.NUM1) + Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.subtract = function (args) {
-	    return Cast.toNumber(args.NUM1) - Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.multiply = function (args) {
-	    return Cast.toNumber(args.NUM1) * Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.divide = function (args) {
-	    return Cast.toNumber(args.NUM1) / Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.lt = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) < 0;
-	};
-
-	Scratch3OperatorsBlocks.prototype.equals = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) === 0;
-	};
-
-	Scratch3OperatorsBlocks.prototype.gt = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) > 0;
-	};
-
-	Scratch3OperatorsBlocks.prototype.and = function (args) {
-	    return Cast.toBoolean(args.OPERAND1) && Cast.toBoolean(args.OPERAND2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.or = function (args) {
-	    return Cast.toBoolean(args.OPERAND1) || Cast.toBoolean(args.OPERAND2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.not = function (args) {
-	    return !Cast.toBoolean(args.OPERAND);
-	};
-
-	Scratch3OperatorsBlocks.prototype.random = function (args) {
-	    var nFrom = Cast.toNumber(args.FROM);
-	    var nTo = Cast.toNumber(args.TO);
-	    var low = nFrom <= nTo ? nFrom : nTo;
-	    var high = nFrom <= nTo ? nTo : nFrom;
-	    if (low === high) return low;
-	    // If both arguments are ints, truncate the result to an int.
-	    if (Cast.isInt(args.FROM) && Cast.isInt(args.TO)) {
-	        return low + parseInt(Math.random() * ((high + 1) - low), 10);
-	    }
-	    return (Math.random() * (high - low)) + low;
-	};
-
-	Scratch3OperatorsBlocks.prototype.join = function (args) {
-	    return Cast.toString(args.STRING1) + Cast.toString(args.STRING2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
-	    var index = Cast.toNumber(args.LETTER) - 1;
-	    var str = Cast.toString(args.STRING);
-	    // Out of bounds?
-	    if (index < 0 || index >= str.length) {
-	        return '';
-	    }
-	    return str.charAt(index);
-	};
-
-	Scratch3OperatorsBlocks.prototype.length = function (args) {
-	    return Cast.toString(args.STRING).length;
-	};
-
-	Scratch3OperatorsBlocks.prototype.mod = function (args) {
-	    var n = Cast.toNumber(args.NUM1);
-	    var modulus = Cast.toNumber(args.NUM2);
-	    var result = n % modulus;
-	    // Scratch mod is kept positive.
-	    if (result / modulus < 0) result += modulus;
 	    return result;
 	};
 
-	Scratch3OperatorsBlocks.prototype.round = function (args) {
-	    return Math.round(Cast.toNumber(args.NUM));
-	};
-
-	Scratch3OperatorsBlocks.prototype.mathop = function (args) {
-	    var operator = Cast.toString(args.OPERATOR).toLowerCase();
-	    var n = Cast.toNumber(args.NUM);
-	    switch (operator) {
-	    case 'abs': return Math.abs(n);
-	    case 'floor': return Math.floor(n);
-	    case 'ceiling': return Math.ceil(n);
-	    case 'sqrt': return Math.sqrt(n);
-	    case 'sin': return Math.sin((Math.PI * n) / 180);
-	    case 'cos': return Math.cos((Math.PI * n) / 180);
-	    case 'tan': return Math.tan((Math.PI * n) / 180);
-	    case 'asin': return (Math.asin(n) * 180) / Math.PI;
-	    case 'acos': return (Math.acos(n) * 180) / Math.PI;
-	    case 'atan': return (Math.atan(n) * 180) / Math.PI;
-	    case 'ln': return Math.log(n);
-	    case 'log': return Math.log(n) / Math.LN10;
-	    case 'e ^': return Math.exp(n);
-	    case '10 ^': return Math.pow(10, n);
-	    }
-	    return 0;
-	};
-
-	module.exports = Scratch3OperatorsBlocks;
+	module.exports = Sprite;
 
 
 /***/ },
-/* 91 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(81);
-
-	var Scratch3SensingBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3SensingBlocks.prototype.getPrimitives = function () {
-	    return {
-	        sensing_touchingobject: this.touchingObject,
-	        sensing_touchingcolor: this.touchingColor,
-	        sensing_coloristouchingcolor: this.colorTouchingColor,
-	        sensing_distanceto: this.distanceTo,
-	        sensing_timer: this.getTimer,
-	        sensing_resettimer: this.resetTimer,
-	        sensing_of: this.getAttributeOf,
-	        sensing_mousex: this.getMouseX,
-	        sensing_mousey: this.getMouseY,
-	        sensing_mousedown: this.getMouseDown,
-	        sensing_keypressed: this.getKeyPressed,
-	        sensing_current: this.current,
-	        sensing_dayssince2000: this.daysSince2000
-	    };
-	};
-
-	Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
-	    var requestedObject = args.TOUCHINGOBJECTMENU;
-	    if (requestedObject === '_mouse_') {
-	        var mouseX = util.ioQuery('mouse', 'getX');
-	        var mouseY = util.ioQuery('mouse', 'getY');
-	        return util.target.isTouchingPoint(mouseX, mouseY);
-	    } else if (requestedObject === '_edge_') {
-	        return util.target.isTouchingEdge();
-	    } else {
-	        return util.target.isTouchingSprite(requestedObject);
-	    }
-	};
-
-	Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
-	    var color = Cast.toRgbColorList(args.COLOR);
-	    return util.target.isTouchingColor(color);
-	};
-
-	Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
-	    var maskColor = Cast.toRgbColorList(args.COLOR);
-	    var targetColor = Cast.toRgbColorList(args.COLOR2);
-	    return util.target.colorIsTouchingColor(targetColor, maskColor);
-	};
-
-	Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
-	    if (util.target.isStage) return 10000;
-
-	    var targetX = 0;
-	    var targetY = 0;
-	    if (args.DISTANCETOMENU === '_mouse_') {
-	        targetX = util.ioQuery('mouse', 'getX');
-	        targetY = util.ioQuery('mouse', 'getY');
-	    } else {
-	        var distTarget = this.runtime.getSpriteTargetByName(
-	            args.DISTANCETOMENU
-	        );
-	        if (!distTarget) return 10000;
-	        targetX = distTarget.x;
-	        targetY = distTarget.y;
-	    }
-
-	    var dx = util.target.x - targetX;
-	    var dy = util.target.y - targetY;
-	    return Math.sqrt((dx * dx) + (dy * dy));
-	};
-
-	Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
-	    return util.ioQuery('clock', 'projectTimer');
-	};
-
-	Scratch3SensingBlocks.prototype.resetTimer = function (args, util) {
-	    util.ioQuery('clock', 'resetProjectTimer');
-	};
-
-	Scratch3SensingBlocks.prototype.getMouseX = function (args, util) {
-	    return util.ioQuery('mouse', 'getX');
-	};
-
-	Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
-	    return util.ioQuery('mouse', 'getY');
-	};
-
-	Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
-	    return util.ioQuery('mouse', 'getIsDown');
-	};
-
-	Scratch3SensingBlocks.prototype.current = function (args) {
-	    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
-	    var date = new Date();
-	    switch (menuOption) {
-	    case 'year': return date.getFullYear();
-	    case 'month': return date.getMonth() + 1; // getMonth is zero-based
-	    case 'date': return date.getDate();
-	    case 'dayofweek': return date.getDay() + 1; // getDay is zero-based, Sun=0
-	    case 'hour': return date.getHours();
-	    case 'minute': return date.getMinutes();
-	    case 'second': return date.getSeconds();
-	    }
-	    return 0;
-	};
-
-	Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
-	    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
-	};
-
-	Scratch3SensingBlocks.prototype.daysSince2000 = function () {
-	    var msPerDay = 24 * 60 * 60 * 1000;
-	    var start = new Date(2000, 0, 1); // Months are 0-indexed.
-	    var today = new Date();
-	    var dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
-	    var mSecsSinceStart = today.valueOf() - start.valueOf();
-	    mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
-	    return mSecsSinceStart / msPerDay;
-	};
-
-	Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
-	    var attrTarget;
-
-	    if (args.OBJECT === '_stage_') {
-	        attrTarget = this.runtime.getTargetForStage();
-	    } else {
-	        attrTarget = this.runtime.getSpriteTargetByName(args.OBJECT);
-	    }
-
-	    // Generic attributes
-	    if (attrTarget.isStage) {
-	        switch (args.PROPERTY) {
-	        // Scratch 1.4 support
-	        case 'background #': return attrTarget.currentCostume + 1;
-
-	        case 'backdrop #': return attrTarget.currentCostume + 1;
-	        case 'backdrop name':
-	            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
-	        case 'volume': return; // @todo: Keep this in mind for sound blocks!
-	        }
-	    } else {
-	        switch (args.PROPERTY) {
-	        case 'x position': return attrTarget.x;
-	        case 'y position': return attrTarget.y;
-	        case 'direction': return attrTarget.direction;
-	        case 'costume #': return attrTarget.currentCostume + 1;
-	        case 'costume name':
-	            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
-	        case 'size': return attrTarget.size;
-	        case 'volume': return; // @todo: above, keep in mind for sound blocks..
-	        }
-	    }
-
-	    // Variables
-	    var varName = args.PROPERTY;
-	    if (attrTarget.variables.hasOwnProperty(varName)) {
-	        return attrTarget.variables[varName].value;
-	    }
-
-	    // Otherwise, 0
-	    return 0;
-	};
-
-	module.exports = Scratch3SensingBlocks;
-
-
-/***/ },
-/* 92 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(81);
-
-	var Scratch3DataBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3DataBlocks.prototype.getPrimitives = function () {
-	    return {
-	        data_variable: this.getVariable,
-	        data_setvariableto: this.setVariableTo,
-	        data_changevariableby: this.changeVariableBy,
-	        data_listcontents: this.getListContents,
-	        data_addtolist: this.addToList,
-	        data_deleteoflist: this.deleteOfList,
-	        data_insertatlist: this.insertAtList,
-	        data_replaceitemoflist: this.replaceItemOfList,
-	        data_itemoflist: this.getItemOfList,
-	        data_lengthoflist: this.lengthOfList,
-	        data_listcontainsitem: this.listContainsItem
-	    };
-	};
-
-	Scratch3DataBlocks.prototype.getVariable = function (args, util) {
-	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
-	    return variable.value;
-	};
-
-	Scratch3DataBlocks.prototype.setVariableTo = function (args, util) {
-	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
-	    variable.value = args.VALUE;
-	};
-
-	Scratch3DataBlocks.prototype.changeVariableBy = function (args, util) {
-	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
-	    var castedValue = Cast.toNumber(variable.value);
-	    var dValue = Cast.toNumber(args.VALUE);
-	    variable.value = castedValue + dValue;
-	};
-
-	Scratch3DataBlocks.prototype.getListContents = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    // Determine if the list is all single letters.
-	    // If it is, report contents joined together with no separator.
-	    // If it's not, report contents joined together with a space.
-	    var allSingleLetters = true;
-	    for (var i = 0; i < list.contents.length; i++) {
-	        var listItem = list.contents[i];
-	        if (!((typeof listItem === 'string') &&
-	              (listItem.length === 1))) {
-	            allSingleLetters = false;
-	            break;
-	        }
-	    }
-	    if (allSingleLetters) {
-	        return list.contents.join('');
-	    } else {
-	        return list.contents.join(' ');
-	    }
-	};
-
-	Scratch3DataBlocks.prototype.addToList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    list.contents.push(args.ITEM);
-	};
-
-	Scratch3DataBlocks.prototype.deleteOfList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
-	    if (index === Cast.LIST_INVALID) {
-	        return;
-	    } else if (index === Cast.LIST_ALL) {
-	        list.contents = [];
-	        return;
-	    }
-	    list.contents.splice(index - 1, 1);
-	};
-
-	Scratch3DataBlocks.prototype.insertAtList = function (args, util) {
-	    var item = args.ITEM;
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length + 1);
-	    if (index === Cast.LIST_INVALID) {
-	        return;
-	    }
-	    list.contents.splice(index - 1, 0, item);
-	};
-
-	Scratch3DataBlocks.prototype.replaceItemOfList = function (args, util) {
-	    var item = args.ITEM;
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
-	    if (index === Cast.LIST_INVALID) {
-	        return;
-	    }
-	    list.contents.splice(index - 1, 1, item);
-	};
-
-	Scratch3DataBlocks.prototype.getItemOfList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
-	    if (index === Cast.LIST_INVALID) {
-	        return '';
-	    }
-	    return list.contents[index - 1];
-	};
-
-	Scratch3DataBlocks.prototype.lengthOfList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    return list.contents.length;
-	};
-
-	Scratch3DataBlocks.prototype.listContainsItem = function (args, util) {
-	    var item = args.ITEM;
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    if (list.contents.indexOf(item) >= 0) {
-	        return true;
-	    }
-	    // Try using Scratch comparison operator on each item.
-	    // (Scratch considers the string '123' equal to the number 123).
-	    for (var i = 0; i < list.contents.length; i++) {
-	        if (Cast.compare(list.contents[i], item) === 0) {
-	            return true;
-	        }
-	    }
-	    return false;
-	};
-
-	module.exports = Scratch3DataBlocks;
-
-
-/***/ },
-/* 93 */
-/***/ function(module, exports) {
-
-	var Scratch3ProcedureBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3ProcedureBlocks.prototype.getPrimitives = function () {
-	    return {
-	        procedures_defnoreturn: this.defNoReturn,
-	        procedures_callnoreturn: this.callNoReturn,
-	        procedures_param: this.param
-	    };
-	};
-
-	Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
-	    // No-op: execute the blocks.
-	};
-
-	Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
-	    if (!util.stackFrame.executed) {
-	        var procedureCode = args.mutation.proccode;
-	        var paramNames = util.getProcedureParamNames(procedureCode);
-	        for (var i = 0; i < paramNames.length; i++) {
-	            if (args.hasOwnProperty('input' + i)) {
-	                util.pushParam(paramNames[i], args['input' + i]);
-	            }
-	        }
-	        util.stackFrame.executed = true;
-	        util.startProcedure(procedureCode);
-	    }
-	};
-
-	Scratch3ProcedureBlocks.prototype.param = function (args, util) {
-	    var value = util.getParam(args.mutation.paramname);
-	    return value;
-	};
-
-	module.exports = Scratch3ProcedureBlocks;
-
-
-/***/ },
-/* 94 */
-/***/ function(module, exports) {
-
-	/**
-	 * Created by Riven on 7/8/2016.
-	 */
-
-	function ArduinoBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	ArduinoBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'event_arduinobegin': this.arduinobegin,
-	        'arduino_pin_mode': this.pinMode,
-	        'arduino_analog_read': this.analogRead,
-	        'arduino_pin_mode_option': this.pinModeOption,
-	        'arduino_digital_write': this.digitalWrite,
-	        'arduino_level_option': this.levelOption,
-	        'arduino_pwm_write': this.pwmWrite,
-	        'arduino_pwm_option': this.pwmOption,
-	        'arduino_digital_read': this.digitalRead,
-	        'arduino_analog_in_option': this.analogPinOption,
-	        'arduino_tone': this.tone,
-	        'arduino_map': this.map,
-	        'arduino_servo': this.servo,
-	        'arduino_pulsein': this.pulsein
-	    };
-	};
-
-	ArduinoBlocks.prototype.getHats = function () {
-	    return {
-	        event_whenarduinobegin: {
-	            restartExistingThreads: true
-	        }
-	    };
-	};
-
-	ArduinoBlocks.prototype.arduinobegin = function(argValues, util){
-	    console.log("restart arduino programe");
-	    cmd = "M999";
-	    util.ioQuery('serial', 'sendMsg', cmd);
-	};
-
-	ArduinoBlocks.prototype.pinMode = function(argValues, util) {
-	    var pinmode = {"INPUT":0,"OUTPUT":1};
-	    pin = argValues.PINNUM;
-	    mode = pinmode[argValues.ARDUINO_PIN_MODE_OPTION];
-	    cmd = "M1 "+pin+" "+mode;
-	    util.ioQuery('serial', 'sendMsg', cmd);
-	};
-
-	ArduinoBlocks.prototype.digitalWrite = function(argValues, util) {
-	    var level = {"HIGH":1,"LOW":0};
-	    pin = argValues.PINNUM;
-	    value = level[argValues.ARDUINO_LEVEL_OPTION];
-	    cmd = "M2 "+pin+" "+value;
-	    util.ioQuery('serial', 'sendMsg', cmd);
-	};
-
-	ArduinoBlocks.prototype.pwmWrite = function(argValues, util) {
-	    pin = argValues.ARDUINO_PWM_OPTION;
-	    value = argValues.PWM;
-	    cmd = "M4 "+pin+" "+value;
-	    util.ioQuery('serial', 'sendMsg', cmd);
-	};
-
-	ArduinoBlocks.prototype.digitalRead = function(argValues, util) {
-	    var pin = argValues.PINNUM;
-	    var data = {type:'D',pin:pin};
-	    return util.ioQuery('serial', 'queryData', data);
-	};
-
-	ArduinoBlocks.prototype.analogRead = function(argValues, util) {
-	    var pin = argValues.PINNUM;
-	    var data = {type:'A',pin:pin};
-	    return util.ioQuery('serial', 'queryData', data);
-	};
-
-
-	ArduinoBlocks.prototype.tone = function(argValues, util){
-	    pin = argValues.PINNUM;
-	    var cmd = "M6 "+pin+" "+argValues.FREQUENCY+" "+argValues.DURATION;
-	    util.ioQuery('serial', 'sendMsg', cmd);
-	};
-
-	ArduinoBlocks.prototype.servo = function(argValues, util){
-	    pin = argValues.PINNUM;
-	    var cmd = "M7 "+pin+" "+argValues.ANGLE;
-	    util.ioQuery('serial', 'sendMsg', cmd);
-	};
-
-	ArduinoBlocks.prototype.pulsein = function(argValues, util) {
-	    var cmd = "M8 "+argValues.PINNUM;
-	    var exePromise = new Promise(function(resolve) {
-	        util.ioQuery('serial', 'sendMsg', cmd);
-	        util.ioQuery('serial', 'regResolve', {"slot":"M8", "resolve":resolve});
-	    });
-	    return exePromise;
-	};
-
-
-	ArduinoBlocks.prototype.map = function(argValues, util){
-	    x = argValues.VAL;
-	    in_min = argValues.FROMLOW;
-	    in_max = argValues.FROMHIGH;
-	    out_min = argValues.TOLOW;
-	    out_max = argValues.TOHIGH;
-	    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-	};
-
-	ArduinoBlocks.prototype.pinModeOption = function(argValues, util) {
-	    return argValues.ARDUINO_PIN_MODE_OPTION;
-	};
-
-	ArduinoBlocks.prototype.levelOption = function(argValues, util) {
-	    return argValues.ARDUINO_LEVEL_OPTION;
-	};
-
-	ArduinoBlocks.prototype.pwmOption = function(argValues, util) {
-	    return argValues.ARDUINO_PWM_OPTION;
-	};
-
-	ArduinoBlocks.prototype.analogPinOption = function(argValues, util) {
-	    return argValues.ARDUINO_ANALOG_IN_OPTION;
-	};
-
-	module.exports = ArduinoBlocks;
-
-
-/***/ },
-/* 95 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @fileoverview
-	 * Partial implementation of an SB2 JSON importer.
-	 * Parses provided JSON and then generates all needed
-	 * scratch-vm runtime structures.
-	 */
-
-	var Blocks = __webpack_require__(25);
-	var RenderedTarget = __webpack_require__(96);
-	var Sprite = __webpack_require__(101);
-	var Color = __webpack_require__(82);
-	var log = __webpack_require__(12);
-	var uid = __webpack_require__(100);
-	var specMap = __webpack_require__(102);
-	var Variable = __webpack_require__(98);
-	var List = __webpack_require__(99);
-
-	/**
-	 * Parse a single "Scratch object" and create all its in-memory VM objects.
-	 * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
-	 * @param {!Runtime} runtime Runtime object to load all structures into.
-	 * @param {boolean} topLevel Whether this is the top-level object (stage).
-	 * @return {?Target} Target created (stage or sprite).
-	 */
-	var parseScratchObject = function (object, runtime, topLevel) {
-	    if (!object.hasOwnProperty('objName')) {
-	        // Watcher/monitor - skip this object until those are implemented in VM.
-	        // @todo
-	        return;
-	    }
-	    // Blocks container for this object.
-	    var blocks = new Blocks();
-	    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-	    var sprite = new Sprite(blocks, runtime);
-	    // Sprite/stage name from JSON.
-	    if (object.hasOwnProperty('objName')) {
-	        sprite.name = object.objName;
-	    }
-	    // Costumes from JSON.
-	    if (object.hasOwnProperty('costumes')) {
-	        for (var i = 0; i < object.costumes.length; i++) {
-	            var costume = object.costumes[i];
-	            // @todo: Make sure all the relevant metadata is being pulled out.
-	            sprite.costumes.push({
-	                //skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
-	                //    costume.baseLayerMD5 + '/get/',
-	                skin: 'http://localhost:9234/' + costume.baseLayerMD5,
-	                name: costume.costumeName,
-	                bitmapResolution: costume.bitmapResolution,
-	                rotationCenterX: costume.rotationCenterX,
-	                rotationCenterY: costume.rotationCenterY
-	            });
-	        }
-	    }
-	    // If included, parse any and all scripts/blocks on the object.
-	    if (object.hasOwnProperty('scripts')) {
-	        parseScripts(object.scripts, blocks);
-	    }
-	    // Create the first clone, and load its run-state from JSON.
-	    var target = sprite.createClone();
-	    // Add it to the runtime's list of targets.
-	    runtime.targets.push(target);
-	    // Load target properties from JSON.
-	    if (object.hasOwnProperty('variables')) {
-	        for (var j = 0; j < object.variables.length; j++) {
-	            var variable = object.variables[j];
-	            target.variables[variable.name] = new Variable(
-	                variable.name,
-	                variable.value,
-	                variable.isPersistent
-	            );
-	        }
-	    }
-	    if (object.hasOwnProperty('lists')) {
-	        for (var k = 0; k < object.lists.length; k++) {
-	            var list = object.lists[k];
-	            // @todo: monitor properties.
-	            target.lists[list.listName] = new List(
-	                list.listName,
-	                list.contents
-	            );
-	        }
-	    }
-	    if (object.hasOwnProperty('scratchX')) {
-	        target.x = object.scratchX;
-	    }
-	    if (object.hasOwnProperty('scratchY')) {
-	        target.y = object.scratchY;
-	    }
-	    if (object.hasOwnProperty('direction')) {
-	        target.direction = object.direction;
-	    }
-	    if (object.hasOwnProperty('scale')) {
-	        // SB2 stores as 1.0 = 100%; we use % in the VM.
-	        target.size = object.scale * 100;
-	    }
-	    if (object.hasOwnProperty('visible')) {
-	        target.visible = object.visible;
-	    }
-	    if (object.hasOwnProperty('currentCostumeIndex')) {
-	        target.currentCostume = Math.round(object.currentCostumeIndex);
-	    }
-	    if (object.hasOwnProperty('rotationStyle')) {
-	        if (object.rotationStyle === 'none') {
-	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
-	        } else if (object.rotationStyle === 'leftRight') {
-	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
-	        } else if (object.rotationStyle === 'normal') {
-	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
-	        }
-	    }
-	    target.isStage = topLevel;
-	    target.updateAllDrawableProperties();
-	    // The stage will have child objects; recursively process them.
-	    if (object.children) {
-	        for (var m = 0; m < object.children.length; m++) {
-	            parseScratchObject(object.children[m], runtime, false);
-	        }
-	    }
-	    return target;
-	};
-
-	/**
-	 * Top-level handler. Parse provided JSON,
-	 * and process the top-level object (the stage object).
-	 * @param {!string} json SB2-format JSON to load.
-	 * @param {!Runtime} runtime Runtime object to load all structures into.
-	 * @param {Boolean=} optForceSprite If set, treat as sprite (Sprite2).
-	 * @return {?Target} Top-level target created (stage or sprite).
-	 */
-	var sb2import = function (json, runtime, optForceSprite) {
-	    return parseScratchObject(
-	        JSON.parse(json),
-	        runtime,
-	        !optForceSprite
-	    );
-	};
-
-	/**
-	 * Parse a Scratch object's scripts into VM blocks.
-	 * This should only handle top-level scripts that include X, Y coordinates.
-	 * @param {!Object} scripts Scripts object from SB2 JSON.
-	 * @param {!Blocks} blocks Blocks object to load parsed blocks into.
-	 */
-	var parseScripts = function (scripts, blocks) {
-	    for (var i = 0; i < scripts.length; i++) {
-	        var script = scripts[i];
-	        var scriptX = script[0];
-	        var scriptY = script[1];
-	        var blockList = script[2];
-	        var parsedBlockList = parseBlockList(blockList);
-	        if (parsedBlockList[0]) {
-	            // Adjust script coordinates to account for
-	            // larger block size in scratch-blocks.
-	            // @todo: Determine more precisely the right formulas here.
-	            parsedBlockList[0].x = scriptX * 1.1;
-	            parsedBlockList[0].y = scriptY * 1.1;
-	            parsedBlockList[0].topLevel = true;
-	            parsedBlockList[0].parent = null;
-	        }
-	        // Flatten children and create add the blocks.
-	        var convertedBlocks = flatten(parsedBlockList);
-	        for (var j = 0; j < convertedBlocks.length; j++) {
-	            blocks.createBlock(convertedBlocks[j]);
-	        }
-	    }
-	};
-
-	/**
-	 * Parse any list of blocks from SB2 JSON into a list of VM-format blocks.
-	 * Could be used to parse a top-level script,
-	 * a list of blocks in a branch (e.g., in forever),
-	 * or a list of blocks in an argument (e.g., move [pick random...]).
-	 * @param {Array.<Object>} blockList SB2 JSON-format block list.
-	 * @return {Array.<Object>} Scratch VM-format block list.
-	 */
-	var parseBlockList = function (blockList) {
-	    var resultingList = [];
-	    var previousBlock = null; // For setting next.
-	    for (var i = 0; i < blockList.length; i++) {
-	        var block = blockList[i];
-	        var parsedBlock = parseBlock(block);
-	        if (previousBlock) {
-	            parsedBlock.parent = previousBlock.id;
-	            previousBlock.next = parsedBlock.id;
-	        }
-	        previousBlock = parsedBlock;
-	        resultingList.push(parsedBlock);
-	    }
-	    return resultingList;
-	};
-
-	/**
-	 * Flatten a block tree into a block list.
-	 * Children are temporarily stored on the `block.children` property.
-	 * @param {Array.<Object>} blocks list generated by `parseBlockList`.
-	 * @return {Array.<Object>} Flattened list to be passed to `blocks.createBlock`.
-	 */
-	var flatten = function (blocks) {
-	    var finalBlocks = [];
-	    for (var i = 0; i < blocks.length; i++) {
-	        var block = blocks[i];
-	        finalBlocks.push(block);
-	        if (block.children) {
-	            finalBlocks = finalBlocks.concat(flatten(block.children));
-	        }
-	        delete block.children;
-	    }
-	    return finalBlocks;
-	};
-
-	/**
-	 * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
-	 * into an argument map. This allows us to provide the expected inputs
-	 * to a mutated procedure call.
-	 * @param {string} procCode Scratch 2.0 procedure string.
-	 * @return {Object} Argument map compatible with those in sb2specmap.
-	 */
-	var parseProcedureArgMap = function (procCode) {
-	    var argMap = [
-	        {} // First item in list is op string.
-	    ];
-	    var INPUT_PREFIX = 'input';
-	    var inputCount = 0;
-	    // Split by %n, %b, %s.
-	    var parts = procCode.split(/(?=[^\\]%[nbs])/);
-	    for (var i = 0; i < parts.length; i++) {
-	        var part = parts[i].trim();
-	        if (part.substring(0, 1) === '%') {
-	            var argType = part.substring(1, 2);
-	            var arg = {
-	                type: 'input',
-	                inputName: INPUT_PREFIX + (inputCount++)
-	            };
-	            if (argType === 'n') {
-	                arg.inputOp = 'math_number';
-	            } else if (argType === 's') {
-	                arg.inputOp = 'text';
-	            }
-	            argMap.push(arg);
-	        }
-	    }
-	    return argMap;
-	};
-
-	/**
-	 * Parse a single SB2 JSON-formatted block and its children.
-	 * @param {!Object} sb2block SB2 JSON-formatted block.
-	 * @return {Object} Scratch VM format block.
-	 */
-	var parseBlock = function (sb2block) {
-	    // First item in block object is the old opcode (e.g., 'forward:').
-	    var oldOpcode = sb2block[0];
-	    // Convert the block using the specMap. See sb2specmap.js.
-	    if (!oldOpcode || !specMap[oldOpcode]) {
-	        log.warn('Couldn\'t find SB2 block: ', oldOpcode);
-	        return;
-	    }
-	    var blockMetadata = specMap[oldOpcode];
-	    // Block skeleton.
-	    var activeBlock = {
-	        id: uid(), // Generate a new block unique ID.
-	        opcode: blockMetadata.opcode, // Converted, e.g. "motion_movesteps".
-	        inputs: {}, // Inputs to this block and the blocks they point to.
-	        fields: {}, // Fields on this block and their values.
-	        next: null, // Next block.
-	        shadow: false, // No shadow blocks in an SB2 by default.
-	        children: [] // Store any generated children, flattened in `flatten`.
-	    };
-	    // For a procedure call, generate argument map from proc string.
-	    if (oldOpcode === 'call') {
-	        blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
-	    }
-	    // Look at the expected arguments in `blockMetadata.argMap.`
-	    // The basic problem here is to turn positional SB2 arguments into
-	    // non-positional named Scratch VM arguments.
-	    for (var i = 0; i < blockMetadata.argMap.length; i++) {
-	        var expectedArg = blockMetadata.argMap[i];
-	        var providedArg = sb2block[i + 1]; // (i = 0 is opcode)
-	        // Whether the input is obscuring a shadow.
-	        var shadowObscured = false;
-	        // Positional argument is an input.
-	        if (expectedArg.type === 'input') {
-	            // Create a new block and input metadata.
-	            var inputUid = uid();
-	            activeBlock.inputs[expectedArg.inputName] = {
-	                name: expectedArg.inputName,
-	                block: null,
-	                shadow: null
-	            };
-	            if (typeof providedArg === 'object' && providedArg) {
-	                // Block or block list occupies the input.
-	                var innerBlocks;
-	                if (typeof providedArg[0] === 'object' && providedArg[0]) {
-	                    // Block list occupies the input.
-	                    innerBlocks = parseBlockList(providedArg);
-	                } else {
-	                    // Single block occupies the input.
-	                    innerBlocks = [parseBlock(providedArg)];
-	                }
-	                var previousBlock = null;
-	                for (var j = 0; j < innerBlocks.length; j++) {
-	                    if (j === 0) {
-	                        innerBlocks[j].parent = activeBlock.id;
-	                    } else {
-	                        innerBlocks[j].parent = previousBlock;
-	                    }
-	                    previousBlock = innerBlocks[j].id;
-	                }
-	                // Obscures any shadow.
-	                shadowObscured = true;
-	                activeBlock.inputs[expectedArg.inputName].block = (
-	                    innerBlocks[0].id
-	                );
-	                activeBlock.children = (
-	                    activeBlock.children.concat(innerBlocks)
-	                );
-	            }
-	            // Generate a shadow block to occupy the input.
-	            if (!expectedArg.inputOp) {
-	                // No editable shadow input; e.g., for a boolean.
-	                continue;
-	            }
-	            // Each shadow has a field generated for it automatically.
-	            // Value to be filled in the field.
-	            var fieldValue = providedArg;
-	            // Shadows' field names match the input name, except for these:
-	            var fieldName = expectedArg.inputName;
-	            if (expectedArg.inputOp === 'math_number' ||
-	                expectedArg.inputOp === 'math_whole_number' ||
-	                expectedArg.inputOp === 'math_positive_number' ||
-	                expectedArg.inputOp === 'math_integer' ||
-	                expectedArg.inputOp === 'math_angle') {
-	                fieldName = 'NUM';
-	                // Fields are given Scratch 2.0 default values if obscured.
-	                if (shadowObscured) {
-	                    fieldValue = 10;
-	                }
-	            } else if (expectedArg.inputOp === 'text') {
-	                fieldName = 'TEXT';
-	                if (shadowObscured) {
-	                    fieldValue = '';
-	                }
-	            } else if (expectedArg.inputOp === 'colour_picker') {
-	                // Convert SB2 color to hex.
-	                fieldValue = Color.decimalToHex(providedArg);
-	                fieldName = 'COLOUR';
-	                if (shadowObscured) {
-	                    fieldValue = '#990000';
-	                }
-	            } else if (shadowObscured) {
-	                // Filled drop-down menu.
-	                fieldValue = '';
-	            }
-	            var fields = {};
-	            fields[fieldName] = {
-	                name: fieldName,
-	                value: fieldValue
-	            };
-	            activeBlock.children.push({
-	                id: inputUid,
-	                opcode: expectedArg.inputOp,
-	                inputs: {},
-	                fields: fields,
-	                next: null,
-	                topLevel: false,
-	                parent: activeBlock.id,
-	                shadow: true
-	            });
-	            activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
-	            // If no block occupying the input, alias to the shadow.
-	            if (!activeBlock.inputs[expectedArg.inputName].block) {
-	                activeBlock.inputs[expectedArg.inputName].block = inputUid;
-	            }
-	        } else if (expectedArg.type === 'field') {
-	            // Add as a field on this block.
-	            activeBlock.fields[expectedArg.fieldName] = {
-	                name: expectedArg.fieldName,
-	                value: providedArg
-	            };
-	        }
-	    }
-	    // Special cases to generate mutations.
-	    if (oldOpcode === 'stopScripts') {
-	        // Mutation for stop block: if the argument is 'other scripts',
-	        // the block needs a next connection.
-	        if (sb2block[1] === 'other scripts in sprite' ||
-	            sb2block[1] === 'other scripts in stage') {
-	            activeBlock.mutation = {
-	                tagName: 'mutation',
-	                hasnext: 'true',
-	                children: []
-	            };
-	        }
-	    } else if (oldOpcode === 'procDef') {
-	        // Mutation for procedure definition:
-	        // store all 2.0 proc data.
-	        var procData = sb2block.slice(1);
-	        activeBlock.mutation = {
-	            tagName: 'mutation',
-	            proccode: procData[0], // e.g., "abc %n %b %s"
-	            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
-	            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
-	            warp: procData[3], // Warp mode, e.g., true/false.
-	            children: []
-	        };
-	    } else if (oldOpcode === 'call') {
-	        // Mutation for procedure call:
-	        // string for proc code (e.g., "abc %n %b %s").
-	        activeBlock.mutation = {
-	            tagName: 'mutation',
-	            children: [],
-	            proccode: sb2block[1]
-	        };
-	    } else if (oldOpcode === 'getParam') {
-	        // Mutation for procedure parameter.
-	        activeBlock.mutation = {
-	            tagName: 'mutation',
-	            children: [],
-	            paramname: sb2block[1], // Name of parameter.
-	            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
-	        };
-	    }
-	    return activeBlock;
-	};
-
-	module.exports = sb2import;
-
-
-/***/ },
-/* 96 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var util = __webpack_require__(3);
 
-	var log = __webpack_require__(12);
-	var MathUtil = __webpack_require__(84);
-	var Target = __webpack_require__(97);
+	var log = __webpack_require__(63);
+	var MathUtil = __webpack_require__(76);
+	var Target = __webpack_require__(77);
 
 	/**
 	 * Rendered target: instance of a sprite (clone), or the stage.
@@ -16419,6 +11995,30 @@
 	            'control_start_as_clone', null, this
 	        );
 	    }
+	};
+
+	RenderedTarget.prototype.toJSON = function () {
+	    var result = new Object();
+	    var notSaved = ['renderer', 'effects', 'sprite', 'drawableID', 'runtime', 'id', 'blocks'];
+	    var x = null;
+	    for (x in this) {
+	        if (typeof this[x] === 'function') {
+	            continue;
+	            if (this.runtime.targets.testing == true) {
+	                console.log('Ignoring ' + x);
+	                }
+	            }
+	        if (notSaved.indexOf(x) === -1) {
+	            if (this.runtime.targets.testing == true) {
+	                console.log('Exporting ' + x);
+	            }
+	            result[x] = this[x];
+	            } else if (this.runtime.targets.testing == true) {
+	                console.log('Ignoring ' + x);
+	            }
+	        }
+	    result.sprite = this.sprite.export();
+	    return result;
 	};
 
 	/**
@@ -17023,7 +12623,7 @@
 	 * Serialize sprite info, used when emitting events about the sprite
 	 * @returns {object} sprite data as a simple object
 	 */
-	RenderedTarget.prototype.toJSON = function () {
+	RenderedTarget.prototype.toJSON2 = function () {
 	    return {
 	        id: this.id,
 	        name: this.getName(),
@@ -17055,13 +12655,609 @@
 
 
 /***/ },
-/* 97 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Blocks = __webpack_require__(25);
-	var Variable = __webpack_require__(98);
-	var List = __webpack_require__(99);
-	var uid = __webpack_require__(100);
+	var minilog = __webpack_require__(64);
+	minilog.enable();
+
+	module.exports = minilog('vm');
+
+
+/***/ },
+/* 64 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Minilog = __webpack_require__(65);
+
+	var oldEnable = Minilog.enable,
+	    oldDisable = Minilog.disable,
+	    isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
+	    console = __webpack_require__(69);
+
+	// Use a more capable logging backend if on Chrome
+	Minilog.defaultBackend = (isChrome ? console.minilog : console);
+
+	// apply enable inputs from localStorage and from the URL
+	if(typeof window != 'undefined') {
+	  try {
+	    Minilog.enable(JSON.parse(window.localStorage['minilogSettings']));
+	  } catch(e) {}
+	  if(window.location && window.location.search) {
+	    var match = RegExp('[?&]minilog=([^&]*)').exec(window.location.search);
+	    match && Minilog.enable(decodeURIComponent(match[1]));
+	  }
+	}
+
+	// Make enable also add to localStorage
+	Minilog.enable = function() {
+	  oldEnable.call(Minilog, true);
+	  try { window.localStorage['minilogSettings'] = JSON.stringify(true); } catch(e) {}
+	  return this;
+	};
+
+	Minilog.disable = function() {
+	  oldDisable.call(Minilog);
+	  try { delete window.localStorage.minilogSettings; } catch(e) {}
+	  return this;
+	};
+
+	exports = module.exports = Minilog;
+
+	exports.backends = {
+	  array: __webpack_require__(73),
+	  browser: Minilog.defaultBackend,
+	  localStorage: __webpack_require__(74),
+	  jQuery: __webpack_require__(75)
+	};
+
+
+/***/ },
+/* 65 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(66),
+	    Filter = __webpack_require__(68);
+
+	var log = new Transform(),
+	    slice = Array.prototype.slice;
+
+	exports = module.exports = function create(name) {
+	  var o   = function() { log.write(name, undefined, slice.call(arguments)); return o; };
+	  o.debug = function() { log.write(name, 'debug', slice.call(arguments)); return o; };
+	  o.info  = function() { log.write(name, 'info',  slice.call(arguments)); return o; };
+	  o.warn  = function() { log.write(name, 'warn',  slice.call(arguments)); return o; };
+	  o.error = function() { log.write(name, 'error', slice.call(arguments)); return o; };
+	  o.log   = o.debug; // for interface compliance with Node and browser consoles
+	  o.suggest = exports.suggest;
+	  o.format = log.format;
+	  return o;
+	};
+
+	// filled in separately
+	exports.defaultBackend = exports.defaultFormatter = null;
+
+	exports.pipe = function(dest) {
+	  return log.pipe(dest);
+	};
+
+	exports.end = exports.unpipe = exports.disable = function(from) {
+	  return log.unpipe(from);
+	};
+
+	exports.Transform = Transform;
+	exports.Filter = Filter;
+	// this is the default filter that's applied when .enable() is called normally
+	// you can bypass it completely and set up your own pipes
+	exports.suggest = new Filter();
+
+	exports.enable = function() {
+	  if(exports.defaultFormatter) {
+	    return log.pipe(exports.suggest) // filter
+	              .pipe(exports.defaultFormatter) // formatter
+	              .pipe(exports.defaultBackend); // backend
+	  }
+	  return log.pipe(exports.suggest) // filter
+	            .pipe(exports.defaultBackend); // formatter
+	};
+
+
+
+/***/ },
+/* 66 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var microee = __webpack_require__(67);
+
+	// Implements a subset of Node's stream.Transform - in a cross-platform manner.
+	function Transform() {}
+
+	microee.mixin(Transform);
+
+	// The write() signature is different from Node's
+	// --> makes it much easier to work with objects in logs.
+	// One of the lessons from v1 was that it's better to target
+	// a good browser rather than the lowest common denominator
+	// internally.
+	// If you want to use external streams, pipe() to ./stringify.js first.
+	Transform.prototype.write = function(name, level, args) {
+	  this.emit('item', name, level, args);
+	};
+
+	Transform.prototype.end = function() {
+	  this.emit('end');
+	  this.removeAllListeners();
+	};
+
+	Transform.prototype.pipe = function(dest) {
+	  var s = this;
+	  // prevent double piping
+	  s.emit('unpipe', dest);
+	  // tell the dest that it's being piped to
+	  dest.emit('pipe', s);
+
+	  function onItem() {
+	    dest.write.apply(dest, Array.prototype.slice.call(arguments));
+	  }
+	  function onEnd() { !dest._isStdio && dest.end(); }
+
+	  s.on('item', onItem);
+	  s.on('end', onEnd);
+
+	  s.when('unpipe', function(from) {
+	    var match = (from === dest) || typeof from == 'undefined';
+	    if(match) {
+	      s.removeListener('item', onItem);
+	      s.removeListener('end', onEnd);
+	      dest.emit('unpipe');
+	    }
+	    return match;
+	  });
+
+	  return dest;
+	};
+
+	Transform.prototype.unpipe = function(from) {
+	  this.emit('unpipe', from);
+	  return this;
+	};
+
+	Transform.prototype.format = function(dest) {
+	  throw new Error([
+	    'Warning: .format() is deprecated in Minilog v2! Use .pipe() instead. For example:',
+	    'var Minilog = require(\'minilog\');',
+	    'Minilog',
+	    '  .pipe(Minilog.backends.console.formatClean)',
+	    '  .pipe(Minilog.backends.console);'].join('\n'));
+	};
+
+	Transform.mixin = function(dest) {
+	  var o = Transform.prototype, k;
+	  for (k in o) {
+	    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
+	  }
+	};
+
+	module.exports = Transform;
+
+
+/***/ },
+/* 67 */
+/***/ function(module, exports) {
+
+	function M() { this._events = {}; }
+	M.prototype = {
+	  on: function(ev, cb) {
+	    this._events || (this._events = {});
+	    var e = this._events;
+	    (e[ev] || (e[ev] = [])).push(cb);
+	    return this;
+	  },
+	  removeListener: function(ev, cb) {
+	    var e = this._events[ev] || [], i;
+	    for(i = e.length-1; i >= 0 && e[i]; i--){
+	      if(e[i] === cb || e[i].cb === cb) { e.splice(i, 1); }
+	    }
+	  },
+	  removeAllListeners: function(ev) {
+	    if(!ev) { this._events = {}; }
+	    else { this._events[ev] && (this._events[ev] = []); }
+	  },
+	  emit: function(ev) {
+	    this._events || (this._events = {});
+	    var args = Array.prototype.slice.call(arguments, 1), i, e = this._events[ev] || [];
+	    for(i = e.length-1; i >= 0 && e[i]; i--){
+	      e[i].apply(this, args);
+	    }
+	    return this;
+	  },
+	  when: function(ev, cb) {
+	    return this.once(ev, cb, true);
+	  },
+	  once: function(ev, cb, when) {
+	    if(!cb) return this;
+	    function c() {
+	      if(!when) this.removeListener(ev, c);
+	      if(cb.apply(this, arguments) && when) this.removeListener(ev, c);
+	    }
+	    c.cb = cb;
+	    this.on(ev, c);
+	    return this;
+	  }
+	};
+	M.mixin = function(dest) {
+	  var o = M.prototype, k;
+	  for (k in o) {
+	    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
+	  }
+	};
+	module.exports = M;
+
+
+/***/ },
+/* 68 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// default filter
+	var Transform = __webpack_require__(66);
+
+	var levelMap = { debug: 1, info: 2, warn: 3, error: 4 };
+
+	function Filter() {
+	  this.enabled = true;
+	  this.defaultResult = true;
+	  this.clear();
+	}
+
+	Transform.mixin(Filter);
+
+	// allow all matching, with level >= given level
+	Filter.prototype.allow = function(name, level) {
+	  this._white.push({ n: name, l: levelMap[level] });
+	  return this;
+	};
+
+	// deny all matching, with level <= given level
+	Filter.prototype.deny = function(name, level) {
+	  this._black.push({ n: name, l: levelMap[level] });
+	  return this;
+	};
+
+	Filter.prototype.clear = function() {
+	  this._white = [];
+	  this._black = [];
+	  return this;
+	};
+
+	function test(rule, name) {
+	  // use .test for RegExps
+	  return (rule.n.test ? rule.n.test(name) : rule.n == name);
+	};
+
+	Filter.prototype.test = function(name, level) {
+	  var i, len = Math.max(this._white.length, this._black.length);
+	  for(i = 0; i < len; i++) {
+	    if(this._white[i] && test(this._white[i], name) && levelMap[level] >= this._white[i].l) {
+	      return true;
+	    }
+	    if(this._black[i] && test(this._black[i], name) && levelMap[level] < this._black[i].l) {
+	      return false;
+	    }
+	  }
+	  return this.defaultResult;
+	};
+
+	Filter.prototype.write = function(name, level, args) {
+	  if(!this.enabled || this.test(name, level)) {
+	    return this.emit('item', name, level, args);
+	  }
+	};
+
+	module.exports = Filter;
+
+
+/***/ },
+/* 69 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(66);
+
+	var newlines = /\n+$/,
+	    logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  var i = args.length-1;
+	  if (typeof console === 'undefined' || !console.log) {
+	    return;
+	  }
+	  if(console.log.apply) {
+	    return console.log.apply(console, [name, level].concat(args));
+	  } else if(JSON && JSON.stringify) {
+	    // console.log.apply is undefined in IE8 and IE9
+	    // for IE8/9: make console.log at least a bit less awful
+	    if(args[i] && typeof args[i] == 'string') {
+	      args[i] = args[i].replace(newlines, '');
+	    }
+	    try {
+	      for(i = 0; i < args.length; i++) {
+	        args[i] = JSON.stringify(args[i]);
+	      }
+	    } catch(e) {}
+	    console.log(args.join(' '));
+	  }
+	};
+
+	logger.formatters = ['color', 'minilog'];
+	logger.color = __webpack_require__(70);
+	logger.minilog = __webpack_require__(72);
+
+	module.exports = logger;
+
+
+/***/ },
+/* 70 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(66),
+	    color = __webpack_require__(71);
+
+	var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
+	    logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  var fn = console.log;
+	  if(console[level] && console[level].apply) {
+	    fn = console[level];
+	    fn.apply(console, [ '%c'+name+' %c'+level, color('gray'), color.apply(color, colors[level])].concat(args));
+	  }
+	};
+
+	// NOP, because piping the formatted logs can only cause trouble.
+	logger.pipe = function() { };
+
+	module.exports = logger;
+
+
+/***/ },
+/* 71 */
+/***/ function(module, exports) {
+
+	var hex = {
+	  black: '#000',
+	  red: '#c23621',
+	  green: '#25bc26',
+	  yellow: '#bbbb00',
+	  blue:  '#492ee1',
+	  magenta: '#d338d3',
+	  cyan: '#33bbc8',
+	  gray: '#808080',
+	  purple: '#708'
+	};
+	function color(fg, isInverse) {
+	  if(isInverse) {
+	    return 'color: #fff; background: '+hex[fg]+';';
+	  } else {
+	    return 'color: '+hex[fg]+';';
+	  }
+	}
+
+	module.exports = color;
+
+
+/***/ },
+/* 72 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(66),
+	    color = __webpack_require__(71),
+	    colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
+	    logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  var fn = console.log;
+	  if(level != 'debug' && console[level]) {
+	    fn = console[level];
+	  }
+
+	  var subset = [], i = 0;
+	  if(level != 'info') {
+	    for(; i < args.length; i++) {
+	      if(typeof args[i] != 'string') break;
+	    }
+	    fn.apply(console, [ '%c'+name +' '+ args.slice(0, i).join(' '), color.apply(color, colors[level]) ].concat(args.slice(i)));
+	  } else {
+	    fn.apply(console, [ '%c'+name, color.apply(color, colors[level]) ].concat(args));
+	  }
+	};
+
+	// NOP, because piping the formatted logs can only cause trouble.
+	logger.pipe = function() { };
+
+	module.exports = logger;
+
+
+/***/ },
+/* 73 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(66),
+	    cache = [ ];
+
+	var logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  cache.push([ name, level, args ]);
+	};
+
+	// utility functions
+	logger.get = function() { return cache; };
+	logger.empty = function() { cache = []; };
+
+	module.exports = logger;
+
+
+/***/ },
+/* 74 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(66),
+	    cache = false;
+
+	var logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  if(typeof window == 'undefined' || typeof JSON == 'undefined' || !JSON.stringify || !JSON.parse) return;
+	  try {
+	    if(!cache) { cache = (window.localStorage.minilog ? JSON.parse(window.localStorage.minilog) : []); }
+	    cache.push([ new Date().toString(), name, level, args ]);
+	    window.localStorage.minilog = JSON.stringify(cache);
+	  } catch(e) {}
+	};
+
+	module.exports = logger;
+
+/***/ },
+/* 75 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(66);
+
+	var cid = new Date().valueOf().toString(36);
+
+	function AjaxLogger(options) {
+	  this.url = options.url || '';
+	  this.cache = [];
+	  this.timer = null;
+	  this.interval = options.interval || 30*1000;
+	  this.enabled = true;
+	  this.jQuery = window.jQuery;
+	  this.extras = {};
+	}
+
+	Transform.mixin(AjaxLogger);
+
+	AjaxLogger.prototype.write = function(name, level, args) {
+	  if(!this.timer) { this.init(); }
+	  this.cache.push([name, level].concat(args));
+	};
+
+	AjaxLogger.prototype.init = function() {
+	  if(!this.enabled || !this.jQuery) return;
+	  var self = this;
+	  this.timer = setTimeout(function() {
+	    var i, logs = [], ajaxData, url = self.url;
+	    if(self.cache.length == 0) return self.init();
+	    // Test each log line and only log the ones that are valid (e.g. don't have circular references).
+	    // Slight performance hit but benefit is we log all valid lines.
+	    for(i = 0; i < self.cache.length; i++) {
+	      try {
+	        JSON.stringify(self.cache[i]);
+	        logs.push(self.cache[i]);
+	      } catch(e) { }
+	    }
+	    if(self.jQuery.isEmptyObject(self.extras)) {
+	        ajaxData = JSON.stringify({ logs: logs });
+	        url = self.url + '?client_id=' + cid;
+	    } else {
+	        ajaxData = JSON.stringify(self.jQuery.extend({logs: logs}, self.extras));
+	    }
+
+	    self.jQuery.ajax(url, {
+	      type: 'POST',
+	      cache: false,
+	      processData: false,
+	      data: ajaxData,
+	      contentType: 'application/json',
+	      timeout: 10000
+	    }).success(function(data, status, jqxhr) {
+	      if(data.interval) {
+	        self.interval = Math.max(1000, data.interval);
+	      }
+	    }).error(function() {
+	      self.interval = 30000;
+	    }).always(function() {
+	      self.init();
+	    });
+	    self.cache = [];
+	  }, this.interval);
+	};
+
+	AjaxLogger.prototype.end = function() {};
+
+	// wait until jQuery is defined. Useful if you don't control the load order.
+	AjaxLogger.jQueryWait = function(onDone) {
+	  if(typeof window !== 'undefined' && (window.jQuery || window.$)) {
+	    return onDone(window.jQuery || window.$);
+	  } else if (typeof window !== 'undefined') {
+	    setTimeout(function() { AjaxLogger.jQueryWait(onDone); }, 200);
+	  }
+	};
+
+	module.exports = AjaxLogger;
+
+
+/***/ },
+/* 76 */
+/***/ function(module, exports) {
+
+	var MathUtil = function () {};
+
+	/**
+	 * Convert a value from degrees to radians.
+	 * @param {!number} deg Value in degrees.
+	 * @return {!number} Equivalent value in radians.
+	 */
+	MathUtil.degToRad = function (deg) {
+	    return deg * Math.PI / 180;
+	};
+
+	/**
+	 * Convert a value from radians to degrees.
+	 * @param {!number} rad Value in radians.
+	 * @return {!number} Equivalent value in degrees.
+	 */
+	MathUtil.radToDeg = function (rad) {
+	    return rad * 180 / Math.PI;
+	};
+
+	/**
+	 * Clamp a number between two limits.
+	 * If n < min, return min. If n > max, return max. Else, return n.
+	 * @param {!number} n Number to clamp.
+	 * @param {!number} min Minimum limit.
+	 * @param {!number} max Maximum limit.
+	 * @return {!number} Value of n clamped to min and max.
+	 */
+	MathUtil.clamp = function (n, min, max) {
+	    return Math.min(Math.max(n, min), max);
+	};
+
+	/**
+	 * Keep a number between two limits, wrapping "extra" into the range.
+	 * e.g., wrapClamp(7, 1, 5) == 2
+	 * wrapClamp(0, 1, 5) == 5
+	 * wrapClamp(-11, -10, 6) == 6, etc.
+	 * @param {!number} n Number to wrap.
+	 * @param {!number} min Minimum limit.
+	 * @param {!number} max Maximum limit.
+	 * @return {!number} Value of n wrapped between min and max.
+	 */
+	MathUtil.wrapClamp = function (n, min, max) {
+	    var range = (max - min) + 1;
+	    return n - (Math.floor((n - min) / range) * range);
+	};
+
+	module.exports = MathUtil;
+
+
+/***/ },
+/* 77 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Blocks = __webpack_require__(7);
+	var Variable = __webpack_require__(78);
+	var List = __webpack_require__(79);
+	var uid = __webpack_require__(80);
 
 	/**
 	 * @fileoverview
@@ -17182,7 +13378,7 @@
 
 
 /***/ },
-/* 98 */
+/* 78 */
 /***/ function(module, exports) {
 
 	/**
@@ -17206,7 +13402,7 @@
 
 
 /***/ },
-/* 99 */
+/* 79 */
 /***/ function(module, exports) {
 
 	/**
@@ -17228,7 +13424,7 @@
 
 
 /***/ },
-/* 100 */
+/* 80 */
 /***/ function(module, exports) {
 
 	/**
@@ -17263,66 +13459,4013 @@
 
 
 /***/ },
+/* 81 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var EventEmitter = __webpack_require__(2);
+	var Sequencer = __webpack_require__(82);
+	var Blocks = __webpack_require__(7);
+	var Thread = __webpack_require__(84);
+	var util = __webpack_require__(3);
+
+	// Virtual I/O devices.
+	var Clock = __webpack_require__(86);
+	var Keyboard = __webpack_require__(87);
+	var Mouse = __webpack_require__(90);
+	var Serial = __webpack_require__(91);
+
+	var defaultBlockPackages = {
+	    scratch3_control: __webpack_require__(92),
+	    scratch3_event: __webpack_require__(93),
+	    scratch3_looks: __webpack_require__(94),
+	    scratch3_motion: __webpack_require__(95),
+	    scratch3_operators: __webpack_require__(96),
+	    scratch3_sensing: __webpack_require__(97),
+	    scratch3_data: __webpack_require__(98),
+	    scratch3_procedures: __webpack_require__(99),
+	    arduino: __webpack_require__(100)
+	};
+
+	/**
+	 * Manages targets, scripts, and the sequencer.
+	 */
+	var Runtime = function () {
+	    // Bind event emitter
+	    EventEmitter.call(this);
+
+	    /**
+	     * Target management and storage.
+	     * @type {Array.<!Target>}
+	     */
+	    this.targets = [];
+
+	    /**
+	     * A list of threads that are currently running in the VM.
+	     * Threads are added when execution starts and pruned when execution ends.
+	     * @type {Array.<Thread>}
+	     */
+	    this.threads = [];
+
+	    /** @type {!Sequencer} */
+	    this.sequencer = new Sequencer(this);
+
+	    /**
+	     * Storage container for flyout blocks.
+	     * These will execute on `_editingTarget.`
+	     * @type {!Blocks}
+	     */
+	    this.flyoutBlocks = new Blocks();
+
+	    /**
+	     * Currently known editing target for the VM.
+	     * @type {?Target}
+	     */
+	    this._editingTarget = null;
+
+	    /**
+	     * Map to look up a block primitive's implementation function by its opcode.
+	     * This is a two-step lookup: package name first, then primitive name.
+	     * @type {Object.<string, Function>}
+	     */
+	    this._primitives = {};
+
+	    /**
+	     * Map to look up hat blocks' metadata.
+	     * Keys are opcode for hat, values are metadata objects.
+	     * @type {Object.<string, Object>}
+	     */
+	    this._hats = {};
+
+	    /**
+	     * Currently known values for edge-activated hats.
+	     * Keys are block ID for the hat; values are the currently known values.
+	     * @type {Object.<string, *>}
+	     */
+	    this._edgeActivatedHatValues = {};
+
+	    /**
+	     * A list of script block IDs that were glowing during the previous frame.
+	     * @type {!Array.<!string>}
+	     */
+	    this._scriptGlowsPreviousFrame = [];
+
+	    /**
+	     * Number of threads running during the previous frame
+	     * @type {number}
+	     */
+	    this._threadCount = 0;
+
+	    /**
+	     * Currently known number of clones, used to enforce clone limit.
+	     * @type {number}
+	     */
+	    this._cloneCounter = 0;
+
+	    /**
+	     * Whether the project is in "turbo mode."
+	     * @type {Boolean}
+	     */
+	    this.turboMode = false;
+
+	    /**
+	     * Whether the project is in "compatibility mode" (30 TPS).
+	     * @type {Boolean}
+	     */
+	    this.compatibilityMode = false;
+
+	    /**
+	     * A reference to the current runtime stepping interval, set
+	     * by a `setInterval`.
+	     * @type {!number}
+	     */
+	    this._steppingInterval = null;
+
+	    /**
+	     * Current length of a step.
+	     * Changes as mode switches, and used by the sequencer to calculate
+	     * WORK_TIME.
+	     * @type {!number}
+	     */
+	    this.currentStepTime = null;
+
+	    /**
+	     * Whether any primitive has requested a redraw.
+	     * Affects whether `Sequencer.stepThreads` will yield
+	     * after stepping each thread.
+	     * Reset on every frame.
+	     * @type {boolean}
+	     */
+	    this.redrawRequested = false;
+
+	    // Register all given block packages.
+	    this._registerBlockPackages();
+
+	    // Register and initialize "IO devices", containers for processing
+	    // I/O related data.
+	    /** @type {Object.<string, Object>} */
+	    this.ioDevices = {
+	        clock: new Clock(),
+	        keyboard: new Keyboard(this),
+	        mouse: new Mouse(this),
+	        serial: new Serial(this)
+	    };
+	};
+
+	/**
+	 * Inherit from EventEmitter
+	 */
+	util.inherits(Runtime, EventEmitter);
+
+	/**
+	 * Width of the stage, in pixels.
+	 * @const {number}
+	 */
+	Runtime.STAGE_WIDTH = 480;
+
+	/**
+	 * Height of the stage, in pixels.
+	 * @const {number}
+	 */
+	Runtime.STAGE_HEIGHT = 360;
+
+	/**
+	 * Event name for glowing a script.
+	 * @const {string}
+	 */
+	Runtime.SCRIPT_GLOW_ON = 'SCRIPT_GLOW_ON';
+
+	/**
+	 * Event name for unglowing a script.
+	 * @const {string}
+	 */
+	Runtime.SCRIPT_GLOW_OFF = 'SCRIPT_GLOW_OFF';
+
+	/**
+	 * Event name for glowing a block.
+	 * @const {string}
+	 */
+	Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
+
+	/**
+	 * Event name for unglowing a block.
+	 * @const {string}
+	 */
+	Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
+
+	/**
+	 * Event name for glowing the green flag
+	 * @const {string}
+	 */
+	Runtime.PROJECT_RUN_START = 'PROJECT_RUN_START';
+
+	/**
+	 * Event name for unglowing the green flag
+	 * @const {string}
+	 */
+	Runtime.PROJECT_RUN_STOP = 'PROJECT_RUN_STOP';
+
+	/**
+	 * Event name for visual value report.
+	 * @const {string}
+	 */
+	Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
+
+	/**
+	 * Event name for sprite info report.
+	 * @const {string}
+	 */
+	Runtime.SPRITE_INFO_REPORT = 'SPRITE_INFO_REPORT';
+
+	/**
+	 * How rapidly we try to step threads by default, in ms.
+	 */
+	Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
+
+	/**
+	 * In compatibility mode, how rapidly we try to step threads, in ms.
+	 */
+	Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY = 1000 / 30;
+
+	/**
+	 * How many clones can be created at a time.
+	 * @const {number}
+	 */
+	Runtime.MAX_CLONES = 300;
+
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Register default block packages with this runtime.
+	 * @todo Prefix opcodes with package name.
+	 * @private
+	 */
+	Runtime.prototype._registerBlockPackages = function (packageToLoad) {
+	    if(packageToLoad==null){
+	        packageToLoad = defaultBlockPackages;
+	    }
+	    for (var packageName in packageToLoad) {
+	        if (packageToLoad.hasOwnProperty(packageName)) {
+	            // @todo pass a different runtime depending on package privilege?
+	            var packageObject = new (packageToLoad[packageName])(this);
+	            // Collect primitives from package.
+	            if (packageObject.getPrimitives) {
+	                var packagePrimitives = packageObject.getPrimitives();
+	                for (var op in packagePrimitives) {
+	                    if (packagePrimitives.hasOwnProperty(op)) {
+	                        this._primitives[op] =
+	                            packagePrimitives[op].bind(packageObject);
+	                    }
+	                }
+	            }
+	            // Collect hat metadata from package.
+	            if (packageObject.getHats) {
+	                var packageHats = packageObject.getHats();
+	                for (var hatName in packageHats) {
+	                    if (packageHats.hasOwnProperty(hatName)) {
+	                        this._hats[hatName] = packageHats[hatName];
+	                    }
+	                }
+	            }
+	        }
+	    }
+	};
+
+	/**
+	 * Retrieve the function associated with the given opcode.
+	 * @param {!string} opcode The opcode to look up.
+	 * @return {Function} The function which implements the opcode.
+	 */
+	Runtime.prototype.getOpcodeFunction = function (opcode) {
+	    return this._primitives[opcode];
+	};
+
+	/**
+	 * Return whether an opcode represents a hat block.
+	 * @param {!string} opcode The opcode to look up.
+	 * @return {Boolean} True if the op is known to be a hat.
+	 */
+	Runtime.prototype.getIsHat = function (opcode) {
+	    return this._hats.hasOwnProperty(opcode);
+	};
+
+	/**
+	 * Return whether an opcode represents an edge-activated hat block.
+	 * @param {!string} opcode The opcode to look up.
+	 * @return {Boolean} True if the op is known to be a edge-activated hat.
+	 */
+	Runtime.prototype.getIsEdgeActivatedHat = function (opcode) {
+	    return this._hats.hasOwnProperty(opcode) &&
+	        this._hats[opcode].edgeActivated;
+	};
+
+	/**
+	 * Update an edge-activated hat block value.
+	 * @param {!string} blockId ID of hat to store value for.
+	 * @param {*} newValue Value to store for edge-activated hat.
+	 * @return {*} The old value for the edge-activated hat.
+	 */
+	Runtime.prototype.updateEdgeActivatedValue = function (blockId, newValue) {
+	    var oldValue = this._edgeActivatedHatValues[blockId];
+	    this._edgeActivatedHatValues[blockId] = newValue;
+	    return oldValue;
+	};
+
+	/**
+	 * Clear all edge-activaed hat values.
+	 */
+	Runtime.prototype.clearEdgeActivatedValues = function () {
+	    this._edgeActivatedHatValues = {};
+	};
+
+	/**
+	 * Attach the renderer
+	 * @param {!RenderWebGL} renderer The renderer to attach
+	 */
+	Runtime.prototype.attachRenderer = function (renderer) {
+	    this.renderer = renderer;
+	};
+
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Create a thread and push it to the list of threads.
+	 * @param {!string} id ID of block that starts the stack.
+	 * @param {!Target} target Target to run thread on.
+	 * @return {!Thread} The newly created thread.
+	 */
+	Runtime.prototype._pushThread = function (id, target) {
+	    var thread = new Thread(id);
+	    thread.target = target;
+	    thread.pushStack(id);
+	    this.threads.push(thread);
+	    return thread;
+	};
+
+	/**
+	 * Remove a thread from the list of threads.
+	 * @param {?Thread} thread Thread object to remove from actives
+	 */
+	Runtime.prototype._removeThread = function (thread) {
+	    // Inform sequencer to stop executing that thread.
+	    this.sequencer.retireThread(thread);
+	    // Remove from the list.
+	    var i = this.threads.indexOf(thread);
+	    if (i > -1) {
+	        this.threads.splice(i, 1);
+	    }
+	};
+
+	/**
+	 * Restart a thread in place, maintaining its position in the list of threads.
+	 * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
+	 * Test project: https://scratch.mit.edu/projects/130183108/
+	 * @param {!Thread} thread Thread object to restart.
+	 */
+	Runtime.prototype._restartThread = function (thread) {
+	    var newThread = new Thread(thread.topBlock);
+	    newThread.target = thread.target;
+	    newThread.pushStack(thread.topBlock);
+	    var i = this.threads.indexOf(thread);
+	    if (i > -1) {
+	        this.threads[i] = newThread;
+	    } else {
+	        this.threads.push(thread);
+	    }
+	};
+
+	/**
+	 * Return whether a thread is currently active/running.
+	 * @param {?Thread} thread Thread object to check.
+	 * @return {Boolean} True if the thread is active/running.
+	 */
+	Runtime.prototype.isActiveThread = function (thread) {
+	    return this.threads.indexOf(thread) > -1;
+	};
+
+	/**
+	 * Toggle a script.
+	 * @param {!string} topBlockId ID of block that starts the script.
+	 */
+	Runtime.prototype.toggleScript = function (topBlockId) {
+	    // Remove any existing thread.
+	    for (var i = 0; i < this.threads.length; i++) {
+	        if (this.threads[i].topBlock === topBlockId) {
+	            this._removeThread(this.threads[i]);
+	            return;
+	        }
+	    }
+	    // Otherwise add it.
+	    this._pushThread(topBlockId, this._editingTarget);
+	};
+
+	/**
+	 * Run a function `f` for all scripts in a workspace.
+	 * `f` will be called with two parameters:
+	 *  - the top block ID of the script.
+	 *  - the target that owns the script.
+	 * @param {!Function} f Function to call for each script.
+	 * @param {Target=} optTarget Optionally, a target to restrict to.
+	 */
+	Runtime.prototype.allScriptsDo = function (f, optTarget) {
+	    var targets = this.targets;
+	    if (optTarget) {
+	        targets = [optTarget];
+	    }
+	    for (var t = 0; t < targets.length; t++) {
+	        var target = targets[t];
+	        var scripts = target.blocks.getScripts();
+	        for (var j = 0; j < scripts.length; j++) {
+	            var topBlockId = scripts[j];
+	            f(topBlockId, target);
+	        }
+	    }
+	};
+
+	/**
+	 * Start all relevant hats.
+	 * @param {!string} requestedHatOpcode Opcode of hats to start.
+	 * @param {Object=} optMatchFields Optionally, fields to match on the hat.
+	 * @param {Target=} optTarget Optionally, a target to restrict to.
+	 * @return {Array.<Thread>} List of threads started by this function.
+	 */
+	Runtime.prototype.startHats = function (requestedHatOpcode,
+	    optMatchFields, optTarget) {
+	    if (!this._hats.hasOwnProperty(requestedHatOpcode)) {
+	        // No known hat with this opcode.
+	        return;
+	    }
+	    var instance = this;
+	    var newThreads = [];
+	    // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
+	    this.allScriptsDo(function (topBlockId, target) {
+	        var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
+	        if (potentialHatOpcode !== requestedHatOpcode) {
+	            // Not the right hat.
+	            return;
+	        }
+	        // Match any requested fields.
+	        // For example: ensures that broadcasts match.
+	        // This needs to happen before the block is evaluated
+	        // (i.e., before the predicate can be run) because "broadcast and wait"
+	        // needs to have a precise collection of started threads.
+	        var hatFields = target.blocks.getFields(topBlockId);
+	        if (optMatchFields) {
+	            for (var matchField in optMatchFields) {
+	                if (hatFields[matchField].value !==
+	                    optMatchFields[matchField]) {
+	                    // Field mismatch.
+	                    return;
+	                }
+	            }
+	        }
+	        // Look up metadata for the relevant hat.
+	        var hatMeta = instance._hats[requestedHatOpcode];
+	        if (hatMeta.restartExistingThreads) {
+	            // If `restartExistingThreads` is true, we should stop
+	            // any existing threads starting with the top block.
+	            for (var i = 0; i < instance.threads.length; i++) {
+	                if (instance.threads[i].topBlock === topBlockId &&
+	                    instance.threads[i].target === target) {
+	                    instance._restartThread(instance.threads[i]);
+	                    return;
+	                }
+	            }
+	        } else {
+	            // If `restartExistingThreads` is false, we should
+	            // give up if any threads with the top block are running.
+	            for (var j = 0; j < instance.threads.length; j++) {
+	                if (instance.threads[j].topBlock === topBlockId &&
+	                    instance.threads[j].target === target) {
+	                    // Some thread is already running.
+	                    return;
+	                }
+	            }
+	        }
+	        // Start the thread with this top block.
+	        newThreads.push(instance._pushThread(topBlockId, target));
+	    }, optTarget);
+	    return newThreads;
+	};
+
+	/**
+	 * Dispose all targets. Return to clean state.
+	 */
+	Runtime.prototype.dispose = function () {
+	    this.stopAll();
+	    this.targets.map(this.disposeTarget, this);
+	};
+
+	/**
+	 * Dispose of a target.
+	 * @param {!Target} disposingTarget Target to dispose of.
+	 */
+	Runtime.prototype.disposeTarget = function (disposingTarget) {
+	    this.targets = this.targets.filter(function (target) {
+	        if (disposingTarget !== target) return true;
+	        // Allow target to do dispose actions.
+	        target.dispose();
+	        // Remove from list of targets.
+	        return false;
+	    });
+	};
+
+	/**
+	 * Stop any threads acting on the target.
+	 * @param {!Target} target Target to stop threads for.
+	 * @param {Thread=} optThreadException Optional thread to skip.
+	 */
+	Runtime.prototype.stopForTarget = function (target, optThreadException) {
+	    // Stop any threads on the target.
+	    for (var i = 0; i < this.threads.length; i++) {
+	        if (this.threads[i] === optThreadException) {
+	            continue;
+	        }
+	        if (this.threads[i].target === target) {
+	            this._removeThread(this.threads[i]);
+	        }
+	    }
+	};
+
+	/**
+	 * Start all threads that start with the green flag.
+	 */
+	Runtime.prototype.greenFlag = function () {
+	    this.stopAll();
+	    this.ioDevices.clock.resetProjectTimer();
+	    this.clearEdgeActivatedValues();
+	    // Inform all targets of the green flag.
+	    for (var i = 0; i < this.targets.length; i++) {
+	        this.targets[i].onGreenFlag();
+	    }
+	    this.startHats('event_whenflagclicked');
+	};
+
+	/**
+	 * Stop "everything."
+	 */
+	Runtime.prototype.stopAll = function () {
+	    // Dispose all clones.
+	    var newTargets = [];
+	    for (var i = 0; i < this.targets.length; i++) {
+	        if (this.targets[i].hasOwnProperty('isOriginal') &&
+	            !this.targets[i].isOriginal) {
+	            this.targets[i].dispose();
+	        } else {
+	            newTargets.push(this.targets[i]);
+	        }
+	    }
+	    this.targets = newTargets;
+	    // Dispose all threads.
+	    var threadsCopy = this.threads.slice();
+	    while (threadsCopy.length > 0) {
+	        var poppedThread = threadsCopy.pop();
+	        this._removeThread(poppedThread);
+	    }
+	};
+
+	/**
+	 * Repeatedly run `sequencer.stepThreads` and filter out
+	 * inactive threads after each iteration.
+	 */
+	Runtime.prototype._step = function () {
+	    // Find all edge-activated hats, and add them to threads to be evaluated.
+	    for (var hatType in this._hats) {
+	        var hat = this._hats[hatType];
+	        if (hat.edgeActivated) {
+	            this.startHats(hatType);
+	        }
+	    }
+	    this.redrawRequested = false;
+	    var doneThreads = this.sequencer.stepThreads();
+	    this._updateGlows(doneThreads);
+	    this._setThreadCount(this.threads.length + doneThreads.length);
+	    if (this.renderer) {
+	        // @todo: Only render when this.redrawRequested or clones rendered.
+	        this.renderer.draw();
+	    }
+	};
+
+	/**
+	 * Set the current editing target known by the runtime.
+	 * @param {!Target} editingTarget New editing target.
+	 */
+	Runtime.prototype.setEditingTarget = function (editingTarget) {
+	    this._editingTarget = editingTarget;
+	    // Script glows must be cleared.
+	    this._scriptGlowsPreviousFrame = [];
+	    this._updateGlows();
+	    this.spriteInfoReport(editingTarget);
+	};
+
+	/**
+	 * Set whether we are in 30 TPS compatibility mode.
+	 * @param {boolean} compatibilityModeOn True iff in compatibility mode.
+	 */
+	Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
+	    this.compatibilityMode = compatibilityModeOn;
+	    if (this._steppingInterval) {
+	        self.clearInterval(this._steppingInterval);
+	        this.start();
+	    }
+	};
+
+	/**
+	 * Emit glows/glow clears for scripts after a single tick.
+	 * Looks at `this.threads` and notices which have turned on/off new glows.
+	 * @param {Array.<Thread>=} optExtraThreads Optional list of inactive threads.
+	 */
+	Runtime.prototype._updateGlows = function (optExtraThreads) {
+	    var searchThreads = [];
+	    searchThreads.push.apply(searchThreads, this.threads);
+	    if (optExtraThreads) {
+	        searchThreads.push.apply(searchThreads, optExtraThreads);
+	    }
+	    // Set of scripts that request a glow this frame.
+	    var requestedGlowsThisFrame = [];
+	    // Final set of scripts glowing during this frame.
+	    var finalScriptGlows = [];
+	    // Find all scripts that should be glowing.
+	    for (var i = 0; i < searchThreads.length; i++) {
+	        var thread = searchThreads[i];
+	        var target = thread.target;
+	        if (target === this._editingTarget) {
+	            var blockForThread = thread.blockGlowInFrame;
+	            if (thread.requestScriptGlowInFrame) {
+	                var script = target.blocks.getTopLevelScript(blockForThread);
+	                if (!script) {
+	                    // Attempt to find in flyout blocks.
+	                    script = this.flyoutBlocks.getTopLevelScript(
+	                        blockForThread
+	                    );
+	                }
+	                if (script) {
+	                    requestedGlowsThisFrame.push(script);
+	                }
+	            }
+	        }
+	    }
+	    // Compare to previous frame.
+	    for (var j = 0; j < this._scriptGlowsPreviousFrame.length; j++) {
+	        var previousFrameGlow = this._scriptGlowsPreviousFrame[j];
+	        if (requestedGlowsThisFrame.indexOf(previousFrameGlow) < 0) {
+	            // Glow turned off.
+	            this.glowScript(previousFrameGlow, false);
+	        } else {
+	            // Still glowing.
+	            finalScriptGlows.push(previousFrameGlow);
+	        }
+	    }
+	    for (var k = 0; k < requestedGlowsThisFrame.length; k++) {
+	        var currentFrameGlow = requestedGlowsThisFrame[k];
+	        if (this._scriptGlowsPreviousFrame.indexOf(currentFrameGlow) < 0) {
+	            // Glow turned on.
+	            this.glowScript(currentFrameGlow, true);
+	            finalScriptGlows.push(currentFrameGlow);
+	        }
+	    }
+	    this._scriptGlowsPreviousFrame = finalScriptGlows;
+	};
+
+	/**
+	 * Emit run start/stop after each tick. Emits when `this.threads.length` goes
+	 * between non-zero and zero
+	 *
+	 * @param {number} threadCount The new threadCount
+	 */
+	Runtime.prototype._setThreadCount = function (threadCount) {
+	    if (this._threadCount === 0 && threadCount > 0) {
+	        this.emit(Runtime.PROJECT_RUN_START);
+	    }
+	    if (this._threadCount > 0 && threadCount === 0) {
+	        this.emit(Runtime.PROJECT_RUN_STOP);
+	    }
+	    this._threadCount = threadCount;
+	};
+
+	/**
+	 * "Quiet" a script's glow: stop the VM from generating glow/unglow events
+	 * about that script. Use when a script has just been deleted, but we may
+	 * still be tracking glow data about it.
+	 * @param {!string} scriptBlockId Id of top-level block in script to quiet.
+	 */
+	Runtime.prototype.quietGlow = function (scriptBlockId) {
+	    var index = this._scriptGlowsPreviousFrame.indexOf(scriptBlockId);
+	    if (index > -1) {
+	        this._scriptGlowsPreviousFrame.splice(index, 1);
+	    }
+	};
+
+	/**
+	 * Emit feedback for block glowing (used in the sequencer).
+	 * @param {?string} blockId ID for the block to update glow
+	 * @param {boolean} isGlowing True to turn on glow; false to turn off.
+	 */
+	Runtime.prototype.glowBlock = function (blockId, isGlowing) {
+	    if (isGlowing) {
+	        this.emit(Runtime.BLOCK_GLOW_ON, {id: blockId});
+	    } else {
+	        this.emit(Runtime.BLOCK_GLOW_OFF, {id: blockId});
+	    }
+	};
+
+	/**
+	 * Emit feedback for script glowing.
+	 * @param {?string} topBlockId ID for the top block to update glow
+	 * @param {boolean} isGlowing True to turn on glow; false to turn off.
+	 */
+	Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
+	    if (isGlowing) {
+	        this.emit(Runtime.SCRIPT_GLOW_ON, {id: topBlockId});
+	    } else {
+	        this.emit(Runtime.SCRIPT_GLOW_OFF, {id: topBlockId});
+	    }
+	};
+
+	/**
+	 * Emit value for reporter to show in the blocks.
+	 * @param {string} blockId ID for the block.
+	 * @param {string} value Value to show associated with the block.
+	 */
+	Runtime.prototype.visualReport = function (blockId, value) {
+	    this.emit(Runtime.VISUAL_REPORT, {id: blockId, value: String(value)});
+	};
+
+	/**
+	 * Emit a sprite info report if the provided target is the original sprite
+	 * @param {!Target} target Target to report sprite info for.
+	 */
+	Runtime.prototype.spriteInfoReport = function (target) {
+	    if (!target.isOriginal) return;
+
+	    this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
+	};
+
+	/**
+	 * Get a target by its id.
+	 * @param {string} targetId Id of target to find.
+	 * @return {?Target} The target, if found.
+	 */
+	Runtime.prototype.getTargetById = function (targetId) {
+	    for (var i = 0; i < this.targets.length; i++) {
+	        var target = this.targets[i];
+	        if (target.id === targetId) {
+	            return target;
+	        }
+	    }
+	};
+
+	/**
+	 * Get the first original (non-clone-block-created) sprite given a name.
+	 * @param {string} spriteName Name of sprite to look for.
+	 * @return {?Target} Target representing a sprite of the given name.
+	 */
+	Runtime.prototype.getSpriteTargetByName = function (spriteName) {
+	    for (var i = 0; i < this.targets.length; i++) {
+	        var target = this.targets[i];
+	        if (target.sprite && target.sprite.name === spriteName) {
+	            return target;
+	        }
+	    }
+	};
+
+	/**
+	 * Update the clone counter to track how many clones are created.
+	 * @param {number} changeAmount How many clones have been created/destroyed.
+	 */
+	Runtime.prototype.changeCloneCounter = function (changeAmount) {
+	    this._cloneCounter += changeAmount;
+	};
+
+	/**
+	 * Return whether there are clones available.
+	 * @return {boolean} True until the number of clones hits Runtime.MAX_CLONES.
+	 */
+	Runtime.prototype.clonesAvailable = function () {
+	    return this._cloneCounter < Runtime.MAX_CLONES;
+	};
+
+	/**
+	 * Get a target representing the Scratch stage, if one exists.
+	 * @return {?Target} The target, if found.
+	 */
+	Runtime.prototype.getTargetForStage = function () {
+	    for (var i = 0; i < this.targets.length; i++) {
+	        var target = this.targets[i];
+	        if (target.isStage) {
+	            return target;
+	        }
+	    }
+	};
+
+	/**
+	 * Tell the runtime to request a redraw.
+	 * Use after a clone/sprite has completed some visible operation on the stage.
+	 */
+	Runtime.prototype.requestRedraw = function () {
+	    this.redrawRequested = true;
+	};
+
+	/**
+	 * Set up timers to repeatedly step in a browser.
+	 */
+	Runtime.prototype.start = function () {
+	    var interval = Runtime.THREAD_STEP_INTERVAL;
+	    if (this.compatibilityMode) {
+	        interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
+	    }
+	    this.currentStepTime = interval;
+	    this._steppingInterval = self.setInterval(function () {
+	        this._step();
+	    }.bind(this), interval);
+	};
+
+	module.exports = Runtime;
+
+
+/***/ },
+/* 82 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Timer = __webpack_require__(83);
+	var Thread = __webpack_require__(84);
+	var execute = __webpack_require__(85);
+
+	var Sequencer = function (runtime) {
+	    /**
+	     * A utility timer for timing thread sequencing.
+	     * @type {!Timer}
+	     */
+	    this.timer = new Timer();
+
+	    /**
+	     * Reference to the runtime owning this sequencer.
+	     * @type {!Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Time to run a warp-mode thread, in ms.
+	 * @type {number}
+	 */
+	Sequencer.WARP_TIME = 500;
+
+	/**
+	 * Step through all threads in `this.runtime.threads`, running them in order.
+	 * @return {Array.<!Thread>} List of inactive threads after stepping.
+	 */
+	Sequencer.prototype.stepThreads = function () {
+	    // Work time is 75% of the thread stepping interval.
+	    var WORK_TIME = 0.75 * this.runtime.currentStepTime;
+	    // Start counting toward WORK_TIME.
+	    this.timer.start();
+	    // Count of active threads.
+	    var numActiveThreads = Infinity;
+	    // Whether `stepThreads` has run through a full single tick.
+	    var ranFirstTick = false;
+	    var doneThreads = [];
+	    // Conditions for continuing to stepping threads:
+	    // 1. We must have threads in the list, and some must be active.
+	    // 2. Time elapsed must be less than WORK_TIME.
+	    // 3. Either turbo mode, or no redraw has been requested by a primitive.
+	    while (this.runtime.threads.length > 0 &&
+	           numActiveThreads > 0 &&
+	           this.timer.timeElapsed() < WORK_TIME &&
+	           (this.runtime.turboMode || !this.runtime.redrawRequested)) {
+	        numActiveThreads = 0;
+	        // Attempt to run each thread one time.
+	        for (var i = 0; i < this.runtime.threads.length; i++) {
+	            var activeThread = this.runtime.threads[i];
+	            if (activeThread.stack.length === 0 ||
+	                activeThread.status === Thread.STATUS_DONE) {
+	                // Finished with this thread.
+	                if (doneThreads.indexOf(activeThread) < 0) {
+	                    doneThreads.push(activeThread);
+	                }
+	                continue;
+	            }
+	            if (activeThread.status === Thread.STATUS_YIELD_TICK &&
+	                !ranFirstTick) {
+	                // Clear single-tick yield from the last call of `stepThreads`.
+	                activeThread.status = Thread.STATUS_RUNNING;
+	            }
+	            if (activeThread.status === Thread.STATUS_RUNNING ||
+	                activeThread.status === Thread.STATUS_YIELD) {
+	                // Normal-mode thread: step.
+	                this.stepThread(activeThread);
+	                activeThread.warpTimer = null;
+	            }
+	            if (activeThread.status === Thread.STATUS_RUNNING) {
+	                numActiveThreads++;
+	            }
+	        }
+	        // We successfully ticked once. Prevents running STATUS_YIELD_TICK
+	        // threads on the next tick.
+	        ranFirstTick = true;
+	    }
+	    // Filter inactive threads from `this.runtime.threads`.
+	    this.runtime.threads = this.runtime.threads.filter(function (thread) {
+	        if (doneThreads.indexOf(thread) > -1) {
+	            return false;
+	        }
+	        return true;
+	    });
+	    return doneThreads;
+	};
+
+	/**
+	 * Step the requested thread for as long as necessary.
+	 * @param {!Thread} thread Thread object to step.
+	 */
+	Sequencer.prototype.stepThread = function (thread) {
+	    var currentBlockId = thread.peekStack();
+	    if (!currentBlockId) {
+	        // A "null block" - empty branch.
+	        thread.popStack();
+	    }
+	    while (thread.peekStack()) {
+	        var isWarpMode = thread.peekStackFrame().warpMode;
+	        if (isWarpMode && !thread.warpTimer) {
+	            // Initialize warp-mode timer if it hasn't been already.
+	            // This will start counting the thread toward `Sequencer.WARP_TIME`.
+	            thread.warpTimer = new Timer();
+	            thread.warpTimer.start();
+	        }
+	        // Execute the current block.
+	        // Save the current block ID to notice if we did control flow.
+	        currentBlockId = thread.peekStack();
+	        execute(this, thread);
+	        thread.blockGlowInFrame = currentBlockId;
+	        // If the thread has yielded or is waiting, yield to other threads.
+	        if (thread.status === Thread.STATUS_YIELD) {
+	            // Mark as running for next iteration.
+	            thread.status = Thread.STATUS_RUNNING;
+	            // In warp mode, yielded blocks are re-executed immediately.
+	            if (isWarpMode &&
+	                thread.warpTimer.timeElapsed() <= Sequencer.WARP_TIME) {
+	                continue;
+	            }
+	            return;
+	        } else if (thread.status === Thread.STATUS_PROMISE_WAIT) {
+	            // A promise was returned by the primitive. Yield the thread
+	            // until the promise resolves. Promise resolution should reset
+	            // thread.status to Thread.STATUS_RUNNING.
+	            return;
+	        }
+	        // If no control flow has happened, switch to next block.
+	        if (thread.peekStack() === currentBlockId) {
+	            thread.goToNextBlock();
+	        }
+	        // If no next block has been found at this point, look on the stack.
+	        while (!thread.peekStack()) {
+	            thread.popStack();
+	            if (thread.stack.length === 0) {
+	                // No more stack to run!
+	                thread.status = Thread.STATUS_DONE;
+	                return;
+	            }
+	            if (thread.peekStackFrame().isLoop) {
+	                // The current level of the stack is marked as a loop.
+	                // Return to yield for the frame/tick in general.
+	                // Unless we're in warp mode - then only return if the
+	                // warp timer is up.
+	                if (!isWarpMode ||
+	                    thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
+	                    // Don't do anything to the stack, since loops need
+	                    // to be re-executed.
+	                    return;
+	                } else {
+	                    // Don't go to the next block for this level of the stack,
+	                    // since loops need to be re-executed.
+	                    continue;
+	                }
+	            } else if (thread.peekStackFrame().waitingReporter) {
+	                // This level of the stack was waiting for a value.
+	                // This means a reporter has just returned - so don't go
+	                // to the next block for this level of the stack.
+	                return;
+	            }
+	            // Get next block of existing block on the stack.
+	            thread.goToNextBlock();
+	        }
+	    }
+	};
+
+	/**
+	 * Step a thread into a block's branch.
+	 * @param {!Thread} thread Thread object to step to branch.
+	 * @param {Number} branchNum Which branch to step to (i.e., 1, 2).
+	 * @param {Boolean} isLoop Whether this block is a loop.
+	 */
+	Sequencer.prototype.stepToBranch = function (thread, branchNum, isLoop) {
+	    if (!branchNum) {
+	        branchNum = 1;
+	    }
+	    var currentBlockId = thread.peekStack();
+	    var branchId = thread.target.blocks.getBranch(
+	        currentBlockId,
+	        branchNum
+	    );
+	    thread.peekStackFrame().isLoop = isLoop;
+	    if (branchId) {
+	        // Push branch ID to the thread's stack.
+	        thread.pushStack(branchId);
+	    } else {
+	        thread.pushStack(null);
+	    }
+	};
+
+	/**
+	 * Step a procedure.
+	 * @param {!Thread} thread Thread object to step to procedure.
+	 * @param {!string} procedureCode Procedure code of procedure to step to.
+	 */
+	Sequencer.prototype.stepToProcedure = function (thread, procedureCode) {
+	    var definition = thread.target.blocks.getProcedureDefinition(procedureCode);
+	    if (!definition) {
+	        return;
+	    }
+	    // Check if the call is recursive.
+	    // If so, set the thread to yield after pushing.
+	    var isRecursive = thread.isRecursiveCall(procedureCode);
+	    // To step to a procedure, we put its definition on the stack.
+	    // Execution for the thread will proceed through the definition hat
+	    // and on to the main definition of the procedure.
+	    // When that set of blocks finishes executing, it will be popped
+	    // from the stack by the sequencer, returning control to the caller.
+	    thread.pushStack(definition);
+	    // In known warp-mode threads, only yield when time is up.
+	    if (thread.peekStackFrame().warpMode &&
+	        thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
+	        thread.status = Thread.STATUS_YIELD;
+	    } else {
+	        // Look for warp-mode flag on definition, and set the thread
+	        // to warp-mode if needed.
+	        var definitionBlock = thread.target.blocks.getBlock(definition);
+	        var doWarp = definitionBlock.mutation.warp;
+	        if (doWarp) {
+	            thread.peekStackFrame().warpMode = true;
+	        } else {
+	            // In normal-mode threads, yield any time we have a recursive call.
+	            if (isRecursive) {
+	                thread.status = Thread.STATUS_YIELD;
+	            }
+	        }
+	    }
+	};
+
+	/**
+	 * Retire a thread in the middle, without considering further blocks.
+	 * @param {!Thread} thread Thread object to retire.
+	 */
+	Sequencer.prototype.retireThread = function (thread) {
+	    thread.stack = [];
+	    thread.stackFrame = [];
+	    thread.requestScriptGlowInFrame = false;
+	    thread.status = Thread.STATUS_DONE;
+	};
+
+	module.exports = Sequencer;
+
+
+/***/ },
+/* 83 */
+/***/ function(module, exports) {
+
+	/**
+	 * @fileoverview
+	 * A utility for accurately measuring time.
+	 * To use:
+	 * ---
+	 * var timer = new Timer();
+	 * timer.start();
+	 * ... pass some time ...
+	 * var timeDifference = timer.timeElapsed();
+	 * ---
+	 * Or, you can use the `time` and `relativeTime`
+	 * to do some measurement yourself.
+	 */
+
+	/**
+	 * @constructor
+	 */
+	var Timer = function () {};
+
+	/**
+	 * Used to store the start time of a timer action.
+	 * Updated when calling `timer.start`.
+	 */
+	Timer.prototype.startTime = 0;
+
+	/**
+	 * Return the currently known absolute time, in ms precision.
+	 * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
+	 */
+	Timer.prototype.time = function () {
+	    if (Date.now) {
+	        return Date.now();
+	    } else {
+	        return new Date().getTime();
+	    }
+	};
+
+	/**
+	 * Returns a time accurate relative to other times produced by this function.
+	 * If possible, will use sub-millisecond precision.
+	 * If not, will use millisecond precision.
+	 * Not guaranteed to produce the same absolute values per-system.
+	 * @returns {number} ms-scale accurate time relative to other relative times.
+	 */
+	Timer.prototype.relativeTime = function () {
+	    if (typeof self !== 'undefined' &&
+	        self.performance && 'now' in self.performance) {
+	        return self.performance.now();
+	    } else {
+	        return this.time();
+	    }
+	};
+
+	/**
+	 * Start a timer for measuring elapsed time,
+	 * at the most accurate precision possible.
+	 */
+	Timer.prototype.start = function () {
+	    this.startTime = this.relativeTime();
+	};
+
+	/**
+	 * Check time elapsed since `timer.start` was called.
+	 * @returns {number} Time elapsed, in ms (possibly sub-ms precision).
+	 */
+	Timer.prototype.timeElapsed = function () {
+	    return this.relativeTime() - this.startTime;
+	};
+
+	module.exports = Timer;
+
+
+/***/ },
+/* 84 */
+/***/ function(module, exports) {
+
+	/**
+	 * A thread is a running stack context and all the metadata needed.
+	 * @param {?string} firstBlock First block to execute in the thread.
+	 * @constructor
+	 */
+	var Thread = function (firstBlock) {
+	    /**
+	     * ID of top block of the thread
+	     * @type {!string}
+	     */
+	    this.topBlock = firstBlock;
+
+	    /**
+	     * Stack for the thread. When the sequencer enters a control structure,
+	     * the block is pushed onto the stack so we know where to exit.
+	     * @type {Array.<string>}
+	     */
+	    this.stack = [];
+
+	    /**
+	     * Stack frames for the thread. Store metadata for the executing blocks.
+	     * @type {Array.<Object>}
+	     */
+	    this.stackFrames = [];
+
+	    /**
+	     * Status of the thread, one of three states (below)
+	     * @type {number}
+	     */
+	    this.status = 0; /* Thread.STATUS_RUNNING */
+
+	    /**
+	     * Target of this thread.
+	     * @type {?Target}
+	     */
+	    this.target = null;
+
+	    /**
+	     * Whether the thread requests its script to glow during this frame.
+	     * @type {boolean}
+	     */
+	    this.requestScriptGlowInFrame = false;
+
+	    /**
+	     * Which block ID should glow during this frame, if any.
+	     * @type {?string}
+	     */
+	    this.blockGlowInFrame = null;
+
+	    /**
+	     * A timer for when the thread enters warp mode.
+	     * Substitutes the sequencer's count toward WORK_TIME on a per-thread basis.
+	     * @type {?Timer}
+	     */
+	    this.warpTimer = null;
+	};
+
+	/**
+	 * Thread status for initialized or running thread.
+	 * This is the default state for a thread - execution should run normally,
+	 * stepping from block to block.
+	 * @const
+	 */
+	Thread.STATUS_RUNNING = 0;
+
+	/**
+	 * Threads are in this state when a primitive is waiting on a promise;
+	 * execution is paused until the promise changes thread status.
+	 * @const
+	 */
+	Thread.STATUS_PROMISE_WAIT = 1;
+
+	/**
+	 * Thread status for yield.
+	 * @const
+	 */
+	Thread.STATUS_YIELD = 2;
+
+	/**
+	 * Thread status for a single-tick yield. This will be cleared when the
+	 * thread is resumed.
+	 * @const
+	 */
+	Thread.STATUS_YIELD_TICK = 3;
+
+	/**
+	 * Thread status for a finished/done thread.
+	 * Thread is in this state when there are no more blocks to execute.
+	 * @const
+	 */
+	Thread.STATUS_DONE = 4;
+
+	/**
+	 * Push stack and update stack frames appropriately.
+	 * @param {string} blockId Block ID to push to stack.
+	 */
+	Thread.prototype.pushStack = function (blockId) {
+	    this.stack.push(blockId);
+	    // Push an empty stack frame, if we need one.
+	    // Might not, if we just popped the stack.
+	    if (this.stack.length > this.stackFrames.length) {
+	        // Copy warp mode from any higher level.
+	        var warpMode = false;
+	        if (this.stackFrames[this.stackFrames.length - 1]) {
+	            warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
+	        }
+	        this.stackFrames.push({
+	            isLoop: false, // Whether this level of the stack is a loop.
+	            warpMode: warpMode, // Whether this level is in warp mode.
+	            reported: {}, // Collects reported input values.
+	            waitingReporter: null, // Name of waiting reporter.
+	            params: {}, // Procedure parameters.
+	            executionContext: {} // A context passed to block implementations.
+	        });
+	    }
+	};
+
+	/**
+	 * Pop last block on the stack and its stack frame.
+	 * @return {string} Block ID popped from the stack.
+	 */
+	Thread.prototype.popStack = function () {
+	    this.stackFrames.pop();
+	    return this.stack.pop();
+	};
+
+	/**
+	 * Get top stack item.
+	 * @return {?string} Block ID on top of stack.
+	 */
+	Thread.prototype.peekStack = function () {
+	    return this.stack[this.stack.length - 1];
+	};
+
+
+	/**
+	 * Get top stack frame.
+	 * @return {?Object} Last stack frame stored on this thread.
+	 */
+	Thread.prototype.peekStackFrame = function () {
+	    return this.stackFrames[this.stackFrames.length - 1];
+	};
+
+	/**
+	 * Get stack frame above the current top.
+	 * @return {?Object} Second to last stack frame stored on this thread.
+	 */
+	Thread.prototype.peekParentStackFrame = function () {
+	    return this.stackFrames[this.stackFrames.length - 2];
+	};
+
+	/**
+	 * Push a reported value to the parent of the current stack frame.
+	 * @param {*} value Reported value to push.
+	 */
+	Thread.prototype.pushReportedValue = function (value) {
+	    var parentStackFrame = this.peekParentStackFrame();
+	    if (parentStackFrame) {
+	        var waitingReporter = parentStackFrame.waitingReporter;
+	        parentStackFrame.reported[waitingReporter] = value;
+	    }
+	};
+
+	/**
+	 * Add a parameter to the stack frame.
+	 * Use when calling a procedure with parameter values.
+	 * @param {!string} paramName Name of parameter.
+	 * @param {*} value Value to set for parameter.
+	 */
+	Thread.prototype.pushParam = function (paramName, value) {
+	    var stackFrame = this.peekStackFrame();
+	    stackFrame.params[paramName] = value;
+	};
+
+	/**
+	 * Get a parameter at the lowest possible level of the stack.
+	 * @param {!string} paramName Name of parameter.
+	 * @return {*} value Value for parameter.
+	 */
+	Thread.prototype.getParam = function (paramName) {
+	    for (var i = this.stackFrames.length - 1; i >= 0; i--) {
+	        var frame = this.stackFrames[i];
+	        if (frame.params.hasOwnProperty(paramName)) {
+	            return frame.params[paramName];
+	        }
+	    }
+	    return null;
+	};
+
+	/**
+	 * Whether the current execution of a thread is at the top of the stack.
+	 * @return {Boolean} True if execution is at top of the stack.
+	 */
+	Thread.prototype.atStackTop = function () {
+	    return this.peekStack() === this.topBlock;
+	};
+
+
+	/**
+	 * Switch the thread to the next block at the current level of the stack.
+	 * For example, this is used in a standard sequence of blocks,
+	 * where execution proceeds from one block to the next.
+	 */
+	Thread.prototype.goToNextBlock = function () {
+	    var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
+	    // Copy warp mode to next block.
+	    var warpMode = this.peekStackFrame().warpMode;
+	    // The current block is on the stack - pop it and push the next.
+	    // Note that this could push `null` - that is handled by the sequencer.
+	    this.popStack();
+	    this.pushStack(nextBlockId);
+	    if (this.peekStackFrame()) {
+	        this.peekStackFrame().warpMode = warpMode;
+	    }
+	};
+
+	/**
+	 * Attempt to determine whether a procedure call is recursive,
+	 * by examining the stack.
+	 * @param {!string} procedureCode Procedure code of procedure being called.
+	 * @return {boolean} True if the call appears recursive.
+	 */
+	Thread.prototype.isRecursiveCall = function (procedureCode) {
+	    var callCount = 5; // Max number of enclosing procedure calls to examine.
+	    var sp = this.stack.length - 1;
+	    for (var i = sp - 1; i >= 0; i--) {
+	        var block = this.target.blocks.getBlock(this.stack[i]);
+	        if (block.opcode === 'procedures_callnoreturn' &&
+	            block.mutation.proccode === procedureCode) {
+	            return true;
+	        }
+	        if (--callCount < 0) return false;
+	    }
+	    return false;
+	};
+
+	module.exports = Thread;
+
+
+/***/ },
+/* 85 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var log = __webpack_require__(63);
+	var Thread = __webpack_require__(84);
+
+	/**
+	 * Utility function to determine if a value is a Promise.
+	 * @param {*} value Value to check for a Promise.
+	 * @return {Boolean} True if the value appears to be a Promise.
+	 */
+	var isPromise = function (value) {
+	    return value && value.then && typeof value.then === 'function';
+	};
+
+	/**
+	 * Execute a block.
+	 * @param {!Sequencer} sequencer Which sequencer is executing.
+	 * @param {!Thread} thread Thread which to read and execute.
+	 */
+	var execute = function (sequencer, thread) {
+	    var runtime = sequencer.runtime;
+	    var target = thread.target;
+
+	    // Current block to execute is the one on the top of the stack.
+	    var currentBlockId = thread.peekStack();
+	    var currentStackFrame = thread.peekStackFrame();
+
+	    // Check where the block lives: target blocks or flyout blocks.
+	    var targetHasBlock = (
+	        typeof target.blocks.getBlock(currentBlockId) !== 'undefined'
+	    );
+	    var flyoutHasBlock = (
+	        typeof runtime.flyoutBlocks.getBlock(currentBlockId) !== 'undefined'
+	    );
+
+	    // Stop if block or target no longer exists.
+	    if (!target || (!targetHasBlock && !flyoutHasBlock)) {
+	        // No block found: stop the thread; script no longer exists.
+	        sequencer.retireThread(thread);
+	        return;
+	    }
+
+	    // Query info about the block.
+	    var blockContainer = null;
+	    if (targetHasBlock) {
+	        blockContainer = target.blocks;
+	    } else {
+	        blockContainer = runtime.flyoutBlocks;
+	    }
+	    var opcode = blockContainer.getOpcode(currentBlockId);
+	    var fields = blockContainer.getFields(currentBlockId);
+	    var inputs = blockContainer.getInputs(currentBlockId);
+	    var blockFunction = runtime.getOpcodeFunction(opcode);
+	    var isHat = runtime.getIsHat(opcode);
+
+
+	    if (!opcode) {
+	        log.warn('Could not get opcode for block: ' + currentBlockId);
+	        return;
+	    }
+
+	    /**
+	     * Handle any reported value from the primitive, either directly returned
+	     * or after a promise resolves.
+	     * @param {*} resolvedValue Value eventually returned from the primitive.
+	     */
+	    var handleReport = function (resolvedValue) {
+	        thread.pushReportedValue(resolvedValue);
+	        if (isHat) {
+	            // Hat predicate was evaluated.
+	            if (runtime.getIsEdgeActivatedHat(opcode)) {
+	                // If this is an edge-activated hat, only proceed if
+	                // the value is true and used to be false.
+	                var oldEdgeValue = runtime.updateEdgeActivatedValue(
+	                    currentBlockId,
+	                    resolvedValue
+	                );
+	                var edgeWasActivated = !oldEdgeValue && resolvedValue;
+	                if (!edgeWasActivated) {
+	                    sequencer.retireThread(thread);
+	                }
+	            } else {
+	                // Not an edge-activated hat: retire the thread
+	                // if predicate was false.
+	                if (!resolvedValue) {
+	                    sequencer.retireThread(thread);
+	                }
+	            }
+	        } else {
+	            // In a non-hat, report the value visually if necessary if
+	            // at the top of the thread stack.
+	            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+	                runtime.visualReport(currentBlockId, resolvedValue);
+	            }
+	            // Finished any yields.
+	            thread.status = Thread.STATUS_RUNNING;
+	        }
+	    };
+
+	    // Hats and single-field shadows are implemented slightly differently
+	    // from regular blocks.
+	    // For hats: if they have an associated block function,
+	    // it's treated as a predicate; if not, execution will proceed as a no-op.
+	    // For single-field shadows: If the block has a single field, and no inputs,
+	    // immediately return the value of the field.
+	    if (!blockFunction) {
+	        if (isHat) {
+	            // Skip through the block (hat with no predicate).
+	            return;
+	        } else {
+	            if (Object.keys(fields).length === 1 &&
+	                Object.keys(inputs).length === 0) {
+	                // One field and no inputs - treat as arg.
+	                for (var fieldKey in fields) { // One iteration.
+	                    handleReport(fields[fieldKey].value);
+	                }
+	            } else {
+	                log.warn('Could not get implementation for opcode: ' +
+	                    opcode);
+	            }
+	            thread.requestScriptGlowInFrame = true;
+	            return;
+	        }
+	    }
+
+	    // Generate values for arguments (inputs).
+	    var argValues = {};
+
+	    // Add all fields on this block to the argValues.
+	    for (var fieldName in fields) {
+	        argValues[fieldName] = fields[fieldName].value;
+	    }
+
+	    // Recursively evaluate input blocks.
+	    for (var inputName in inputs) {
+	        var input = inputs[inputName];
+	        var inputBlockId = input.block;
+	        // Is there no value for this input waiting in the stack frame?
+	        if (typeof currentStackFrame.reported[inputName] === 'undefined' &&
+	            inputBlockId) {
+	            // If there's not, we need to evaluate the block.
+	            // Push to the stack to evaluate the reporter block.
+	            thread.pushStack(inputBlockId);
+	            // Save name of input for `Thread.pushReportedValue`.
+	            currentStackFrame.waitingReporter = inputName;
+	            // Actually execute the block.
+	            execute(sequencer, thread);
+	            if (thread.status === Thread.STATUS_PROMISE_WAIT) {
+	                return;
+	            } else {
+	                // Execution returned immediately,
+	                // and presumably a value was reported, so pop the stack.
+	                currentStackFrame.waitingReporter = null;
+	                thread.popStack();
+	            }
+	        }
+	        argValues[inputName] = currentStackFrame.reported[inputName];
+	    }
+
+	    // Add any mutation to args (e.g., for procedures).
+	    var mutation = blockContainer.getMutation(currentBlockId);
+	    if (mutation) {
+	        argValues.mutation = mutation;
+	    }
+
+	    // If we've gotten this far, all of the input blocks are evaluated,
+	    // and `argValues` is fully populated. So, execute the block primitive.
+	    // First, clear `currentStackFrame.reported`, so any subsequent execution
+	    // (e.g., on return from a branch) gets fresh inputs.
+	    currentStackFrame.reported = {};
+
+	    var primitiveReportedValue = null;
+	    primitiveReportedValue = blockFunction(argValues, {
+	        stackFrame: currentStackFrame.executionContext,
+	        target: target,
+	        yield: function () {
+	            thread.status = Thread.STATUS_YIELD;
+	        },
+	        startBranch: function (branchNum, isLoop) {
+	            sequencer.stepToBranch(thread, branchNum, isLoop);
+	        },
+	        stopAll: function () {
+	            runtime.stopAll();
+	        },
+	        stopOtherTargetThreads: function () {
+	            runtime.stopForTarget(target, thread);
+	        },
+	        stopThread: function () {
+	            sequencer.retireThread(thread);
+	        },
+	        startProcedure: function (procedureCode) {
+	            sequencer.stepToProcedure(thread, procedureCode);
+	        },
+	        getProcedureParamNames: function (procedureCode) {
+	            return blockContainer.getProcedureParamNames(procedureCode);
+	        },
+	        pushParam: function (paramName, paramValue) {
+	            thread.pushParam(paramName, paramValue);
+	        },
+	        getParam: function (paramName) {
+	            return thread.getParam(paramName);
+	        },
+	        startHats: function (requestedHat, optMatchFields, optTarget) {
+	            return (
+	                runtime.startHats(requestedHat, optMatchFields, optTarget)
+	            );
+	        },
+	        ioQuery: function (device, func, args) {
+	            // Find the I/O device and execute the query/function call.
+	            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
+	                var devObject = runtime.ioDevices[device];
+	                // @todo Figure out why eslint complains about no-useless-call
+	                // no-useless-call can't tell if the call is useless for dynamic
+	                // expressions... or something. Not exactly sure why it
+	                // complains here.
+	                // eslint-disable-next-line no-useless-call
+	                return devObject[func].call(devObject, args);
+	            }
+	        }
+	    });
+
+	    if (typeof primitiveReportedValue === 'undefined') {
+	        // No value reported - potentially a command block.
+	        // Edge-activated hats don't request a glow; all commands do.
+	        thread.requestScriptGlowInFrame = true;
+	    }
+
+	    // If it's a promise, wait until promise resolves.
+	    if (isPromise(primitiveReportedValue)) {
+	        if (thread.status === Thread.STATUS_RUNNING) {
+	            // Primitive returned a promise; automatically yield thread.
+	            thread.status = Thread.STATUS_PROMISE_WAIT;
+	        }
+	        // Promise handlers
+	        primitiveReportedValue.then(function (resolvedValue) {
+	            handleReport(resolvedValue);
+	            if (typeof resolvedValue === 'undefined') {
+	                var popped = thread.popStack();
+	                var nextBlockId = thread.target.blocks.getNextBlock(popped);
+	                thread.pushStack(nextBlockId);
+	            } else {
+	                thread.popStack();
+	            }
+	        }, function (rejectionReason) {
+	            // Promise rejected: the primitive had some error.
+	            // Log it and proceed.
+	            log.warn('Primitive rejected promise: ', rejectionReason);
+	            thread.status = Thread.STATUS_RUNNING;
+	            thread.popStack();
+	        });
+	    } else if (thread.status === Thread.STATUS_RUNNING) {
+	        handleReport(primitiveReportedValue);
+	    }
+	};
+
+	module.exports = execute;
+
+
+/***/ },
+/* 86 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Timer = __webpack_require__(83);
+
+	var Clock = function (runtime) {
+	    this._projectTimer = new Timer();
+	    this._projectTimer.start();
+	    this._pausedTime = null;
+	    this._paused = false;
+	    /**
+	     * Reference to the owning Runtime.
+	     * @type{!Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	Clock.prototype.projectTimer = function () {
+	    if (this._paused) {
+	        return this._pausedTime / 1000;
+	    }
+	    return this._projectTimer.timeElapsed() / 1000;
+	};
+
+	Clock.prototype.pause = function () {
+	    this._paused = true;
+	    this._pausedTime = this._projectTimer.timeElapsed();
+	};
+
+	Clock.prototype.resume = function () {
+	    this._paused = false;
+	    var dt = this._projectTimer.timeElapsed() - this._pausedTime;
+	    this._projectTimer.startTime += dt;
+	};
+
+	Clock.prototype.resetProjectTimer = function () {
+	    this._projectTimer.start();
+	};
+
+	module.exports = Clock;
+
+
+/***/ },
+/* 87 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(88);
+
+	var Keyboard = function (runtime) {
+	    /**
+	     * List of currently pressed keys.
+	     * @type{Array.<number>}
+	     */
+	    this._keysPressed = [];
+	    /**
+	     * Reference to the owning Runtime.
+	     * Can be used, for example, to activate hats.
+	     * @type{!Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Convert a Scratch key name to a DOM keyCode.
+	 * @param {Any} keyName Scratch key argument.
+	 * @return {number} Key code corresponding to a DOM event.
+	 * @private
+	 */
+	Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
+	    if (typeof keyName === 'number') {
+	        // Key codes placed in with number blocks.
+	        return keyName;
+	    }
+	    var keyString = Cast.toString(keyName);
+	    switch (keyString) {
+	    case 'space': return 32;
+	    case 'left arrow': return 37;
+	    case 'up arrow': return 38;
+	    case 'right arrow': return 39;
+	    case 'down arrow': return 40;
+	    // @todo: Consider adding other special keys here.
+	    }
+	    // Keys reported by DOM keyCode are upper case.
+	    return keyString.toUpperCase().charCodeAt(0);
+	};
+
+	/**
+	 * Convert a DOM keyCode into a Scratch key name.
+	 * @param  {number} keyCode Key code from DOM event.
+	 * @return {Any} Scratch key argument.
+	 * @private
+	 */
+	Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
+	    if (keyCode >= 48 && keyCode <= 90) {
+	        // Standard letter.
+	        return String.fromCharCode(keyCode).toLowerCase();
+	    }
+	    switch (keyCode) {
+	    case 32: return 'space';
+	    case 37: return 'left arrow';
+	    case 38: return 'up arrow';
+	    case 39: return 'right arrow';
+	    case 40: return 'down arrow';
+	    }
+	    return null;
+	};
+
+	/**
+	 * Keyboard DOM event handler.
+	 * @param  {object} data Data from DOM event.
+	 */
+	Keyboard.prototype.postData = function (data) {
+	    if (data.keyCode) {
+	        var index = this._keysPressed.indexOf(data.keyCode);
+	        if (data.isDown) {
+	            // If not already present, add to the list.
+	            if (index < 0) {
+	                this._keysPressed.push(data.keyCode);
+	            }
+	            // Always trigger hats, even if it was already pressed.
+	            this.runtime.startHats('event_whenkeypressed', {
+	                KEY_OPTION: this._keyCodeToScratchKey(data.keyCode)
+	            });
+	            this.runtime.startHats('event_whenkeypressed', {
+	                KEY_OPTION: 'any'
+	            });
+	        } else if (index > -1) {
+	            // If already present, remove from the list.
+	            this._keysPressed.splice(index, 1);
+	        }
+	    }
+	};
+
+	/**
+	 * Get key down state for a specified Scratch key name.
+	 * @param  {Any} key Scratch key argument.
+	 * @return {boolean} Is the specified key down?
+	 */
+	Keyboard.prototype.getKeyIsDown = function (key) {
+	    if (key === 'any') {
+	        return this._keysPressed.length > 0;
+	    }
+	    var keyCode = this._scratchKeyToKeyCode(key);
+	    return this._keysPressed.indexOf(keyCode) > -1;
+	};
+
+	module.exports = Keyboard;
+
+
+/***/ },
+/* 88 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Color = __webpack_require__(89);
+
+	var Cast = function () {};
+
+	/**
+	 * @fileoverview
+	 * Utilities for casting and comparing Scratch data-types.
+	 * Scratch behaves slightly differently from JavaScript in many respects,
+	 * and these differences should be encapsulated below.
+	 * For example, in Scratch, add(1, join("hello", world")) -> 1.
+	 * This is because "hello world" is cast to 0.
+	 * In JavaScript, 1 + Number("hello" + "world") would give you NaN.
+	 * Use when coercing a value before computation.
+	 */
+
+	/**
+	 * Scratch cast to number.
+	 * Treats NaN as 0.
+	 * In Scratch 2.0, this is captured by `interp.numArg.`
+	 * @param {*} value Value to cast to number.
+	 * @return {number} The Scratch-casted number value.
+	 */
+	Cast.toNumber = function (value) {
+	    var n = Number(value);
+	    if (isNaN(n)) {
+	        // Scratch treats NaN as 0, when needed as a number.
+	        // E.g., 0 + NaN -> 0.
+	        return 0;
+	    }
+	    return n;
+	};
+
+	/**
+	 * Scratch cast to boolean.
+	 * In Scratch 2.0, this is captured by `interp.boolArg.`
+	 * Treats some string values differently from JavaScript.
+	 * @param {*} value Value to cast to boolean.
+	 * @return {boolean} The Scratch-casted boolean value.
+	 */
+	Cast.toBoolean = function (value) {
+	    // Already a boolean?
+	    if (typeof value === 'boolean') {
+	        return value;
+	    }
+	    if (typeof value === 'string') {
+	        // These specific strings are treated as false in Scratch.
+	        if ((value === '') ||
+	            (value === '0') ||
+	            (value.toLowerCase() === 'false')) {
+	            return false;
+	        }
+	        // All other strings treated as true.
+	        return true;
+	    }
+	    // Coerce other values and numbers.
+	    return Boolean(value);
+	};
+
+	/**
+	 * Scratch cast to string.
+	 * @param {*} value Value to cast to string.
+	 * @return {string} The Scratch-casted string value.
+	 */
+	Cast.toString = function (value) {
+	    return String(value);
+	};
+
+	/**
+	 * Cast any Scratch argument to an RGB color object to be used for the renderer.
+	 * @param {*} value Value to convert to RGB color object.
+	 * @return {Array.<number>} [r,g,b], values between 0-255.
+	 */
+	Cast.toRgbColorList = function (value) {
+	    var color;
+	    if (typeof value === 'string' && value.substring(0, 1) === '#') {
+	        color = Color.hexToRgb(value);
+	    } else {
+	        color = Color.decimalToRgb(Cast.toNumber(value));
+	    }
+	    return [color.r, color.g, color.b];
+	};
+
+	/**
+	 * Compare two values, using Scratch cast, case-insensitive string compare, etc.
+	 * In Scratch 2.0, this is captured by `interp.compare.`
+	 * @param {*} v1 First value to compare.
+	 * @param {*} v2 Second value to compare.
+	 * @returns {Number} Negative number if v1 < v2; 0 if equal; positive otherwise.
+	 */
+	Cast.compare = function (v1, v2) {
+	    var n1 = Number(v1);
+	    var n2 = Number(v2);
+	    if (isNaN(n1) || isNaN(n2)) {
+	        // At least one argument can't be converted to a number.
+	        // Scratch compares strings as case insensitive.
+	        var s1 = String(v1).toLowerCase();
+	        var s2 = String(v2).toLowerCase();
+	        return s1.localeCompare(s2);
+	    } else {
+	        // Compare as numbers.
+	        return n1 - n2;
+	    }
+	};
+
+	/**
+	 * Determine if a Scratch argument number represents a round integer.
+	 * @param {*} val Value to check.
+	 * @return {boolean} True if number looks like an integer.
+	 */
+	Cast.isInt = function (val) {
+	    // Values that are already numbers.
+	    if (typeof val === 'number') {
+	        if (isNaN(val)) { // NaN is considered an integer.
+	            return true;
+	        }
+	        // True if it's "round" (e.g., 2.0 and 2).
+	        return val === parseInt(val, 10);
+	    } else if (typeof val === 'boolean') {
+	        // `True` and `false` always represent integer after Scratch cast.
+	        return true;
+	    } else if (typeof val === 'string') {
+	        // If it contains a decimal point, don't consider it an int.
+	        return val.indexOf('.') < 0;
+	    }
+	    return false;
+	};
+
+	Cast.LIST_INVALID = 'INVALID';
+	Cast.LIST_ALL = 'ALL';
+	/**
+	 * Compute a 1-based index into a list, based on a Scratch argument.
+	 * Two special cases may be returned:
+	 * LIST_ALL: if the block is referring to all of the items in the list.
+	 * LIST_INVALID: if the index was invalid in any way.
+	 * @param {*} index Scratch arg, including 1-based numbers or special cases.
+	 * @param {number} length Length of the list.
+	 * @return {(number|string)} 1-based index for list, LIST_ALL, or LIST_INVALID.
+	 */
+	Cast.toListIndex = function (index, length) {
+	    if (typeof index !== 'number') {
+	        if (index === 'all') {
+	            return Cast.LIST_ALL;
+	        }
+	        if (index === 'last') {
+	            if (length > 0) {
+	                return length;
+	            }
+	            return Cast.LIST_INVALID;
+	        } else if (index === 'random' || index === 'any') {
+	            if (length > 0) {
+	                return 1 + Math.floor(Math.random() * length);
+	            }
+	            return Cast.LIST_INVALID;
+	        }
+	    }
+	    index = Math.floor(Cast.toNumber(index));
+	    if (index < 1 || index > length) {
+	        return Cast.LIST_INVALID;
+	    }
+	    return index;
+	};
+
+	module.exports = Cast;
+
+
+/***/ },
+/* 89 */
+/***/ function(module, exports) {
+
+	var Color = function () {};
+
+	/**
+	 * Convert a Scratch decimal color to a hex string, #RRGGBB.
+	 * @param {number} decimal RGB color as a decimal.
+	 * @return {string} RGB color as #RRGGBB hex string.
+	 */
+	Color.decimalToHex = function (decimal) {
+	    if (decimal < 0) {
+	        decimal += 0xFFFFFF + 1;
+	    }
+	    var hex = Number(decimal).toString(16);
+	    hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
+	    return hex;
+	};
+
+	/**
+	 * Convert a Scratch decimal color to an RGB color object.
+	 * @param {number} decimal RGB color as decimal.
+	 * @returns {Object} {r: R, g: G, b: B}, values between 0-255
+	 */
+	Color.decimalToRgb = function (decimal) {
+	    var r = (decimal >> 16) & 0xFF;
+	    var g = (decimal >> 8) & 0xFF;
+	    var b = decimal & 0xFF;
+	    return {r: r, g: g, b: b};
+	};
+
+	/**
+	 * Convert a hex color (e.g., F00, #03F, #0033FF) to an RGB color object.
+	 * CC-BY-SA Tim Down:
+	 * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+	 * @param {!string} hex Hex representation of the color.
+	 * @return {Object} {r: R, g: G, b: B}, 0-255, or null.
+	 */
+	Color.hexToRgb = function (hex) {
+	    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+	    hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+	        return r + r + g + g + b + b;
+	    });
+	    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	    return result ? {
+	        r: parseInt(result[1], 16),
+	        g: parseInt(result[2], 16),
+	        b: parseInt(result[3], 16)
+	    } : null;
+	};
+
+	/**
+	 * Convert an RGB color object to a hex color.
+	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+	 * @return {!string} Hex representation of the color.
+	 */
+	Color.rgbToHex = function (rgb) {
+	    return Color.decimalToHex(Color.rgbToDecimal(rgb));
+	};
+
+	/**
+	 * Convert an RGB color object to a Scratch decimal color.
+	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+	 * @return {!number} Number representing the color.
+	 */
+	Color.rgbToDecimal = function (rgb) {
+	    return (rgb.r << 16) + (rgb.g << 8) + rgb.b;
+	};
+
+	/**
+	* Convert a hex color (e.g., F00, #03F, #0033FF) to a decimal color number.
+	* @param {!string} hex Hex representation of the color.
+	* @return {!number} Number representing the color.
+	*/
+	Color.hexToDecimal = function (hex) {
+	    return Color.rgbToDecimal(Color.hexToRgb(hex));
+	};
+
+	module.exports = Color;
+
+
+/***/ },
+/* 90 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var MathUtil = __webpack_require__(76);
+
+	var Mouse = function (runtime) {
+	    this._x = 0;
+	    this._y = 0;
+	    this._isDown = false;
+	    /**
+	     * Reference to the owning Runtime.
+	     * Can be used, for example, to activate hats.
+	     * @type{!Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Activate "event_whenthisspriteclicked" hats if needed.
+	 * @param  {number} x X position to be sent to the renderer.
+	 * @param  {number} y Y position to be sent to the renderer.
+	 * @private
+	 */
+	Mouse.prototype._activateClickHats = function (x, y) {
+	    if (this.runtime.renderer) {
+	        var drawableID = this.runtime.renderer.pick(x, y);
+	        for (var i = 0; i < this.runtime.targets.length; i++) {
+	            var target = this.runtime.targets[i];
+	            if (target.hasOwnProperty('drawableID') &&
+	                target.drawableID === drawableID) {
+	                this.runtime.startHats('event_whenthisspriteclicked',
+	                    null, target);
+	                return;
+	            }
+	        }
+	    }
+	};
+
+	/**
+	 * Mouse DOM event handler.
+	 * @param  {object} data Data from DOM event.
+	 */
+	Mouse.prototype.postData = function (data) {
+	    if (data.x) {
+	        this._x = data.x - data.canvasWidth / 2;
+	    }
+	    if (data.y) {
+	        this._y = data.y - data.canvasHeight / 2;
+	    }
+	    if (typeof data.isDown !== 'undefined') {
+	        this._isDown = data.isDown;
+	        if (this._isDown) {
+	            this._activateClickHats(data.x, data.y);
+	        }
+	    }
+	};
+
+	/**
+	 * Get the X position of the mouse.
+	 * @return {number} Clamped X position of the mouse cursor.
+	 */
+	Mouse.prototype.getX = function () {
+	    return MathUtil.clamp(this._x, -240, 240);
+	};
+
+	/**
+	 * Get the Y position of the mouse.
+	 * @return {number} Clamped Y position of the mouse cursor.
+	 */
+	Mouse.prototype.getY = function () {
+	    return MathUtil.clamp(-this._y, -180, 180);
+	};
+
+	/**
+	 * Get the down state of the mouse.
+	 * @return {boolean} Is the mouse down?
+	 */
+	Mouse.prototype.getIsDown = function () {
+	    return this._isDown;
+	};
+
+	module.exports = Mouse;
+
+
+/***/ },
+/* 91 */
+/***/ function(module, exports) {
+
+	/**
+	 * Created by Riven on 2016/10/3.
+	 */
+
+	function Serial (runtime) {
+
+	    /**
+	     * Reference to the owning Runtime.
+	     * Can be used, for example, to activate hats.
+	     * @type{!Runtime}
+	     */
+	    this.runtime = runtime;
+	    // call back for send msg
+	    this.sendMsg = null;
+	    this.sendBuff = null;
+	    // call back for data query
+	    this.query = null;
+	    // promise cb for each command
+	    this._resolves = {};
+	}
+
+	Serial.prototype.postData = function (data) {
+	    var slot = data.slot;
+	    var report = data.report;
+	    if(slot in this._resolves){
+	        if(report!=null){
+	            this._resolves[slot](report);
+	        }else{
+	            this._resolves[slot]();
+	        }
+	    }
+
+	};
+
+	Serial.prototype.sendBuff = function(data){
+	    if(this.sendBuff){
+	        this.sendBuff(data);
+	    }
+	};
+
+	Serial.prototype.sendMsg = function(data){
+	    if(this.sendMsg){
+	        this.sendMsg(data);
+	    }
+	};
+
+	Serial.prototype.queryData = function(data){
+	    if(this.query){
+	        return this.query(data);
+	    }
+	    return null;
+	};
+
+	Serial.prototype.regSendMsg = function(cb){
+	    this.sendMsg = cb;
+	};
+
+	Serial.prototype.regQueryData = function(cb){
+	    this.query = cb;
+	};
+
+	Serial.prototype.regResolve = function(data){
+	    var slot = data["slot"];
+	    var cb = data["resolve"];
+	    this._resolves[slot] = cb;
+	};
+
+
+	module.exports = Serial;
+
+
+/***/ },
+/* 92 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(88);
+	var Timer = __webpack_require__(83);
+
+	var Scratch3ControlBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3ControlBlocks.prototype.getPrimitives = function () {
+	    return {
+	        control_repeat: this.repeat,
+	        control_repeat_until: this.repeatUntil,
+	        control_forever: this.forever,
+	        control_wait: this.wait,
+	        control_wait_until: this.waitUntil,
+	        control_if: this.if,
+	        control_if_else: this.ifElse,
+	        control_stop: this.stop,
+	        control_create_clone_of: this.createClone,
+	        control_delete_this_clone: this.deleteClone
+	    };
+	};
+
+	Scratch3ControlBlocks.prototype.getHats = function () {
+	    return {
+	        control_start_as_clone: {
+	            restartExistingThreads: false
+	        }
+	    };
+	};
+
+	Scratch3ControlBlocks.prototype.repeat = function (args, util) {
+	    var times = Math.floor(Cast.toNumber(args.TIMES));
+	    // Initialize loop
+	    if (typeof util.stackFrame.loopCounter === 'undefined') {
+	        util.stackFrame.loopCounter = times;
+	    }
+	    // Only execute once per frame.
+	    // When the branch finishes, `repeat` will be executed again and
+	    // the second branch will be taken, yielding for the rest of the frame.
+	    // Decrease counter
+	    util.stackFrame.loopCounter--;
+	    // If we still have some left, start the branch.
+	    if (util.stackFrame.loopCounter >= 0) {
+	        util.startBranch(1, true);
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.repeatUntil = function (args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    // If the condition is true, start the branch.
+	    if (!condition) {
+	        util.startBranch(1, true);
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.waitUntil = function (args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    if (!condition) {
+	        util.yield();
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.forever = function (args, util) {
+	    util.startBranch(1, true);
+	};
+
+	Scratch3ControlBlocks.prototype.wait = function (args, util) {
+	    if (!util.stackFrame.timer) {
+	        util.stackFrame.timer = new Timer();
+	        util.stackFrame.timer.start();
+	        util.yield();
+	        this.runtime.requestRedraw();
+	    } else {
+	        var duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+	        if (util.stackFrame.timer.timeElapsed() < duration) {
+	            util.yield();
+	        }
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.if = function (args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    if (condition) {
+	        util.startBranch(1, false);
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.ifElse = function (args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    if (condition) {
+	        util.startBranch(1, false);
+	    } else {
+	        util.startBranch(2, false);
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.stop = function (args, util) {
+	    var option = args.STOP_OPTION;
+	    if (option === 'all') {
+	        util.stopAll();
+	    } else if (option === 'other scripts in sprite' ||
+	        option === 'other scripts in stage') {
+	        util.stopOtherTargetThreads();
+	    } else if (option === 'this script') {
+	        util.stopThread();
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.createClone = function (args, util) {
+	    var cloneTarget;
+	    if (args.CLONE_OPTION === '_myself_') {
+	        cloneTarget = util.target;
+	    } else {
+	        cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
+	    }
+	    if (!cloneTarget) {
+	        return;
+	    }
+	    var newClone = cloneTarget.makeClone();
+	    if (newClone) {
+	        this.runtime.targets.push(newClone);
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
+	    if (util.target.isOriginal) return;
+	    this.runtime.disposeTarget(util.target);
+	    this.runtime.stopForTarget(util.target);
+	};
+
+	module.exports = Scratch3ControlBlocks;
+
+
+/***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(88);
+
+	var Scratch3EventBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3EventBlocks.prototype.getPrimitives = function () {
+	    return {
+	        event_broadcast: this.broadcast,
+	        event_broadcastandwait: this.broadcastAndWait,
+	        event_whengreaterthan: this.hatGreaterThanPredicate
+	    };
+	};
+
+	Scratch3EventBlocks.prototype.getHats = function () {
+	    return {
+	        event_whenflagclicked: {
+	            restartExistingThreads: true
+	        },
+	        event_whenkeypressed: {
+	            restartExistingThreads: false
+	        },
+	        event_whenthisspriteclicked: {
+	            restartExistingThreads: true
+	        },
+	        event_whenbackdropswitchesto: {
+	            restartExistingThreads: true
+	        },
+	        event_whengreaterthan: {
+	            restartExistingThreads: false,
+	            edgeActivated: true
+	        },
+	        event_whenbroadcastreceived: {
+	            restartExistingThreads: true
+	        }
+	    };
+	};
+
+	Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
+	    var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
+	    var value = Cast.toNumber(args.VALUE);
+	    // @todo: Other cases :)
+	    if (option === 'timer') {
+	        return util.ioQuery('clock', 'projectTimer') > value;
+	    }
+	    return false;
+	};
+
+	Scratch3EventBlocks.prototype.broadcast = function (args, util) {
+	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+	    util.startHats('event_whenbroadcastreceived', {
+	        BROADCAST_OPTION: broadcastOption
+	    });
+	};
+
+	Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
+	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+	    // Have we run before, starting threads?
+	    if (!util.stackFrame.startedThreads) {
+	        // No - start hats for this broadcast.
+	        util.stackFrame.startedThreads = util.startHats(
+	            'event_whenbroadcastreceived', {
+	                BROADCAST_OPTION: broadcastOption
+	            }
+	        );
+	        if (util.stackFrame.startedThreads.length === 0) {
+	            // Nothing was started.
+	            return;
+	        }
+	    }
+	    // We've run before; check if the wait is still going on.
+	    var instance = this;
+	    var waiting = util.stackFrame.startedThreads.some(function (thread) {
+	        return instance.runtime.isActiveThread(thread);
+	    });
+	    if (waiting) {
+	        util.yield();
+	    }
+	};
+
+	module.exports = Scratch3EventBlocks;
+
+
+/***/ },
+/* 94 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(88);
+
+	var Scratch3LooksBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3LooksBlocks.prototype.getPrimitives = function () {
+	    return {
+	        looks_say: this.say,
+	        looks_sayforsecs: this.sayforsecs,
+	        looks_think: this.think,
+	        looks_thinkforsecs: this.sayforsecs,
+	        looks_show: this.show,
+	        looks_hide: this.hide,
+	        looks_switchcostumeto: this.switchCostume,
+	        looks_switchbackdropto: this.switchBackdrop,
+	        looks_switchbackdroptoandwait: this.switchBackdropAndWait,
+	        looks_nextcostume: this.nextCostume,
+	        looks_nextbackdrop: this.nextBackdrop,
+	        looks_changeeffectby: this.changeEffect,
+	        looks_seteffectto: this.setEffect,
+	        looks_cleargraphiceffects: this.clearEffects,
+	        looks_changesizeby: this.changeSize,
+	        looks_setsizeto: this.setSize,
+	        looks_gotofront: this.goToFront,
+	        looks_gobacklayers: this.goBackLayers,
+	        looks_size: this.getSize,
+	        looks_costumeorder: this.getCostumeIndex,
+	        looks_backdroporder: this.getBackdropIndex,
+	        looks_backdropname: this.getBackdropName
+	    };
+	};
+
+	Scratch3LooksBlocks.prototype.say = function (args, util) {
+	    util.target.setSay('say', args.MESSAGE);
+	};
+
+	Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
+	    util.target.setSay('say', args.MESSAGE);
+	    return new Promise(function (resolve) {
+	        setTimeout(function () {
+	            // Clear say bubble and proceed.
+	            util.target.setSay();
+	            resolve();
+	        }, 1000 * args.SECS);
+	    });
+	};
+
+	Scratch3LooksBlocks.prototype.think = function (args, util) {
+	    util.target.setSay('think', args.MESSAGE);
+	};
+
+	Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
+	    util.target.setSay('think', args.MESSAGE);
+	    return new Promise(function (resolve) {
+	        setTimeout(function () {
+	            // Clear say bubble and proceed.
+	            util.target.setSay();
+	            resolve();
+	        }, 1000 * args.SECS);
+	    });
+	};
+
+	Scratch3LooksBlocks.prototype.show = function (args, util) {
+	    util.target.setVisible(true);
+	};
+
+	Scratch3LooksBlocks.prototype.hide = function (args, util) {
+	    util.target.setVisible(false);
+	};
+
+	/**
+	 * Utility function to set the costume or backdrop of a target.
+	 * Matches the behavior of Scratch 2.0 for different types of arguments.
+	 * @param {!Target} target Target to set costume/backdrop to.
+	 * @param {Any} requestedCostume Costume requested, e.g., 0, 'name', etc.
+	 * @param {boolean=} optZeroIndex Set to zero-index the requestedCostume.
+	 * @return {Array.<!Thread>} Any threads started by this switch.
+	 */
+	Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
+	        requestedCostume, optZeroIndex) {
+	    if (typeof requestedCostume === 'number') {
+	        target.setCostume(optZeroIndex ?
+	            requestedCostume : requestedCostume - 1);
+	    } else {
+	        var costumeIndex = target.getCostumeIndexByName(requestedCostume);
+	        if (costumeIndex > -1) {
+	            target.setCostume(costumeIndex);
+	        } else if (requestedCostume === 'previous costume' ||
+	                   requestedCostume === 'previous backdrop') {
+	            target.setCostume(target.currentCostume - 1);
+	        } else if (requestedCostume === 'next costume' ||
+	                   requestedCostume === 'next backdrop') {
+	            target.setCostume(target.currentCostume + 1);
+	        } else {
+	            var forcedNumber = Cast.toNumber(requestedCostume);
+	            if (!isNaN(forcedNumber)) {
+	                target.setCostume(optZeroIndex ?
+	                    forcedNumber : forcedNumber - 1);
+	            }
+	        }
+	    }
+	    if (target === this.runtime.getTargetForStage()) {
+	        // Target is the stage - start hats.
+	        var newName = target.sprite.costumes[target.currentCostume].name;
+	        return this.runtime.startHats('event_whenbackdropswitchesto', {
+	            BACKDROP: newName
+	        });
+	    }
+	    return [];
+	};
+
+	Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
+	    this._setCostumeOrBackdrop(util.target, args.COSTUME);
+	};
+
+	Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
+	    this._setCostumeOrBackdrop(
+	        util.target, util.target.currentCostume + 1, true
+	    );
+	};
+
+	Scratch3LooksBlocks.prototype.switchBackdrop = function (args) {
+	    this._setCostumeOrBackdrop(this.runtime.getTargetForStage(), args.BACKDROP);
+	};
+
+	Scratch3LooksBlocks.prototype.switchBackdropAndWait = function (args, util) {
+	    // Have we run before, starting threads?
+	    if (!util.stackFrame.startedThreads) {
+	        // No - switch the backdrop.
+	        util.stackFrame.startedThreads = (
+	            this._setCostumeOrBackdrop(
+	                this.runtime.getTargetForStage(),
+	                args.BACKDROP
+	            )
+	        );
+	        if (util.stackFrame.startedThreads.length === 0) {
+	            // Nothing was started.
+	            return;
+	        }
+	    }
+	    // We've run before; check if the wait is still going on.
+	    var instance = this;
+	    var waiting = util.stackFrame.startedThreads.some(function (thread) {
+	        return instance.runtime.isActiveThread(thread);
+	    });
+	    if (waiting) {
+	        util.yield();
+	    }
+	};
+
+	Scratch3LooksBlocks.prototype.nextBackdrop = function () {
+	    var stage = this.runtime.getTargetForStage();
+	    this._setCostumeOrBackdrop(
+	        stage, stage.currentCostume + 1, true
+	    );
+	};
+
+	Scratch3LooksBlocks.prototype.changeEffect = function (args, util) {
+	    var effect = Cast.toString(args.EFFECT).toLowerCase();
+	    var change = Cast.toNumber(args.CHANGE);
+	    if (!util.target.effects.hasOwnProperty(effect)) return;
+	    var newValue = change + util.target.effects[effect];
+	    util.target.setEffect(effect, newValue);
+	};
+
+	Scratch3LooksBlocks.prototype.setEffect = function (args, util) {
+	    var effect = Cast.toString(args.EFFECT).toLowerCase();
+	    var value = Cast.toNumber(args.VALUE);
+	    util.target.setEffect(effect, value);
+	};
+
+	Scratch3LooksBlocks.prototype.clearEffects = function (args, util) {
+	    util.target.clearEffects();
+	};
+
+	Scratch3LooksBlocks.prototype.changeSize = function (args, util) {
+	    var change = Cast.toNumber(args.CHANGE);
+	    util.target.setSize(util.target.size + change);
+	};
+
+	Scratch3LooksBlocks.prototype.setSize = function (args, util) {
+	    var size = Cast.toNumber(args.SIZE);
+	    util.target.setSize(size);
+	};
+
+	Scratch3LooksBlocks.prototype.goToFront = function (args, util) {
+	    util.target.goToFront();
+	};
+
+	Scratch3LooksBlocks.prototype.goBackLayers = function (args, util) {
+	    util.target.goBackLayers(args.NUM);
+	};
+
+	Scratch3LooksBlocks.prototype.getSize = function (args, util) {
+	    return util.target.size;
+	};
+
+	Scratch3LooksBlocks.prototype.getBackdropIndex = function () {
+	    var stage = this.runtime.getTargetForStage();
+	    return stage.currentCostume + 1;
+	};
+
+	Scratch3LooksBlocks.prototype.getBackdropName = function () {
+	    var stage = this.runtime.getTargetForStage();
+	    return stage.sprite.costumes[stage.currentCostume].name;
+	};
+
+	Scratch3LooksBlocks.prototype.getCostumeIndex = function (args, util) {
+	    return util.target.currentCostume + 1;
+	};
+
+	module.exports = Scratch3LooksBlocks;
+
+
+/***/ },
+/* 95 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(88);
+	var MathUtil = __webpack_require__(76);
+	var Timer = __webpack_require__(83);
+
+	var Scratch3MotionBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3MotionBlocks.prototype.getPrimitives = function () {
+	    return {
+	        motion_movesteps: this.moveSteps,
+	        motion_gotoxy: this.goToXY,
+	        motion_goto: this.goTo,
+	        motion_turnright: this.turnRight,
+	        motion_turnleft: this.turnLeft,
+	        motion_pointindirection: this.pointInDirection,
+	        motion_pointtowards: this.pointTowards,
+	        motion_glidesecstoxy: this.glide,
+	        motion_ifonedgebounce: this.ifOnEdgeBounce,
+	        motion_setrotationstyle: this.setRotationStyle,
+	        motion_changexby: this.changeX,
+	        motion_setx: this.setX,
+	        motion_changeyby: this.changeY,
+	        motion_sety: this.setY,
+	        motion_xposition: this.getX,
+	        motion_yposition: this.getY,
+	        motion_direction: this.getDirection
+	    };
+	};
+
+	Scratch3MotionBlocks.prototype.moveSteps = function (args, util) {
+	    var steps = Cast.toNumber(args.STEPS);
+	    var radians = MathUtil.degToRad(90 - util.target.direction);
+	    var dx = steps * Math.cos(radians);
+	    var dy = steps * Math.sin(radians);
+	    util.target.setXY(util.target.x + dx, util.target.y + dy);
+	};
+
+	Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
+	    var x = Cast.toNumber(args.X);
+	    var y = Cast.toNumber(args.Y);
+	    util.target.setXY(x, y);
+	};
+
+	Scratch3MotionBlocks.prototype.goTo = function (args, util) {
+	    var targetX = 0;
+	    var targetY = 0;
+	    if (args.TO === '_mouse_') {
+	        targetX = util.ioQuery('mouse', 'getX');
+	        targetY = util.ioQuery('mouse', 'getY');
+	    } else if (args.TO === '_random_') {
+	        var stageWidth = this.runtime.constructor.STAGE_WIDTH;
+	        var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+	        targetX = Math.round(stageWidth * (Math.random() - 0.5));
+	        targetY = Math.round(stageHeight * (Math.random() - 0.5));
+	    } else {
+	        var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
+	        if (!goToTarget) return;
+	        targetX = goToTarget.x;
+	        targetY = goToTarget.y;
+	    }
+	    util.target.setXY(targetX, targetY);
+	};
+
+	Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
+	    var degrees = Cast.toNumber(args.DEGREES);
+	    util.target.setDirection(util.target.direction + degrees);
+	};
+
+	Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
+	    var degrees = Cast.toNumber(args.DEGREES);
+	    util.target.setDirection(util.target.direction - degrees);
+	};
+
+	Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
+	    var direction = Cast.toNumber(args.DIRECTION);
+	    util.target.setDirection(direction);
+	};
+
+	Scratch3MotionBlocks.prototype.pointTowards = function (args, util) {
+	    var targetX = 0;
+	    var targetY = 0;
+	    if (args.TOWARDS === '_mouse_') {
+	        targetX = util.ioQuery('mouse', 'getX');
+	        targetY = util.ioQuery('mouse', 'getY');
+	    } else {
+	        var pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
+	        if (!pointTarget) return;
+	        targetX = pointTarget.x;
+	        targetY = pointTarget.y;
+	    }
+
+	    var dx = targetX - util.target.x;
+	    var dy = targetY - util.target.y;
+	    var direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
+	    util.target.setDirection(direction);
+	};
+
+	Scratch3MotionBlocks.prototype.glide = function (args, util) {
+	    if (!util.stackFrame.timer) {
+	        // First time: save data for future use.
+	        util.stackFrame.timer = new Timer();
+	        util.stackFrame.timer.start();
+	        util.stackFrame.duration = Cast.toNumber(args.SECS);
+	        util.stackFrame.startX = util.target.x;
+	        util.stackFrame.startY = util.target.y;
+	        util.stackFrame.endX = Cast.toNumber(args.X);
+	        util.stackFrame.endY = Cast.toNumber(args.Y);
+	        if (util.stackFrame.duration <= 0) {
+	            // Duration too short to glide.
+	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+	            return;
+	        }
+	        util.yield();
+	    } else {
+	        var timeElapsed = util.stackFrame.timer.timeElapsed();
+	        if (timeElapsed < util.stackFrame.duration * 1000) {
+	            // In progress: move to intermediate position.
+	            var frac = timeElapsed / (util.stackFrame.duration * 1000);
+	            var dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
+	            var dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
+	            util.target.setXY(
+	                util.stackFrame.startX + dx,
+	                util.stackFrame.startY + dy
+	            );
+	            util.yield();
+	        } else {
+	            // Finished: move to final position.
+	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+	        }
+	    }
+	};
+
+	Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
+	    var bounds = util.target.getBounds();
+	    if (!bounds) {
+	        return;
+	    }
+	    // Measure distance to edges.
+	    // Values are positive when the sprite is far away,
+	    // and clamped to zero when the sprite is beyond.
+	    var stageWidth = this.runtime.constructor.STAGE_WIDTH;
+	    var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+	    var distLeft = Math.max(0, (stageWidth / 2) + bounds.left);
+	    var distTop = Math.max(0, (stageHeight / 2) - bounds.top);
+	    var distRight = Math.max(0, (stageWidth / 2) - bounds.right);
+	    var distBottom = Math.max(0, (stageHeight / 2) + bounds.bottom);
+	    // Find the nearest edge.
+	    var nearestEdge = '';
+	    var minDist = Infinity;
+	    if (distLeft < minDist) {
+	        minDist = distLeft;
+	        nearestEdge = 'left';
+	    }
+	    if (distTop < minDist) {
+	        minDist = distTop;
+	        nearestEdge = 'top';
+	    }
+	    if (distRight < minDist) {
+	        minDist = distRight;
+	        nearestEdge = 'right';
+	    }
+	    if (distBottom < minDist) {
+	        minDist = distBottom;
+	        nearestEdge = 'bottom';
+	    }
+	    if (minDist > 0) {
+	        return; // Not touching any edge.
+	    }
+	    // Point away from the nearest edge.
+	    var radians = MathUtil.degToRad(90 - util.target.direction);
+	    var dx = Math.cos(radians);
+	    var dy = -Math.sin(radians);
+	    if (nearestEdge === 'left') {
+	        dx = Math.max(0.2, Math.abs(dx));
+	    } else if (nearestEdge === 'top') {
+	        dy = Math.max(0.2, Math.abs(dy));
+	    } else if (nearestEdge === 'right') {
+	        dx = 0 - Math.max(0.2, Math.abs(dx));
+	    } else if (nearestEdge === 'bottom') {
+	        dy = 0 - Math.max(0.2, Math.abs(dy));
+	    }
+	    var newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;
+	    util.target.setDirection(newDirection);
+	    // Keep within the stage.
+	    var fencedPosition = util.target.keepInFence(util.target.x, util.target.y);
+	    util.target.setXY(fencedPosition[0], fencedPosition[1]);
+	};
+
+	Scratch3MotionBlocks.prototype.setRotationStyle = function (args, util) {
+	    util.target.setRotationStyle(args.STYLE);
+	};
+
+	Scratch3MotionBlocks.prototype.changeX = function (args, util) {
+	    var dx = Cast.toNumber(args.DX);
+	    util.target.setXY(util.target.x + dx, util.target.y);
+	};
+
+	Scratch3MotionBlocks.prototype.setX = function (args, util) {
+	    var x = Cast.toNumber(args.X);
+	    util.target.setXY(x, util.target.y);
+	};
+
+	Scratch3MotionBlocks.prototype.changeY = function (args, util) {
+	    var dy = Cast.toNumber(args.DY);
+	    util.target.setXY(util.target.x, util.target.y + dy);
+	};
+
+	Scratch3MotionBlocks.prototype.setY = function (args, util) {
+	    var y = Cast.toNumber(args.Y);
+	    util.target.setXY(util.target.x, y);
+	};
+
+	Scratch3MotionBlocks.prototype.getX = function (args, util) {
+	    return util.target.x;
+	};
+
+	Scratch3MotionBlocks.prototype.getY = function (args, util) {
+	    return util.target.y;
+	};
+
+	Scratch3MotionBlocks.prototype.getDirection = function (args, util) {
+	    return util.target.direction;
+	};
+
+	module.exports = Scratch3MotionBlocks;
+
+
+/***/ },
+/* 96 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(88);
+
+	var Scratch3OperatorsBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3OperatorsBlocks.prototype.getPrimitives = function () {
+	    return {
+	        operator_add: this.add,
+	        operator_subtract: this.subtract,
+	        operator_multiply: this.multiply,
+	        operator_divide: this.divide,
+	        operator_lt: this.lt,
+	        operator_equals: this.equals,
+	        operator_gt: this.gt,
+	        operator_and: this.and,
+	        operator_or: this.or,
+	        operator_not: this.not,
+	        operator_random: this.random,
+	        operator_join: this.join,
+	        operator_letter_of: this.letterOf,
+	        operator_length: this.length,
+	        operator_mod: this.mod,
+	        operator_round: this.round,
+	        operator_mathop: this.mathop
+	    };
+	};
+
+	Scratch3OperatorsBlocks.prototype.add = function (args) {
+	    return Cast.toNumber(args.NUM1) + Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.subtract = function (args) {
+	    return Cast.toNumber(args.NUM1) - Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.multiply = function (args) {
+	    return Cast.toNumber(args.NUM1) * Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.divide = function (args) {
+	    return Cast.toNumber(args.NUM1) / Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.lt = function (args) {
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) < 0;
+	};
+
+	Scratch3OperatorsBlocks.prototype.equals = function (args) {
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) === 0;
+	};
+
+	Scratch3OperatorsBlocks.prototype.gt = function (args) {
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) > 0;
+	};
+
+	Scratch3OperatorsBlocks.prototype.and = function (args) {
+	    return Cast.toBoolean(args.OPERAND1) && Cast.toBoolean(args.OPERAND2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.or = function (args) {
+	    return Cast.toBoolean(args.OPERAND1) || Cast.toBoolean(args.OPERAND2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.not = function (args) {
+	    return !Cast.toBoolean(args.OPERAND);
+	};
+
+	Scratch3OperatorsBlocks.prototype.random = function (args) {
+	    var nFrom = Cast.toNumber(args.FROM);
+	    var nTo = Cast.toNumber(args.TO);
+	    var low = nFrom <= nTo ? nFrom : nTo;
+	    var high = nFrom <= nTo ? nTo : nFrom;
+	    if (low === high) return low;
+	    // If both arguments are ints, truncate the result to an int.
+	    if (Cast.isInt(args.FROM) && Cast.isInt(args.TO)) {
+	        return low + parseInt(Math.random() * ((high + 1) - low), 10);
+	    }
+	    return (Math.random() * (high - low)) + low;
+	};
+
+	Scratch3OperatorsBlocks.prototype.join = function (args) {
+	    return Cast.toString(args.STRING1) + Cast.toString(args.STRING2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
+	    var index = Cast.toNumber(args.LETTER) - 1;
+	    var str = Cast.toString(args.STRING);
+	    // Out of bounds?
+	    if (index < 0 || index >= str.length) {
+	        return '';
+	    }
+	    return str.charAt(index);
+	};
+
+	Scratch3OperatorsBlocks.prototype.length = function (args) {
+	    return Cast.toString(args.STRING).length;
+	};
+
+	Scratch3OperatorsBlocks.prototype.mod = function (args) {
+	    var n = Cast.toNumber(args.NUM1);
+	    var modulus = Cast.toNumber(args.NUM2);
+	    var result = n % modulus;
+	    // Scratch mod is kept positive.
+	    if (result / modulus < 0) result += modulus;
+	    return result;
+	};
+
+	Scratch3OperatorsBlocks.prototype.round = function (args) {
+	    return Math.round(Cast.toNumber(args.NUM));
+	};
+
+	Scratch3OperatorsBlocks.prototype.mathop = function (args) {
+	    var operator = Cast.toString(args.OPERATOR).toLowerCase();
+	    var n = Cast.toNumber(args.NUM);
+	    switch (operator) {
+	    case 'abs': return Math.abs(n);
+	    case 'floor': return Math.floor(n);
+	    case 'ceiling': return Math.ceil(n);
+	    case 'sqrt': return Math.sqrt(n);
+	    case 'sin': return Math.sin((Math.PI * n) / 180);
+	    case 'cos': return Math.cos((Math.PI * n) / 180);
+	    case 'tan': return Math.tan((Math.PI * n) / 180);
+	    case 'asin': return (Math.asin(n) * 180) / Math.PI;
+	    case 'acos': return (Math.acos(n) * 180) / Math.PI;
+	    case 'atan': return (Math.atan(n) * 180) / Math.PI;
+	    case 'ln': return Math.log(n);
+	    case 'log': return Math.log(n) / Math.LN10;
+	    case 'e ^': return Math.exp(n);
+	    case '10 ^': return Math.pow(10, n);
+	    }
+	    return 0;
+	};
+
+	module.exports = Scratch3OperatorsBlocks;
+
+
+/***/ },
+/* 97 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(88);
+
+	var Scratch3SensingBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3SensingBlocks.prototype.getPrimitives = function () {
+	    return {
+	        sensing_touchingobject: this.touchingObject,
+	        sensing_touchingcolor: this.touchingColor,
+	        sensing_coloristouchingcolor: this.colorTouchingColor,
+	        sensing_distanceto: this.distanceTo,
+	        sensing_timer: this.getTimer,
+	        sensing_resettimer: this.resetTimer,
+	        sensing_of: this.getAttributeOf,
+	        sensing_mousex: this.getMouseX,
+	        sensing_mousey: this.getMouseY,
+	        sensing_mousedown: this.getMouseDown,
+	        sensing_keypressed: this.getKeyPressed,
+	        sensing_current: this.current,
+	        sensing_dayssince2000: this.daysSince2000
+	    };
+	};
+
+	Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
+	    var requestedObject = args.TOUCHINGOBJECTMENU;
+	    if (requestedObject === '_mouse_') {
+	        var mouseX = util.ioQuery('mouse', 'getX');
+	        var mouseY = util.ioQuery('mouse', 'getY');
+	        return util.target.isTouchingPoint(mouseX, mouseY);
+	    } else if (requestedObject === '_edge_') {
+	        return util.target.isTouchingEdge();
+	    } else {
+	        return util.target.isTouchingSprite(requestedObject);
+	    }
+	};
+
+	Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
+	    var color = Cast.toRgbColorList(args.COLOR);
+	    return util.target.isTouchingColor(color);
+	};
+
+	Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
+	    var maskColor = Cast.toRgbColorList(args.COLOR);
+	    var targetColor = Cast.toRgbColorList(args.COLOR2);
+	    return util.target.colorIsTouchingColor(targetColor, maskColor);
+	};
+
+	Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
+	    if (util.target.isStage) return 10000;
+
+	    var targetX = 0;
+	    var targetY = 0;
+	    if (args.DISTANCETOMENU === '_mouse_') {
+	        targetX = util.ioQuery('mouse', 'getX');
+	        targetY = util.ioQuery('mouse', 'getY');
+	    } else {
+	        var distTarget = this.runtime.getSpriteTargetByName(
+	            args.DISTANCETOMENU
+	        );
+	        if (!distTarget) return 10000;
+	        targetX = distTarget.x;
+	        targetY = distTarget.y;
+	    }
+
+	    var dx = util.target.x - targetX;
+	    var dy = util.target.y - targetY;
+	    return Math.sqrt((dx * dx) + (dy * dy));
+	};
+
+	Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
+	    return util.ioQuery('clock', 'projectTimer');
+	};
+
+	Scratch3SensingBlocks.prototype.resetTimer = function (args, util) {
+	    util.ioQuery('clock', 'resetProjectTimer');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseX = function (args, util) {
+	    return util.ioQuery('mouse', 'getX');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
+	    return util.ioQuery('mouse', 'getY');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
+	    return util.ioQuery('mouse', 'getIsDown');
+	};
+
+	Scratch3SensingBlocks.prototype.current = function (args) {
+	    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
+	    var date = new Date();
+	    switch (menuOption) {
+	    case 'year': return date.getFullYear();
+	    case 'month': return date.getMonth() + 1; // getMonth is zero-based
+	    case 'date': return date.getDate();
+	    case 'dayofweek': return date.getDay() + 1; // getDay is zero-based, Sun=0
+	    case 'hour': return date.getHours();
+	    case 'minute': return date.getMinutes();
+	    case 'second': return date.getSeconds();
+	    }
+	    return 0;
+	};
+
+	Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
+	    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
+	};
+
+	Scratch3SensingBlocks.prototype.daysSince2000 = function () {
+	    var msPerDay = 24 * 60 * 60 * 1000;
+	    var start = new Date(2000, 0, 1); // Months are 0-indexed.
+	    var today = new Date();
+	    var dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
+	    var mSecsSinceStart = today.valueOf() - start.valueOf();
+	    mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
+	    return mSecsSinceStart / msPerDay;
+	};
+
+	Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
+	    var attrTarget;
+
+	    if (args.OBJECT === '_stage_') {
+	        attrTarget = this.runtime.getTargetForStage();
+	    } else {
+	        attrTarget = this.runtime.getSpriteTargetByName(args.OBJECT);
+	    }
+
+	    // Generic attributes
+	    if (attrTarget.isStage) {
+	        switch (args.PROPERTY) {
+	        // Scratch 1.4 support
+	        case 'background #': return attrTarget.currentCostume + 1;
+
+	        case 'backdrop #': return attrTarget.currentCostume + 1;
+	        case 'backdrop name':
+	            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
+	        case 'volume': return; // @todo: Keep this in mind for sound blocks!
+	        }
+	    } else {
+	        switch (args.PROPERTY) {
+	        case 'x position': return attrTarget.x;
+	        case 'y position': return attrTarget.y;
+	        case 'direction': return attrTarget.direction;
+	        case 'costume #': return attrTarget.currentCostume + 1;
+	        case 'costume name':
+	            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
+	        case 'size': return attrTarget.size;
+	        case 'volume': return; // @todo: above, keep in mind for sound blocks..
+	        }
+	    }
+
+	    // Variables
+	    var varName = args.PROPERTY;
+	    if (attrTarget.variables.hasOwnProperty(varName)) {
+	        return attrTarget.variables[varName].value;
+	    }
+
+	    // Otherwise, 0
+	    return 0;
+	};
+
+	module.exports = Scratch3SensingBlocks;
+
+
+/***/ },
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(88);
+
+	var Scratch3DataBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3DataBlocks.prototype.getPrimitives = function () {
+	    return {
+	        data_variable: this.getVariable,
+	        data_setvariableto: this.setVariableTo,
+	        data_changevariableby: this.changeVariableBy,
+	        data_listcontents: this.getListContents,
+	        data_addtolist: this.addToList,
+	        data_deleteoflist: this.deleteOfList,
+	        data_insertatlist: this.insertAtList,
+	        data_replaceitemoflist: this.replaceItemOfList,
+	        data_itemoflist: this.getItemOfList,
+	        data_lengthoflist: this.lengthOfList,
+	        data_listcontainsitem: this.listContainsItem
+	    };
+	};
+
+	Scratch3DataBlocks.prototype.getVariable = function (args, util) {
+	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+	    return variable.value;
+	};
+
+	Scratch3DataBlocks.prototype.setVariableTo = function (args, util) {
+	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+	    variable.value = args.VALUE;
+	};
+
+	Scratch3DataBlocks.prototype.changeVariableBy = function (args, util) {
+	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+	    var castedValue = Cast.toNumber(variable.value);
+	    var dValue = Cast.toNumber(args.VALUE);
+	    variable.value = castedValue + dValue;
+	};
+
+	Scratch3DataBlocks.prototype.getListContents = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    // Determine if the list is all single letters.
+	    // If it is, report contents joined together with no separator.
+	    // If it's not, report contents joined together with a space.
+	    var allSingleLetters = true;
+	    for (var i = 0; i < list.contents.length; i++) {
+	        var listItem = list.contents[i];
+	        if (!((typeof listItem === 'string') &&
+	              (listItem.length === 1))) {
+	            allSingleLetters = false;
+	            break;
+	        }
+	    }
+	    if (allSingleLetters) {
+	        return list.contents.join('');
+	    } else {
+	        return list.contents.join(' ');
+	    }
+	};
+
+	Scratch3DataBlocks.prototype.addToList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    list.contents.push(args.ITEM);
+	};
+
+	Scratch3DataBlocks.prototype.deleteOfList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+	    if (index === Cast.LIST_INVALID) {
+	        return;
+	    } else if (index === Cast.LIST_ALL) {
+	        list.contents = [];
+	        return;
+	    }
+	    list.contents.splice(index - 1, 1);
+	};
+
+	Scratch3DataBlocks.prototype.insertAtList = function (args, util) {
+	    var item = args.ITEM;
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length + 1);
+	    if (index === Cast.LIST_INVALID) {
+	        return;
+	    }
+	    list.contents.splice(index - 1, 0, item);
+	};
+
+	Scratch3DataBlocks.prototype.replaceItemOfList = function (args, util) {
+	    var item = args.ITEM;
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+	    if (index === Cast.LIST_INVALID) {
+	        return;
+	    }
+	    list.contents.splice(index - 1, 1, item);
+	};
+
+	Scratch3DataBlocks.prototype.getItemOfList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+	    if (index === Cast.LIST_INVALID) {
+	        return '';
+	    }
+	    return list.contents[index - 1];
+	};
+
+	Scratch3DataBlocks.prototype.lengthOfList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    return list.contents.length;
+	};
+
+	Scratch3DataBlocks.prototype.listContainsItem = function (args, util) {
+	    var item = args.ITEM;
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    if (list.contents.indexOf(item) >= 0) {
+	        return true;
+	    }
+	    // Try using Scratch comparison operator on each item.
+	    // (Scratch considers the string '123' equal to the number 123).
+	    for (var i = 0; i < list.contents.length; i++) {
+	        if (Cast.compare(list.contents[i], item) === 0) {
+	            return true;
+	        }
+	    }
+	    return false;
+	};
+
+	module.exports = Scratch3DataBlocks;
+
+
+/***/ },
+/* 99 */
+/***/ function(module, exports) {
+
+	var Scratch3ProcedureBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3ProcedureBlocks.prototype.getPrimitives = function () {
+	    return {
+	        procedures_defnoreturn: this.defNoReturn,
+	        procedures_callnoreturn: this.callNoReturn,
+	        procedures_param: this.param
+	    };
+	};
+
+	Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
+	    // No-op: execute the blocks.
+	};
+
+	Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
+	    if (!util.stackFrame.executed) {
+	        var procedureCode = args.mutation.proccode;
+	        var paramNames = util.getProcedureParamNames(procedureCode);
+	        for (var i = 0; i < paramNames.length; i++) {
+	            if (args.hasOwnProperty('input' + i)) {
+	                util.pushParam(paramNames[i], args['input' + i]);
+	            }
+	        }
+	        util.stackFrame.executed = true;
+	        util.startProcedure(procedureCode);
+	    }
+	};
+
+	Scratch3ProcedureBlocks.prototype.param = function (args, util) {
+	    var value = util.getParam(args.mutation.paramname);
+	    return value;
+	};
+
+	module.exports = Scratch3ProcedureBlocks;
+
+
+/***/ },
+/* 100 */
+/***/ function(module, exports) {
+
+	/**
+	 * Created by Riven on 7/8/2016.
+	 */
+
+	function ArduinoBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	ArduinoBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'event_arduinobegin': this.arduinobegin,
+	        'arduino_pin_mode': this.pinMode,
+	        'arduino_analog_read': this.analogRead,
+	        'arduino_pin_mode_option': this.pinModeOption,
+	        'arduino_digital_write': this.digitalWrite,
+	        'arduino_level_option': this.levelOption,
+	        'arduino_pwm_write': this.pwmWrite,
+	        'arduino_pwm_option': this.pwmOption,
+	        'arduino_digital_read': this.digitalRead,
+	        'arduino_analog_in_option': this.analogPinOption,
+	        'arduino_tone': this.tone,
+	        'arduino_map': this.map,
+	        'arduino_servo': this.servo,
+	        'arduino_pulsein': this.pulsein
+	    };
+	};
+
+	ArduinoBlocks.prototype.getHats = function () {
+	    return {
+	        event_whenarduinobegin: {
+	            restartExistingThreads: true
+	        }
+	    };
+	};
+
+	ArduinoBlocks.prototype.arduinobegin = function(argValues, util){
+	    console.log("restart arduino programe");
+	    cmd = "M999";
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.pinMode = function(argValues, util) {
+	    var pinmode = {"INPUT":0,"OUTPUT":1};
+	    pin = argValues.PINNUM;
+	    mode = pinmode[argValues.ARDUINO_PIN_MODE_OPTION];
+	    cmd = "M1 "+pin+" "+mode;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.digitalWrite = function(argValues, util) {
+	    var level = {"HIGH":1,"LOW":0};
+	    pin = argValues.PINNUM;
+	    value = level[argValues.ARDUINO_LEVEL_OPTION];
+	    cmd = "M2 "+pin+" "+value;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.pwmWrite = function(argValues, util) {
+	    pin = argValues.ARDUINO_PWM_OPTION;
+	    value = argValues.PWM;
+	    cmd = "M4 "+pin+" "+value;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.digitalRead = function(argValues, util) {
+	    var pin = argValues.PINNUM;
+	    var data = {type:'D',pin:pin};
+	    return util.ioQuery('serial', 'queryData', data);
+	};
+
+	ArduinoBlocks.prototype.analogRead = function(argValues, util) {
+	    var pin = argValues.PINNUM;
+	    var data = {type:'A',pin:pin};
+	    return util.ioQuery('serial', 'queryData', data);
+	};
+
+
+	ArduinoBlocks.prototype.tone = function(argValues, util){
+	    pin = argValues.PINNUM;
+	    var cmd = "M6 "+pin+" "+argValues.FREQUENCY+" "+argValues.DURATION;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.servo = function(argValues, util){
+	    pin = argValues.PINNUM;
+	    var cmd = "M7 "+pin+" "+argValues.ANGLE;
+	    util.ioQuery('serial', 'sendMsg', cmd);
+	};
+
+	ArduinoBlocks.prototype.pulsein = function(argValues, util) {
+	    var cmd = "M8 "+argValues.PINNUM;
+	    var exePromise = new Promise(function(resolve) {
+	        util.ioQuery('serial', 'sendMsg', cmd);
+	        util.ioQuery('serial', 'regResolve', {"slot":"M8", "resolve":resolve});
+	    });
+	    return exePromise;
+	};
+
+
+	ArduinoBlocks.prototype.map = function(argValues, util){
+	    x = argValues.VAL;
+	    in_min = argValues.FROMLOW;
+	    in_max = argValues.FROMHIGH;
+	    out_min = argValues.TOLOW;
+	    out_max = argValues.TOHIGH;
+	    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	};
+
+	ArduinoBlocks.prototype.pinModeOption = function(argValues, util) {
+	    return argValues.ARDUINO_PIN_MODE_OPTION;
+	};
+
+	ArduinoBlocks.prototype.levelOption = function(argValues, util) {
+	    return argValues.ARDUINO_LEVEL_OPTION;
+	};
+
+	ArduinoBlocks.prototype.pwmOption = function(argValues, util) {
+	    return argValues.ARDUINO_PWM_OPTION;
+	};
+
+	ArduinoBlocks.prototype.analogPinOption = function(argValues, util) {
+	    return argValues.ARDUINO_ANALOG_IN_OPTION;
+	};
+
+	module.exports = ArduinoBlocks;
+
+
+/***/ },
 /* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var RenderedTarget = __webpack_require__(96);
-	var Blocks = __webpack_require__(25);
+	/**
+	 * @fileoverview
+	 * Partial implementation of an SB2 JSON importer.
+	 * Parses provided JSON and then generates all needed
+	 * scratch-vm runtime structures.
+	 */
+
+	var Blocks = __webpack_require__(7);
+	var RenderedTarget = __webpack_require__(62);
+	var Sprite = __webpack_require__(61);
+	var Color = __webpack_require__(89);
+	var log = __webpack_require__(63);
+	var uid = __webpack_require__(80);
+	var specMap = __webpack_require__(102);
+	var Variable = __webpack_require__(78);
+	var List = __webpack_require__(79);
 
 	/**
-	 * Sprite to be used on the Scratch stage.
-	 * All clones of a sprite have shared blocks, shared costumes, shared variables.
-	 * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
-	 * @param {Runtime} runtime Reference to the runtime.
-	 * @constructor
+	 * Parse a single "Scratch object" and create all its in-memory VM objects.
+	 * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
+	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 * @param {boolean} topLevel Whether this is the top-level object (stage).
+	 * @return {?Target} Target created (stage or sprite).
 	 */
-	var Sprite = function (blocks, runtime) {
-	    this.runtime = runtime;
-	    if (!blocks) {
-	        // Shared set of blocks for all clones.
-	        blocks = new Blocks();
+	var parseScratchObject = function (object, runtime, topLevel) {
+	    if (!object.hasOwnProperty('objName')) {
+	        // Watcher/monitor - skip this object until those are implemented in VM.
+	        // @todo
+	        return;
 	    }
-	    this.blocks = blocks;
-	    /**
-	     * Human-readable name for this sprite (and all clones).
-	     * @type {string}
-	     */
-	    this.name = '';
-	    /**
-	     * List of costumes for this sprite.
-	     * Each entry is an object, e.g.,
-	     * {
-	     *      skin: "costume.svg",
-	     *      name: "Costume Name",
-	     *      bitmapResolution: 2,
-	     *      rotationCenterX: 0,
-	     *      rotationCenterY: 0
-	     * }
-	     * @type {Array.<!Object>}
-	     */
-	    this.costumes = [];
-	    /**
-	     * List of clones for this sprite, including the original.
-	     * @type {Array.<!RenderedTarget>}
-	     */
-	    this.clones = [];
+	    // Blocks container for this object.
+	    var blocks = new Blocks();
+	    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
+	    var sprite = new Sprite(blocks, runtime);
+	    // Sprite/stage name from JSON.
+	    if (object.hasOwnProperty('objName')) {
+	        sprite.name = object.objName;
+	    }
+	    // Costumes from JSON.
+	    if (object.hasOwnProperty('costumes')) {
+	        for (var i = 0; i < object.costumes.length; i++) {
+	            var costume = object.costumes[i];
+	            // @todo: Make sure all the relevant metadata is being pulled out.
+	            sprite.costumes.push({
+	                //skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
+	                //    costume.baseLayerMD5 + '/get/',
+	                skin: 'http://localhost:9234/' + costume.baseLayerMD5,
+	                name: costume.costumeName,
+	                bitmapResolution: costume.bitmapResolution,
+	                rotationCenterX: costume.rotationCenterX,
+	                rotationCenterY: costume.rotationCenterY
+	            });
+	        }
+	    }
+	    // If included, parse any and all scripts/blocks on the object.
+	    if (object.hasOwnProperty('scripts')) {
+	        parseScripts(object.scripts, blocks);
+	    }
+	    // Create the first clone, and load its run-state from JSON.
+	    var target = sprite.createClone();
+	    // Add it to the runtime's list of targets.
+	    runtime.targets.push(target);
+	    // Load target properties from JSON.
+	    if (object.hasOwnProperty('variables')) {
+	        for (var j = 0; j < object.variables.length; j++) {
+	            var variable = object.variables[j];
+	            target.variables[variable.name] = new Variable(
+	                variable.name,
+	                variable.value,
+	                variable.isPersistent
+	            );
+	        }
+	    }
+	    if (object.hasOwnProperty('lists')) {
+	        for (var k = 0; k < object.lists.length; k++) {
+	            var list = object.lists[k];
+	            // @todo: monitor properties.
+	            target.lists[list.listName] = new List(
+	                list.listName,
+	                list.contents
+	            );
+	        }
+	    }
+	    if (object.hasOwnProperty('scratchX')) {
+	        target.x = object.scratchX;
+	    }
+	    if (object.hasOwnProperty('scratchY')) {
+	        target.y = object.scratchY;
+	    }
+	    if (object.hasOwnProperty('direction')) {
+	        target.direction = object.direction;
+	    }
+	    if (object.hasOwnProperty('scale')) {
+	        // SB2 stores as 1.0 = 100%; we use % in the VM.
+	        target.size = object.scale * 100;
+	    }
+	    if (object.hasOwnProperty('visible')) {
+	        target.visible = object.visible;
+	    }
+	    if (object.hasOwnProperty('currentCostumeIndex')) {
+	        target.currentCostume = Math.round(object.currentCostumeIndex);
+	    }
+	    if (object.hasOwnProperty('rotationStyle')) {
+	        if (object.rotationStyle === 'none') {
+	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
+	        } else if (object.rotationStyle === 'leftRight') {
+	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
+	        } else if (object.rotationStyle === 'normal') {
+	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
+	        }
+	    }
+	    target.isStage = topLevel;
+	    target.updateAllDrawableProperties();
+	    // The stage will have child objects; recursively process them.
+	    if (object.children) {
+	        for (var m = 0; m < object.children.length; m++) {
+	            parseScratchObject(object.children[m], runtime, false);
+	        }
+	    }
+	    return target;
 	};
 
 	/**
-	 * Create a clone of this sprite.
-	 * @returns {!Clone} Newly created clone.
+	 * Top-level handler. Parse provided JSON,
+	 * and process the top-level object (the stage object).
+	 * @param {!string} json SB2-format JSON to load.
+	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 * @param {Boolean=} optForceSprite If set, treat as sprite (Sprite2).
+	 * @return {?Target} Top-level target created (stage or sprite).
 	 */
-	Sprite.prototype.createClone = function () {
-	    var newClone = new RenderedTarget(this, this.runtime);
-	    newClone.isOriginal = this.clones.length === 0;
-	    this.clones.push(newClone);
-	    if (newClone.isOriginal) {
-	        newClone.initDrawable();
-	    }
-	    return newClone;
+	var sb2import = function (json, runtime, optForceSprite) {
+	    return parseScratchObject(
+	        JSON.parse(json),
+	        runtime,
+	        !optForceSprite
+	    );
 	};
 
-	module.exports = Sprite;
+	/**
+	 * Parse a Scratch object's scripts into VM blocks.
+	 * This should only handle top-level scripts that include X, Y coordinates.
+	 * @param {!Object} scripts Scripts object from SB2 JSON.
+	 * @param {!Blocks} blocks Blocks object to load parsed blocks into.
+	 */
+	var parseScripts = function (scripts, blocks) {
+	    for (var i = 0; i < scripts.length; i++) {
+	        var script = scripts[i];
+	        var scriptX = script[0];
+	        var scriptY = script[1];
+	        var blockList = script[2];
+	        var parsedBlockList = parseBlockList(blockList);
+	        if (parsedBlockList[0]) {
+	            // Adjust script coordinates to account for
+	            // larger block size in scratch-blocks.
+	            // @todo: Determine more precisely the right formulas here.
+	            parsedBlockList[0].x = scriptX * 1.1;
+	            parsedBlockList[0].y = scriptY * 1.1;
+	            parsedBlockList[0].topLevel = true;
+	            parsedBlockList[0].parent = null;
+	        }
+	        // Flatten children and create add the blocks.
+	        var convertedBlocks = flatten(parsedBlockList);
+	        for (var j = 0; j < convertedBlocks.length; j++) {
+	            blocks.createBlock(convertedBlocks[j]);
+	        }
+	    }
+	};
+
+	/**
+	 * Parse any list of blocks from SB2 JSON into a list of VM-format blocks.
+	 * Could be used to parse a top-level script,
+	 * a list of blocks in a branch (e.g., in forever),
+	 * or a list of blocks in an argument (e.g., move [pick random...]).
+	 * @param {Array.<Object>} blockList SB2 JSON-format block list.
+	 * @return {Array.<Object>} Scratch VM-format block list.
+	 */
+	var parseBlockList = function (blockList) {
+	    var resultingList = [];
+	    var previousBlock = null; // For setting next.
+	    for (var i = 0; i < blockList.length; i++) {
+	        var block = blockList[i];
+	        var parsedBlock = parseBlock(block);
+	        if (previousBlock) {
+	            parsedBlock.parent = previousBlock.id;
+	            previousBlock.next = parsedBlock.id;
+	        }
+	        previousBlock = parsedBlock;
+	        resultingList.push(parsedBlock);
+	    }
+	    return resultingList;
+	};
+
+	/**
+	 * Flatten a block tree into a block list.
+	 * Children are temporarily stored on the `block.children` property.
+	 * @param {Array.<Object>} blocks list generated by `parseBlockList`.
+	 * @return {Array.<Object>} Flattened list to be passed to `blocks.createBlock`.
+	 */
+	var flatten = function (blocks) {
+	    var finalBlocks = [];
+	    for (var i = 0; i < blocks.length; i++) {
+	        var block = blocks[i];
+	        finalBlocks.push(block);
+	        if (block.children) {
+	            finalBlocks = finalBlocks.concat(flatten(block.children));
+	        }
+	        delete block.children;
+	    }
+	    return finalBlocks;
+	};
+
+	/**
+	 * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
+	 * into an argument map. This allows us to provide the expected inputs
+	 * to a mutated procedure call.
+	 * @param {string} procCode Scratch 2.0 procedure string.
+	 * @return {Object} Argument map compatible with those in sb2specmap.
+	 */
+	var parseProcedureArgMap = function (procCode) {
+	    var argMap = [
+	        {} // First item in list is op string.
+	    ];
+	    var INPUT_PREFIX = 'input';
+	    var inputCount = 0;
+	    // Split by %n, %b, %s.
+	    var parts = procCode.split(/(?=[^\\]%[nbs])/);
+	    for (var i = 0; i < parts.length; i++) {
+	        var part = parts[i].trim();
+	        if (part.substring(0, 1) === '%') {
+	            var argType = part.substring(1, 2);
+	            var arg = {
+	                type: 'input',
+	                inputName: INPUT_PREFIX + (inputCount++)
+	            };
+	            if (argType === 'n') {
+	                arg.inputOp = 'math_number';
+	            } else if (argType === 's') {
+	                arg.inputOp = 'text';
+	            }
+	            argMap.push(arg);
+	        }
+	    }
+	    return argMap;
+	};
+
+	/**
+	 * Parse a single SB2 JSON-formatted block and its children.
+	 * @param {!Object} sb2block SB2 JSON-formatted block.
+	 * @return {Object} Scratch VM format block.
+	 */
+	var parseBlock = function (sb2block) {
+	    // First item in block object is the old opcode (e.g., 'forward:').
+	    var oldOpcode = sb2block[0];
+	    // Convert the block using the specMap. See sb2specmap.js.
+	    if (!oldOpcode || !specMap[oldOpcode]) {
+	        log.warn('Couldn\'t find SB2 block: ', oldOpcode);
+	        return;
+	    }
+	    var blockMetadata = specMap[oldOpcode];
+	    // Block skeleton.
+	    var activeBlock = {
+	        id: uid(), // Generate a new block unique ID.
+	        opcode: blockMetadata.opcode, // Converted, e.g. "motion_movesteps".
+	        inputs: {}, // Inputs to this block and the blocks they point to.
+	        fields: {}, // Fields on this block and their values.
+	        next: null, // Next block.
+	        shadow: false, // No shadow blocks in an SB2 by default.
+	        children: [] // Store any generated children, flattened in `flatten`.
+	    };
+	    // For a procedure call, generate argument map from proc string.
+	    if (oldOpcode === 'call') {
+	        blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
+	    }
+	    // Look at the expected arguments in `blockMetadata.argMap.`
+	    // The basic problem here is to turn positional SB2 arguments into
+	    // non-positional named Scratch VM arguments.
+	    for (var i = 0; i < blockMetadata.argMap.length; i++) {
+	        var expectedArg = blockMetadata.argMap[i];
+	        var providedArg = sb2block[i + 1]; // (i = 0 is opcode)
+	        // Whether the input is obscuring a shadow.
+	        var shadowObscured = false;
+	        // Positional argument is an input.
+	        if (expectedArg.type === 'input') {
+	            // Create a new block and input metadata.
+	            var inputUid = uid();
+	            activeBlock.inputs[expectedArg.inputName] = {
+	                name: expectedArg.inputName,
+	                block: null,
+	                shadow: null
+	            };
+	            if (typeof providedArg === 'object' && providedArg) {
+	                // Block or block list occupies the input.
+	                var innerBlocks;
+	                if (typeof providedArg[0] === 'object' && providedArg[0]) {
+	                    // Block list occupies the input.
+	                    innerBlocks = parseBlockList(providedArg);
+	                } else {
+	                    // Single block occupies the input.
+	                    innerBlocks = [parseBlock(providedArg)];
+	                }
+	                var previousBlock = null;
+	                for (var j = 0; j < innerBlocks.length; j++) {
+	                    if (j === 0) {
+	                        innerBlocks[j].parent = activeBlock.id;
+	                    } else {
+	                        innerBlocks[j].parent = previousBlock;
+	                    }
+	                    previousBlock = innerBlocks[j].id;
+	                }
+	                // Obscures any shadow.
+	                shadowObscured = true;
+	                activeBlock.inputs[expectedArg.inputName].block = (
+	                    innerBlocks[0].id
+	                );
+	                activeBlock.children = (
+	                    activeBlock.children.concat(innerBlocks)
+	                );
+	            }
+	            // Generate a shadow block to occupy the input.
+	            if (!expectedArg.inputOp) {
+	                // No editable shadow input; e.g., for a boolean.
+	                continue;
+	            }
+	            // Each shadow has a field generated for it automatically.
+	            // Value to be filled in the field.
+	            var fieldValue = providedArg;
+	            // Shadows' field names match the input name, except for these:
+	            var fieldName = expectedArg.inputName;
+	            if (expectedArg.inputOp === 'math_number' ||
+	                expectedArg.inputOp === 'math_whole_number' ||
+	                expectedArg.inputOp === 'math_positive_number' ||
+	                expectedArg.inputOp === 'math_integer' ||
+	                expectedArg.inputOp === 'math_angle') {
+	                fieldName = 'NUM';
+	                // Fields are given Scratch 2.0 default values if obscured.
+	                if (shadowObscured) {
+	                    fieldValue = 10;
+	                }
+	            } else if (expectedArg.inputOp === 'text') {
+	                fieldName = 'TEXT';
+	                if (shadowObscured) {
+	                    fieldValue = '';
+	                }
+	            } else if (expectedArg.inputOp === 'colour_picker') {
+	                // Convert SB2 color to hex.
+	                fieldValue = Color.decimalToHex(providedArg);
+	                fieldName = 'COLOUR';
+	                if (shadowObscured) {
+	                    fieldValue = '#990000';
+	                }
+	            } else if (shadowObscured) {
+	                // Filled drop-down menu.
+	                fieldValue = '';
+	            }
+	            var fields = {};
+	            fields[fieldName] = {
+	                name: fieldName,
+	                value: fieldValue
+	            };
+	            activeBlock.children.push({
+	                id: inputUid,
+	                opcode: expectedArg.inputOp,
+	                inputs: {},
+	                fields: fields,
+	                next: null,
+	                topLevel: false,
+	                parent: activeBlock.id,
+	                shadow: true
+	            });
+	            activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
+	            // If no block occupying the input, alias to the shadow.
+	            if (!activeBlock.inputs[expectedArg.inputName].block) {
+	                activeBlock.inputs[expectedArg.inputName].block = inputUid;
+	            }
+	        } else if (expectedArg.type === 'field') {
+	            // Add as a field on this block.
+	            activeBlock.fields[expectedArg.fieldName] = {
+	                name: expectedArg.fieldName,
+	                value: providedArg
+	            };
+	        }
+	    }
+	    // Special cases to generate mutations.
+	    if (oldOpcode === 'stopScripts') {
+	        // Mutation for stop block: if the argument is 'other scripts',
+	        // the block needs a next connection.
+	        if (sb2block[1] === 'other scripts in sprite' ||
+	            sb2block[1] === 'other scripts in stage') {
+	            activeBlock.mutation = {
+	                tagName: 'mutation',
+	                hasnext: 'true',
+	                children: []
+	            };
+	        }
+	    } else if (oldOpcode === 'procDef') {
+	        // Mutation for procedure definition:
+	        // store all 2.0 proc data.
+	        var procData = sb2block.slice(1);
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            proccode: procData[0], // e.g., "abc %n %b %s"
+	            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
+	            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
+	            warp: procData[3], // Warp mode, e.g., true/false.
+	            children: []
+	        };
+	    } else if (oldOpcode === 'call') {
+	        // Mutation for procedure call:
+	        // string for proc code (e.g., "abc %n %b %s").
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            children: [],
+	            proccode: sb2block[1]
+	        };
+	    } else if (oldOpcode === 'getParam') {
+	        // Mutation for procedure parameter.
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            children: [],
+	            paramname: sb2block[1], // Name of parameter.
+	            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
+	        };
+	    }
+	    return activeBlock;
+	};
+
+	module.exports = sb2import;
 
 
 /***/ },

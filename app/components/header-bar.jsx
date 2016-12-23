@@ -20,6 +20,7 @@ class HeaderBarComponent extends React.Component {
             connectedPort,
             openSetupModal,
             openLoadProjectDialog,
+            openSaveProjectDialog,
             projectName,
             ...componentProps
         } = this.props;
@@ -112,7 +113,7 @@ class HeaderBarComponent extends React.Component {
                         <ButtonGroup>
                             <DropdownButton title={Blockly.Msg.PROJECT} bsStyle="warning" id="projDropdown">
                                 <MenuItem eventKey="1">{Blockly.Msg.NEW_PROJECT}</MenuItem>
-                                <MenuItem eventKey="2">{Blockly.Msg.SAVE}</MenuItem>
+                                <MenuItem eventKey="2" onClick={openSaveProjectDialog}>{Blockly.Msg.SAVE}</MenuItem>
                                 <MenuItem eventKey="3" onClick={openLoadProjectDialog}>{Blockly.Msg.LOAD_PROJECT}</MenuItem>
                             </DropdownButton>
                         </ButtonGroup>

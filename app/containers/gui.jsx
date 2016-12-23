@@ -30,7 +30,7 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
                         'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget',
-                        'consoleSend','consoleClear','translateCode']);
+                        'consoleSend','consoleClear','translateCode','saveProject']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -89,6 +89,7 @@ class GUI extends React.Component {
         this.props.kb.arduino.sendCmdEvent.addListener(this.sendCommonData);
         this.props.vm.start();
         this.props.kb.loadDefaultProj();
+        this.saveProjDialog.nwsaveas = "KittenBot";
     }
     componentWillReceiveProps (nextProps) {
         if (this.props.projectData !== nextProps.projectData) {
@@ -130,6 +131,9 @@ class GUI extends React.Component {
     openLoadProjectDialog(){
         this.loadProjDialog.click();
     }
+    openSaveProjectDialog(){
+        this.saveProjDialog.click();
+    }
     openSetArduinoPathDialog(){
         this.setArduinoDialog.click();
     }
@@ -137,6 +141,10 @@ class GUI extends React.Component {
         var file = this.loadProjDialog.value;
         var name = this.props.kb.loadSb2(file);
         this.setState({projectName:name});
+    }
+    saveProject(){
+        var file = this.saveProjDialog.value;
+        console.log("save proj "+file);
     }
     setArduinoPath(){
         var temppath = this.setArduinoDialog.value;
@@ -243,6 +251,7 @@ class GUI extends React.Component {
             openSetupModal: ()=>this.openModal("setup-modal"),
             portReadLine: (line)=>this.portReadLine(line),
             openLoadProjectDialog:()=>this.openLoadProjectDialog(),
+            openSaveProjectDialog:()=>this.openSaveProjectDialog(),
             projectName: this.state.projectName
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
@@ -282,7 +291,8 @@ class GUI extends React.Component {
                 <EditorTabs vm={vm} {...editorTabsProps} />
                 <ArduinoPanel vm={vm} {...arduinoPanelProps} />
                 <SetupModal kb={kb} {...setupModalProps}/>
-                <input type="file" style={{display:'none'}} ref={(ref) => this.loadProjDialog = ref} onChange={this.loadProject} accept=".sb2"/>
+                <input type="file" style={{display:'none'}} ref={(ref) => this.loadProjDialog = ref} onChange={this.loadProject} accept=".sb2;.kb"/>
+                <input type="file" style={{display:'none'}} ref={(ref) => this.saveProjDialog = ref} onChange={this.saveProject} accept=".kb"/>
                 <input type="file" style={{display:'none'}} ref={(ref) => this.setArduinoDialog = ref} onChange={this.setArduinoPath} />
             </GUIComponent>
         );
