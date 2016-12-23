@@ -202,6 +202,11 @@ class GUI extends React.Component {
         var code = this.refs.Blocks.sb2cpp();
         this.setState({editorCode:code});
     }
+    selectPlugin(plugin){
+        console.log("select plugin "+plugin);
+        var ret = this.props.kb.selectPlugin(plugin);
+        this.setState({pluginlist:ret});
+    }
     render () {
         let {
             backdropLibraryProps,
@@ -257,7 +262,8 @@ class GUI extends React.Component {
             language: this.state.language,
             selectLanguage: this.selectLanguage,
             applyconfig: this.applyConfig,
-            pluginlist: this.state.pluginlist
+            pluginlist: this.state.pluginlist,
+            selectPlugin: (plugin)=>this.selectPlugin(plugin)
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),

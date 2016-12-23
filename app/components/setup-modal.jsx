@@ -18,10 +18,14 @@ class SetupModalComponent extends React.Component {
         super(props);
         bindAll(this, [
             'setLang',
+            'selectPlugin'
         ]);
     }
     setLang(lang){
         this.props.selectLanguage(lang);
+    }
+    selectPlugin(plugin){
+        this.props.selectPlugin(plugin);
     }
     render() {
         const {
@@ -31,7 +35,6 @@ class SetupModalComponent extends React.Component {
             language,
             applyconfig,
             pluginlist,
-            selectLanguage,
     ...componentProps
         } = this.props;
         var plugins = [];
@@ -41,7 +44,9 @@ class SetupModalComponent extends React.Component {
             var filter = p.active==true?'none':'grayscale(100%) blur(3px)';
             plugins.push(
                 <div className="col-xs-4 col-md-3 text-center" key={p.name}>
-                    <img style={{width:150,WebkitFilter:filter}} src={src}/>
+                    <img style={{width:150,WebkitFilter:filter}} src={src}
+                    onClick={this.selectPlugin.bind(this,p.name)}
+                    />
                     <span>{p.name}</span>
                 </div>
             );
