@@ -203,100 +203,6 @@ module.exports =
 	    this.runtime.setEditingTarget(this.editingTarget);
 	};
 
-	VirtualMachine.prototype.toPrettyJSON = function (testing) {
-	    this.runtime.targets.testing = testing;
-	    var json = JSON.stringify(this.toJSON(), null, 4);
-	    this.runtime.targets.testing = false;
-	    if (testing == true) {
-	        console.log('Exported To JSON');
-	    }
-	    return json;
-	};
-
-	VirtualMachine.prototype.toJSON = function () {
-	    if (this.runtime.targets.hasOwnProperty('testing') == false) {
-	        this.runtime.targets.testing = false;
-	    }
-	    var obj = new Object();
-	    obj.sprites = this.runtime.targets;
-	    obj.meta = new Object();
-	    obj.meta.name = 'WIP';
-	    obj.meta.useragent = navigator.userAgent;
-	    return obj;
-	};
-
-	VirtualMachine.prototype.fromJSON = function (json, testing) {
-	    this.clear();
-	    if (testing == true) {
-	        console.log('Importing JSON');
-	    }
-	    var obj = JSON.parse(json);
-	    var i = 0;
-	    for (; i < obj.sprites.length; i++) {
-	        var blocks = new Blocks();
-	        var z = null;
-	        for (z in obj.sprites[i].sprite.blocks) {
-	            blocks[z] = obj.sprites[i].sprite.blocks[z];
-	            if (testing == true) {
-	                console.log('Importing ' + z + ' to Blocks');
-	            }
-	        }
-	        var sprite = new Sprite(blocks, this.runtime);
-	        var y = null;
-	        for (y in obj.sprites[i].sprite) {
-	            if (y === 'blocks') {
-	                continue;
-	            }
-	            sprite[y] = obj.sprites[i].sprite[y];
-	            if (testing == true) {
-	                console.log('Importing ' + y + ' to Sprite');
-	            }
-	        }
-	        var target = sprite.createClone();
-	        this.runtime.targets.push(target);
-	        var x = null;
-	        for (x in obj.sprites[i]) {
-	            if (x === 'sprite') {
-	                continue;
-	            }
-	            target[x] = obj.sprites[i][x];
-	            console.log('Importing ' + x + ' to Rendered Target');
-	        }
-	        target.updateAllDrawableProperties();
-	    }
-	    this.editingTarget = this.runtime.targets[0];
-	    // Update the VM user's knowledge of targets and blocks on the workspace.
-	    this.emitTargetsUpdate();
-	    this.emitWorkspaceUpdate();
-	    this.runtime.setEditingTarget(this.editingTarget);
-	    if (testing == true) {
-	        console.log('Imported from JSON');
-	    }
-	};
-
-	VirtualMachine.prototype.testJSON = function () {
-	    console.log('Exporting to JSON...');
-	    var json = this.toPrettyJSON(true);
-	    console.log('Importing from JSON...');
-	    this.fromJSON(json, true);
-	    console.log('Exporting to JSON...');
-	    var json2 = this.toPrettyJSON(true);
-	    if (json == json2) {
-	        console.log('JSON Test: Successful');
-	    } else {
-	        console.log('JSON Test: Failed: JSON Not Equivalent');
-	        console.log('JSON 1:');
-	        console.log(json);
-	        console.log('JSON 2:');
-	        console.log(json2);
-	    }
-	    this.editingTarget = this.runtime.targets[0];
-	    this.emitTargetsUpdate();
-	    this.emitWorkspaceUpdate();
-	    this.runtime.setEditingTarget(this.editingTarget);
-	};
-
-
 	/**
 	 * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
 	 * @param {?string} json JSON string representing the sprite.
@@ -11895,28 +11801,6 @@ module.exports =
 	    return newClone;
 	};
 
-	Sprite.prototype.export = function () {
-	    var result = new Object();
-	    var notSaved = ['clones', 'runtime'];
-	    var x = null;
-	    for (x in this) {
-	        if (typeof this[x] === 'function') {
-	            continue;
-	            if (this.runtime.targets.testing == true) {
-	                console.log('Ignoring ' + x);
-	            }
-	        }
-	        if (notSaved.indexOf(x) === -1) {
-	            result[x] = this[x];
-	            if (this.runtime.targets.testing == true) {
-	                console.log('Exporting ' + x);
-	            }
-	        } else if (this.runtime.targets.testing == true) {
-	            console.log('Ignoring ' + x);
-	        }
-	    }
-	    return result;
-	};
 
 	module.exports = Sprite;
 
@@ -11991,29 +11875,6 @@ module.exports =
 	    }
 	};
 
-	RenderedTarget.prototype.toJSON = function () {
-	    var result = new Object();
-	    var notSaved = ['renderer', 'effects', 'sprite', 'drawableID', 'runtime', 'id', 'blocks'];
-	    var x = null;
-	    for (x in this) {
-	        if (typeof this[x] === 'function') {
-	            continue;
-	            if (this.runtime.targets.testing == true) {
-	                console.log('Ignoring ' + x);
-	                }
-	            }
-	        if (notSaved.indexOf(x) === -1) {
-	            if (this.runtime.targets.testing == true) {
-	                console.log('Exporting ' + x);
-	            }
-	            result[x] = this[x];
-	            } else if (this.runtime.targets.testing == true) {
-	                console.log('Ignoring ' + x);
-	            }
-	        }
-	    result.sprite = this.sprite.export();
-	    return result;
-	};
 
 	/**
 	 * Whether this represents an "original" non-clone rendered-target for a sprite,
@@ -12617,7 +12478,7 @@ module.exports =
 	 * Serialize sprite info, used when emitting events about the sprite
 	 * @returns {object} sprite data as a simple object
 	 */
-	RenderedTarget.prototype.toJSON2 = function () {
+	RenderedTarget.prototype.toJSON = function () {
 	    return {
 	        id: this.id,
 	        name: this.getName(),

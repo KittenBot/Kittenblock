@@ -64,29 +64,6 @@ RenderedTarget.prototype.initDrawable = function () {
     }
 };
 
-RenderedTarget.prototype.toJSON = function () {
-    var result = new Object();
-    var notSaved = ['renderer', 'effects', 'sprite', 'drawableID', 'runtime', 'id', 'blocks'];
-    var x = null;
-    for (x in this) {
-        if (typeof this[x] === 'function') {
-            continue;
-            if (this.runtime.targets.testing == true) {
-                console.log('Ignoring ' + x);
-                }
-            }
-        if (notSaved.indexOf(x) === -1) {
-            if (this.runtime.targets.testing == true) {
-                console.log('Exporting ' + x);
-            }
-            result[x] = this[x];
-            } else if (this.runtime.targets.testing == true) {
-                console.log('Ignoring ' + x);
-            }
-        }
-    result.sprite = this.sprite.export();
-    return result;
-};
 
 /**
  * Whether this represents an "original" non-clone rendered-target for a sprite,
@@ -690,7 +667,7 @@ RenderedTarget.prototype.postSpriteInfo = function (data) {
  * Serialize sprite info, used when emitting events about the sprite
  * @returns {object} sprite data as a simple object
  */
-RenderedTarget.prototype.toJSON2 = function () {
+RenderedTarget.prototype.toJSON = function () {
     return {
         id: this.id,
         name: this.getName(),
