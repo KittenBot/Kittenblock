@@ -8,7 +8,12 @@ import {Icon} from 'react-fa';
 class HeaderBarComponent extends React.Component {
     constructor (props) {
         super(props);
-        bindAll(this, []);
+        bindAll(this, ['handleTitle']);
+    }
+    handleTitle(e){
+        var title = e.target.value;
+        //console.log("handle "+e.target.value);
+        this.props.changeTitle(title);
     }
     render() {
         const {
@@ -22,6 +27,7 @@ class HeaderBarComponent extends React.Component {
             openLoadProjectDialog,
             openSaveProjectDialog,
             projectName,
+            changeTitle,
             ...componentProps
         } = this.props;
         var portMenuItem;
@@ -97,6 +103,7 @@ class HeaderBarComponent extends React.Component {
                                 color: '#FFFFFF'
                             }}
                             value={projectName}
+                            onChange={this.handleTitle}
                         />
                     </NavItem>
                 </Nav>

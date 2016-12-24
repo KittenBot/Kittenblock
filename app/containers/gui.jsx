@@ -32,7 +32,7 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
                         'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget',
-                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib']);
+                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib','changeTitle']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -223,6 +223,10 @@ class GUI extends React.Component {
     copyArduinoLib(){
         this.props.kb.copyArduinoLibrary();
     }
+    changeTitle(e){
+        this.setState({projectName:e});
+        this.saveProjDialog.nwsaveas = e;
+    }
     render () {
         let {
             backdropLibraryProps,
@@ -289,7 +293,8 @@ class GUI extends React.Component {
             portReadLine: (line)=>this.portReadLine(line),
             openLoadProjectDialog:()=>this.openLoadProjectDialog(),
             openSaveProjectDialog:()=>this.openSaveProjectDialog(),
-            projectName: this.state.projectName
+            projectName: this.state.projectName,
+            changeTitle: (t)=>this.changeTitle(t)
         });
         arduinoPanelProps = defaultsDeep({}, arduinoPanelProps, {
             visible: this.state.showArduinoPanel,
