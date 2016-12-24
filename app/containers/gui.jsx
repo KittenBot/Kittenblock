@@ -57,8 +57,15 @@ class GUI extends React.Component {
     }
     sendCommonData(msg){
         this.props.kb.sendCmd(msg);
-        this.consoleMsgBuff.push({msg:msg,color:"Gray"});
-        this.setState({consoleMsg:this.consoleMsgBuff})
+        if(msg instanceof Uint8Array){
+            var msg = Buffer.from(msg).toString('hex')
+            this.consoleMsgBuff.push({msg:msg,color:"Gray"});
+            this.setState({consoleMsg:this.consoleMsgBuff})
+        }else{
+            this.consoleMsgBuff.push({msg:msg,color:"Gray"});
+            this.setState({consoleMsg:this.consoleMsgBuff})
+        }
+
     }
     appendLog(msg,color){
         if(!color)
@@ -105,6 +112,8 @@ class GUI extends React.Component {
         if('parseLine' in this.props.kb.plugin){
             this.props.kb.setPluginParseLine(this.props.kb.plugin.parseLine);
         }
+
+
     }
     componentWillReceiveProps (nextProps) {
         if (this.props.projectData !== nextProps.projectData) {
