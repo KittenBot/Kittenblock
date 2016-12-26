@@ -1,0 +1,17 @@
+# Mac OS
+.DS_Store
+/.idea
+/closure-library
+
+# NPM
+/node_modules
+npm-*
+
+
+# Testing
+/.nyc_output
+/coverage
+
+# Build
+/build
+/.opt-in

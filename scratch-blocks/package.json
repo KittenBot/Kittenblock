@@ -1,0 +1,99 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "scratch-blocks@latest",
+        "scope": null,
+        "escapedName": "scratch-blocks",
+        "name": "scratch-blocks",
+        "rawSpec": "latest",
+        "spec": "latest",
+        "type": "tag"
+      },
+      "G:\\blockly\\scratch-gui"
+    ]
+  ],
+  "_cnpm_publish_time": 1478651086962,
+  "_from": "scratch-blocks@latest",
+  "_id": "scratch-blocks@0.1.0-prerelease.1478651044",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/scratch-blocks",
+  "_nodeVersion": "4.6.2",
+  "_npmOperationalInternal": {
+    "host": "packages-12-west.internal.npmjs.com",
+    "tmp": "tmp/scratch-blocks-0.1.0-prerelease.1478651044.tgz_1478651084139_0.8876912016421556"
+  },
+  "_npmUser": {
+    "name": "scratch",
+    "email": "scratchr-sysadmin@media.mit.edu"
+  },
+  "_npmVersion": "2.15.11",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "scratch-blocks@latest",
+    "scope": null,
+    "escapedName": "scratch-blocks",
+    "name": "scratch-blocks",
+    "rawSpec": "latest",
+    "spec": "latest",
+    "type": "tag"
+  },
+  "_requiredBy": [
+    "#DEV:/"
+  ],
+  "_resolved": "https://registry.npm.taobao.org/scratch-blocks/download/scratch-blocks-0.1.0-prerelease.1478651044.tgz",
+  "_shasum": "7000f985c4bd4b50082b213f30a30bb13cc46080",
+  "_shrinkwrap": null,
+  "_spec": "scratch-blocks@latest",
+  "_where": "G:\\blockly\\scratch-gui",
+  "author": {
+    "name": "Massachusetts Institute of Technology"
+  },
+  "bugs": {
+    "url": "https://github.com/LLK/scratch-blocks/issues"
+  },
+  "dependencies": {},
+  "description": "Scratch Blocks is a library for building creative computing interfaces.",
+  "devDependencies": {
+    "eslint": "2.9.0",
+    "exports-loader": "0.6.3",
+    "google-closure-library": "20160911.0.0",
+    "imports-loader": "0.6.5",
+    "json": "9.0.4",
+    "travis-after-all": "1.4.4",
+    "webpack": "1.13.2"
+  },
+  "directories": {},
+  "dist": {
+    "shasum": "7000f985c4bd4b50082b213f30a30bb13cc46080",
+    "size": 1195384,
+    "noattachment": false,
+    "tarball": "http://registry.npm.taobao.org/scratch-blocks/download/scratch-blocks-0.1.0-prerelease.1478651044.tgz"
+  },
+  "gitHead": "2182eb225e5552d63c60577d1f8502b5f2b198b6",
+  "homepage": "https://github.com/LLK/scratch-blocks#readme",
+  "license": "Apache-2.0",
+  "main": "./dist/vertical.js",
+  "maintainers": [
+    {
+      "name": "scratch",
+      "email": "scratchr-sysadmin@media.mit.edu"
+    }
+  ],
+  "name": "scratch-blocks",
+  "optionalDependencies": {},
+  "publish_time": 1478651086962,
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LLK/scratch-blocks.git",
+    "sha": "2182eb225e5552d63c60577d1f8502b5f2b198b6"
+  },
+  "scripts": {
+    "prepublish": "python ./build.py && ./node_modules/.bin/webpack",
+    "test": "eslint .",
+    "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
+  },
+  "version": "0.1.0-prerelease.1478651044"
+}
