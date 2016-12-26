@@ -1,0 +1,146 @@
+{
+	"objName": "Background",
+	"sounds": [{
+			"soundName": "pop",
+			"soundID": 1,
+			"md5": "83a9787d4cb6f3b7632b4ddfebf74367.wav",
+			"sampleCount": 258,
+			"rate": 11025,
+			"format": ""
+		}],
+	"costumes": [{
+			"costumeName": "neon tunnel",
+			"baseLayerID": 5,
+			"baseLayerMD5": "c12c828274fd238c1cd9a732557167e9.svg",
+			"bitmapResolution": 1,
+			"rotationCenterX": 240,
+			"rotationCenterY": 180
+		},
+		{
+			"costumeName": "red brick",
+			"baseLayerID": 6,
+			"baseLayerMD5": "954592756e333d87f03daa101c001b37.svg",
+			"bitmapResolution": 1,
+			"rotationCenterX": 240,
+			"rotationCenterY": 180
+		},
+		{
+			"costumeName": "plain redline",
+			"baseLayerID": 7,
+			"baseLayerMD5": "2eba6633cc25296b30aa796985e8ff0f.svg",
+			"bitmapResolution": 1,
+			"rotationCenterX": 240,
+			"rotationCenterY": 180
+		}],
+	"currentCostumeIndex": 0,
+	"penLayerMD5": "5c81a336fab8be57adc039a8a2b33ca9.png",
+	"penLayerID": 0,
+	"tempoBPM": 100,
+	"videoAlpha": 0.5,
+	"children": [{
+			"objName": "Paddle",
+			"scripts": [[34, 27, [["whenGreenFlag"], ["doForever", [["xpos:", ["mouseX"]]]]]]],
+			"costumes": [{
+					"costumeName": "paddle",
+					"baseLayerID": 1,
+					"baseLayerMD5": "7ee81878243158f52dac33f9c35b9d1f.svg",
+					"bitmapResolution": 1,
+					"rotationCenterX": 40,
+					"rotationCenterY": 8
+				}],
+			"currentCostumeIndex": 0,
+			"scratchX": 228,
+			"scratchY": -145,
+			"scale": 1.00000000000001,
+			"direction": -90,
+			"rotationStyle": "normal",
+			"isDraggable": false,
+			"indexInLibrary": 2,
+			"visible": true,
+			"spriteInfo": {
+			}
+		},
+		{
+			"objName": "Ball",
+			"scripts": [[10,
+					10,
+					[["whenGreenFlag"],
+						["gotoX:y:", 20, 150],
+						["heading:", 45],
+						["doForever", [["bounceOffEdge"], ["forward:", 15]]]]],
+				[10,
+					183,
+					[["whenGreenFlag"],
+						["doForever",
+							[["doIf",
+									["touching:", "Paddle"],
+									[["playSound:", "water_drop"], ["turnRight:", ["randomFrom:to:", 160, 200]], ["forward:", 15]]]]]]],
+				[16,
+					393,
+					[["whenGreenFlag"],
+						["doForever", [["doIf", ["touchingColor:", -588799], [["stopScripts", "all"]]]]]]]],
+			"scriptComments": [[362, 248, 157, 94, true, 8, "You can change what happens when the ball hits the paddle"],
+				[213, 458, 171, 100, true, 16, "You can change what happens when the ball hits the red area"],
+				[155, 145, 152, 91, true, 5, "Type a bigger number to make the ball go faster."]],
+			"sounds": [{
+					"soundName": "water_drop",
+					"soundID": 0,
+					"md5": "3e18cdc8d21c501d9c5d14576ff0fc86.wav",
+					"sampleCount": 12160,
+					"rate": 22050,
+					"format": "adpcm"
+				}],
+			"costumes": [{
+					"costumeName": "ball-a",
+					"baseLayerID": 2,
+					"baseLayerMD5": "61b2689a35b8494a29fb353d11e4bf00.svg",
+					"bitmapResolution": 1,
+					"rotationCenterX": 18,
+					"rotationCenterY": 16
+				},
+				{
+					"costumeName": "ball-b",
+					"baseLayerID": 3,
+					"baseLayerMD5": "721ba83aa80623687ffb99acab518e98.svg",
+					"bitmapResolution": 1,
+					"rotationCenterX": 25,
+					"rotationCenterY": 25
+				},
+				{
+					"costumeName": "ball-a2",
+					"baseLayerID": 4,
+					"baseLayerMD5": "10117ddaefa98d819f2b1df93805622f.svg",
+					"bitmapResolution": 1,
+					"rotationCenterX": 22,
+					"rotationCenterY": 22
+				}],
+			"currentCostumeIndex": 2,
+			"scratchX": 85.94314466330819,
+			"scratchY": -50.44764537534475,
+			"scale": 1.2000000000000102,
+			"direction": 65,
+			"rotationStyle": "none",
+			"isDraggable": false,
+			"indexInLibrary": 1,
+			"visible": true,
+			"spriteInfo": {
+			}
+		}],
+	"info": {
+		"platform": "Mac OS",
+		"scriptCount": 4,
+		"spriteCount": 2,
+		"comment": "A simple pong game\r\rINSTRUCTIONS\r*Move mouse to control paddle\r*Don't let the ball fall into the lava\r\rHOW I MADE THIS\r*The paddle just moves it's X coordinate to whatever the mouse's X coordinate is\r*I drew the ball using the gradient effect in the paint editor\r*The trickiest thing for me was to get the ball to bounce off the paddle right. I ended up going on the website and finding how someone else had done it: \"point in direction (180 - direction)\".  I still find this confusing but it works really well. Then I turn a random amount to make it more interesting.\r\rMORE IDEAS\rMake the game more complex or change images.\r",
+		"author": "",
+		"videoOn": false,
+		"scratch-version": "1.4 of 30-Jun-09",
+		"hasCloudData": false,
+		"swfVersion": "v450.1",
+		"language": "en",
+		"flashVersion": "WIN 23,0,0,205",
+		"projectID": "10128515",
+		"history": "2007-5-1 23:05:59\tsave\tpong test\tjay\tjay\r2007-5-1 23:55:55\tsave\tpong test with world\tjay\tjay\r2007-5-2 17:22:48\tsave\tpong Simple\tjay\tjay\r2007-5-2 17:26:24\tsave\tpong Simple\tjay\tjay\r2007-5-2 17:27:12\tsave\tpong Simple\tjay\tjay\r2007-5-2 17:27:36\tsave\tpong Simple\tjay\tjay\r2007-5-2 17:34:39\tsave\tpong Simple\tjay\tjay\r2007-5-2 17:35:16\tsave\tpong Simple\tjay\tjay\r2007-5-2 19:27:31\tsave\tpong Simple\tjay\tjAy sIlvEr\r2007-5-2 19:35:10\tsave\tpong Simple\tjay\tjAy sIlvEr\r2007-5-3 15:20:08\tsave\t2 Pong e\tjay\tjay\r2007-10-28 16:20:10\tsave\t2 PongER\t\t\r2007-11-29 16:05:40\tsave\t2 Pong\t\t\r2007-11-29 16:06:26\tsave\t2 Pong\t\t\r2007-11-29 16:06:39\tsave\t2 Pong\t\t\r2007-12-5 14:51:40\tshare\t2 Pong\tSampleProjectsTeam\tXimena\r2012-2-7 09:42:38\tsave\tPong Revised Feb 2012\t\t\r2012-2-7 09:58:08\tsave\tPong Revised Feb 2012\t\t\r2012-2-7 10:06:36\tsave\tPong Revised Feb 2012\t\t\r2012-2-7 10:11:13\tsave\tPong Variable Revised Feb 2012\t\t\r2012-2-7 10:22:04\tsave\tPong Variable Revised Feb 2012\t\t\r2012-2-7 10:32:29\tsave\tPong Variable Revised Feb 2012\t\t\r2012-2-7 11:51:40\tsave\tPong Variable Revised Feb 2012\t\t\r2012-2-7 12:06:13\tsave\tPong Variable Revised Feb 2012\t\t\r2012-2-7 12:06:18\tsave\tPong Variable Revised Feb 2012\t\t\r",
+		"userAgent": "Mozilla\/5.0 (Windows NT 10.0; WOW64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/53.0.2785.143 Safari\/537.36",
+		"os-version": "1068"
+	}
+}
