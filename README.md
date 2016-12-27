@@ -1,5 +1,5 @@
 # This is the source code of KittenBlock
-![](http://git.oschina.net/uploads/images/2016/1226/212757_19ab1d69_76038.png)
+![](https://cloud.githubusercontent.com/assets/3390845/21489461/e95cd10e-cc25-11e6-8c7b-77d492bfe2e8.png)
 Kittenblock is based on the latest code-base of scratch 3.0, it includes 3 major parts:
 
 scratch-vm: the major running environment of scratch3.0 blocks, joint point of scratch-blocks and scratch-render.
