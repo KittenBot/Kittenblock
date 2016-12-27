@@ -1,5 +1,6 @@
 # This is the source code of KittenBlock
 ![](https://cloud.githubusercontent.com/assets/3390845/21489461/e95cd10e-cc25-11e6-8c7b-77d492bfe2e8.png)
+
 Kittenblock is based on the latest code-base of Scratch 3.0, it includes 3 major parts:
 
 scratch-vm: the major running environment of Scratch blocks (Scratch 3.0), joint point of Scratch-blocks and Scratch-render.
@@ -14,6 +15,9 @@ All these three parts already included in this repo, I have modified some of the
 
 Basically I sync to official scratch code base every week.
 
+## For commusers:
+get the windows application at:
+https://pan.baidu.com/s/1mi4T3ZE pass: 5uhh
 
 ## Deploy:
 clone this repo
