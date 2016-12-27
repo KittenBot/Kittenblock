@@ -28,7 +28,7 @@ install packages
 
 	npm install
 
-to make kittenblock run offline locally you still need kittenblock-pc depends[http://git.oschina.net/Kittenbot/kittenblock-pc](http://git.oschina.net/Kittenbot/kittenblock-pc)
+to make kittenblock run offline locally you still need kittenblock-pc depends [http://git.oschina.net/Kittenbot/kittenblock-pc](http://git.oschina.net/Kittenbot/kittenblock-pc)
 
 	https://git.oschina.net/Kittenbot/kittenblock-pc.git
 
