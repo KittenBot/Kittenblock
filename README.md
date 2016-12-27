@@ -15,9 +15,9 @@ All these three parts already included in this repo, I have modified some of the
 
 Basically I sync to official scratch code base every week.
 
-## For commusers:
-get the windows application at:
-https://pan.baidu.com/s/1mi4T3ZE pass: 5uhh
+## For KittenBlock Users:
+Please download the Windows application here:
+http://kittenbot.cc/kittenblock/download/
 
 ## Deploy:
 clone this repo
