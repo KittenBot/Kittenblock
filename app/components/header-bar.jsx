@@ -18,8 +18,10 @@ class HeaderBarComponent extends React.Component {
     render() {
         const {
             serialDev,
+            boards,
             refreshPort,
             selectPort,
+            selectBoard,
             toggleArduinoPanel,
             toggleStage,
             connectedPort,
@@ -51,6 +53,11 @@ class HeaderBarComponent extends React.Component {
                 ));
             portDropdownTxt = Blockly.Msg.SERIAL_PORT_NOTCONNECTED;
         }
+
+        var boardMenuItem = boards.map(b=>(
+            <MenuItem eventKey={{'name':b.name,'type':b.type}} key={b.name}>{b.name}</MenuItem>
+        ));
+
         return (
             <Navbar
                 style={{
@@ -75,8 +82,9 @@ class HeaderBarComponent extends React.Component {
                     <NavItem >
                         <ButtonGroup >
                             <DropdownButton title={"Arduino Uno"} bsStyle="warning" id="boardDropdown"
+                                            onSelect={selectBoard}
                                             style={{width: '150px'}}>
-
+                                {boardMenuItem}
                             </DropdownButton>
                         </ButtonGroup>
                     </NavItem>
