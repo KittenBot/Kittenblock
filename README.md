@@ -53,7 +53,11 @@ back to root repos and pack everything else
 all the source code need for will locate in nwjs folder
 the next thing is get [nwjs](http://nwjs.io/) and unzip to nwjs folder, have fun.
 
-PS:
+## Specially Thanks to:
+Spanish translate contributor: Jose Carlos
+French translate contributor: Michel FREARD
+
+## PS:
 
 Due to Github blocked by GFW from time to time, my major dev repo is [https://git.oschina.net/Kittenbot/KittenbotGui.git
 ](https://git.oschina.net/Kittenbot/KittenbotGui.git) .
