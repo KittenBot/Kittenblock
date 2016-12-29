@@ -34,7 +34,7 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
                         'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget',
-                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib','changeTitle','notify']);
+                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib','changeTitle','notify','updaterCallback']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -52,6 +52,7 @@ class GUI extends React.Component {
             firmwares: [{name:'arduino','path':null}],
             alerts:[],
             alertTimeout:5000,
+            updater: {'version':0,'path':''},
         };
         require("../language/"+this.props.kb.config.language.file);
     }
@@ -117,6 +118,8 @@ class GUI extends React.Component {
             this.props.kb.setPluginParseLine(this.props.kb.plugin.parseLine);
         }
         this.props.kb.notify = this.notify;
+        // get latest version from server
+        this.props.kb.updater.getServer(this.updaterCallback);
     }
     componentWillReceiveProps (nextProps) {
         if (this.props.projectData !== nextProps.projectData) {
@@ -261,6 +264,9 @@ class GUI extends React.Component {
             alerts: [...this.state.alerts, newAlert]
         });
     }
+    updaterCallback(obj){
+        this.setState({updater:obj});
+    }
     render () {
         let {
             backdropLibraryProps,
@@ -317,6 +323,7 @@ class GUI extends React.Component {
             selectLanguage: this.selectLanguage,
             applyconfig: this.applyConfig,
             pluginlist: this.state.pluginlist,
+            updater: this.state.updater,
             selectPlugin: (plugin)=>this.selectPlugin(plugin),
             copyArduinoLib: ()=>this.copyArduinoLib(),
         });

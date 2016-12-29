@@ -36,6 +36,7 @@ class SetupModalComponent extends React.Component {
             applyconfig,
             pluginlist,
             copyArduinoLib,
+            updater,
     ...componentProps
         } = this.props;
         var plugins = [];
@@ -66,7 +67,9 @@ class SetupModalComponent extends React.Component {
                 <div className="setup-items">
                     <label id="versionNum">KittenBlock {version}</label>
                     <br/>
-                    <Button bsStyle="success">Update to ?</Button>
+                    <Button bsStyle="success"
+                    style={{display:updater.version>version?'inline-box':'none'}}
+                    >Update to {updater.version}</Button>
                 </div>
                 <div className="setup-items">
                     <label>Arduino Path</label>
