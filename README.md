@@ -54,7 +54,9 @@ all the source code need for will locate in nwjs folder
 the next thing is get [nwjs](http://nwjs.io/) and unzip to nwjs folder, have fun.
 
 ## Specially Thanks to:
+
 Spanish translate contributor: Jose Carlos
+
 French translate contributor: Michel FREARD
 
 ## PS:
