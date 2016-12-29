@@ -1,12 +1,14 @@
 const React = require('react');
 const ReactDOM = require('react-dom');
 const bindAll = require('lodash.bindall');
+const arduinoIcon = require('./arduino.png');
 
 import {Button,FormControl,MenuItem,ButtonGroup,DropdownButton } from 'react-bootstrap';
 import brace from 'brace';
 import AceEditor from 'react-ace';
 import 'brace/mode/java';
 import 'brace/theme/eclipse';
+import {Icon} from 'react-fa';
 
 class ArduinoPanelComponent extends React.Component {
     constructor (props) {
@@ -68,8 +70,8 @@ class ArduinoPanelComponent extends React.Component {
                     }
                     </DropdownButton>
                 </ButtonGroup>
-                <Button style={{marginLeft:5}} onClick={uploadProj}>{Blockly.Msg.UPLOAD}</Button>
-                <Button style={{float:'right'}} onClick={openIno}>{Blockly.Msg.OPENWITHARDUINO}</Button>
+                <Button style={{marginLeft:5}} onClick={uploadProj}>{<Icon name="arrow-up"/>}{Blockly.Msg.UPLOAD}</Button>
+                <Button style={{float:'right'}} onClick={openIno}>{<img style={{height: 20}} src={arduinoIcon}/>}{Blockly.Msg.OPENWITHARDUINO}</Button>
             </div>
             <AceEditor
                 style={{top:45,left:2,height:450,width:495}}
