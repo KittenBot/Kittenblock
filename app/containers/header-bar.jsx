@@ -10,8 +10,9 @@ class HeaderBar extends React.Component {
         bindAll(this, ['serialDevUpdate','refreshPort','selectPort','portConnected','portClosed','selectBoard']);
         this.state = {
             portDev: [],
-            boards:[{'name':'Uno','type':'uno'},{'name':'Nano 328p','type':'nano:cpu=atmega328'}],
-            connectedPort: null
+            boards:[{'name':'Arduino Uno','type':'uno'},{'name':'Nano 328p','type':'nano:cpu=atmega328'}],
+            connectedPort: null,
+            selectedBoard:{'name':'Arduino Uno','type':'uno'}
         };
     }
     serialDevUpdate (data) {
@@ -44,9 +45,8 @@ class HeaderBar extends React.Component {
         }
     }
     selectBoard(board){
-        console.log("select board "+JSON.stringify(board));
-
-
+        this.props.kb.selectBoard(board);
+        this.setState({selectedBoard:board});
     }
 
     componentDidMount () {
@@ -70,6 +70,7 @@ class HeaderBar extends React.Component {
                 toggleStage={this.props.toggleStage}
                 openSetupModal={this.props.openSetupModal}
                 connectedPort={this.state.connectedPort}
+                selectedBoard={this.state.selectedBoard}
                 openLoadProjectDialog={this.props.openLoadProjectDialog}
                 openSaveProjectDialog={this.props.openSaveProjectDialog}
                 {...props}

@@ -25,6 +25,7 @@ class HeaderBarComponent extends React.Component {
             toggleArduinoPanel,
             toggleStage,
             connectedPort,
+            selectedBoard,
             openSetupModal,
             openLoadProjectDialog,
             openSaveProjectDialog,
@@ -81,7 +82,7 @@ class HeaderBarComponent extends React.Component {
                 <Nav>
                     <NavItem >
                         <ButtonGroup >
-                            <DropdownButton title={"Arduino Uno"} bsStyle="warning" id="boardDropdown"
+                            <DropdownButton title={selectedBoard.name} bsStyle="warning" id="boardDropdown"
                                             onSelect={selectBoard}
                                             style={{width: '150px'}}>
                                 {boardMenuItem}
