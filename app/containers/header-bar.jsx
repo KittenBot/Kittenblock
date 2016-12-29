@@ -41,7 +41,6 @@ class HeaderBar extends React.Component {
             }else{
                 this.props.kb.connectPort(port,this.portConnected,this.props.portReadLine,this.portClosed);
             }
-
         }
     }
     selectBoard(board){
