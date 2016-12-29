@@ -25,6 +25,8 @@ const SpriteLibrary = require('./sprite-library.jsx');
 const CostumeLibrary = require('./costume-library.jsx');
 const BackdropLibrary = require('./backdrop-library.jsx');
 
+import { AlertList  } from "react-bs-notifier";
+
 
 class GUI extends React.Component {
     constructor (props) {
@@ -32,7 +34,7 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
                         'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget',
-                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib','changeTitle']);
+                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib','changeTitle','notify']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -47,7 +49,9 @@ class GUI extends React.Component {
             language: this.props.kb.config.language,
             pluginlist: this.props.kb.pluginlist,
             projectName: "",
-            firmwares: [{name:'arduino','path':null}]
+            firmwares: [{name:'arduino','path':null}],
+            alerts:[],
+            alertTimeout:5000,
         };
         require("../language/"+this.props.kb.config.language.file);
     }
@@ -112,8 +116,7 @@ class GUI extends React.Component {
         if('parseLine' in this.props.kb.plugin){
             this.props.kb.setPluginParseLine(this.props.kb.plugin.parseLine);
         }
-
-
+        this.props.kb.notify = this.notify;
     }
     componentWillReceiveProps (nextProps) {
         if (this.props.projectData !== nextProps.projectData) {
@@ -236,6 +239,28 @@ class GUI extends React.Component {
         this.setState({projectName:e});
         this.saveProjDialog.nwsaveas = e;
     }
+    onAlertDismissed(alert) {
+        const alerts = this.state.alerts;
+        // find the index of the alert that was dismissed
+        const idx = alerts.indexOf(alert);
+
+        if (idx >= 0) {
+            this.setState({
+                // remove the alert from the array
+                alerts: [...alerts.slice(0, idx), ...alerts.slice(idx + 1)]
+            });
+        }
+    }
+    notify(type,msg){
+        const newAlert ={
+            id: (new Date()).getTime(),
+            type: type,
+            message: msg
+        };
+        this.setState({
+            alerts: [...this.state.alerts, newAlert]
+        });
+    }
     render () {
         let {
             backdropLibraryProps,
@@ -346,6 +371,12 @@ class GUI extends React.Component {
                 <input type="file" style={{display:'none'}} ref={(ref) => this.loadProjDialog = ref} onChange={this.loadProject} accept=".sb2,.kb"/>
                 <input type="file" style={{display:'none'}} ref={(ref) => this.saveProjDialog = ref} onChange={this.saveProject} accept=".kb"/>
                 <input type="file" style={{display:'none'}} ref={(ref) => this.setArduinoDialog = ref} onChange={this.setArduinoPath} />
+                <AlertList
+                    position='top-left'
+                    alerts={this.state.alerts}
+                    timeout={this.state.alertTimeout}
+                    onDismiss={this.onAlertDismissed.bind(this)}
+                />
             </GUIComponent>
         );
         /* eslint-enable react/jsx-max-props-per-line, lines-around-comment */
