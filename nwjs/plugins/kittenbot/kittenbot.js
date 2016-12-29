@@ -14,38 +14,11 @@ var KittenBot = function (runtime) {
 
 KittenBot.PULSE_PER_METER = 14124;
 KittenBot.BASE_WIDTH = 0.128;
+KittenBot.PULSE_PER_ROUND = 2048;
 
 KittenBot.prototype.getBlocks = function () {
     var color = this.color;
     return {
-        'kittenbot_stepperspeed': {
-            /**
-             * Block to turn
-             * @this Blockly.Block
-             */
-            init: function() {
-                this.jsonInit({
-                    "id": "kittenbot_stepperspeed",
-                    "message0": "stepper speed L %1 R %2",
-                    "args0": [
-                        {
-                            "type": "input_value",
-                            "name": "SPEEDL"
-                        },
-                        {
-                            "type": "input_value",
-                            "name": "SPEEDR"
-                        },
-                    ],
-                    "inputsInline": true,
-                    "previousStatement": null,
-                    "nextStatement": null,
-                    "colour": color.primary,
-                    "colourSecondary": color.secondary,
-                    "colourTertiary": color.tertiary
-                });
-            }
-        },
         "kittenbot_motorspeed":{
             /**
              * Block to set motor speed
@@ -156,7 +129,7 @@ KittenBot.prototype.getBlocks = function () {
             init: function() {
                 this.jsonInit({
                     "id": "kittenbot_steppermove",
-                    "message0": "stepper move %1 cm",
+                    "message0": "car move %1 cm",
                     "args0": [
                         {
                             "type": "input_value",
@@ -180,12 +153,44 @@ KittenBot.prototype.getBlocks = function () {
             init: function() {
                 this.jsonInit({
                     "id": "kittenbot_stepperturn",
-                    "message0": "stepper turn %1 degrees",
+                    "message0": "car turn %1 degrees",
                     "args0": [
                         {
                             "type": "input_value",
                             "name": "DEGREE"
                         }
+                    ],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color.primary,
+                    "colourSecondary": color.secondary,
+                    "colourTertiary": color.tertiary
+                });
+            }
+        },
+        'kittenbot_stepperspeed':{
+            init: function() {
+                this.jsonInit({
+                    "id": "kittenbot_stepperspeed",
+                    "message0": "stepper %1 degree %2 rpm, %3 degree %4 rpm",
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "POSL"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "SPDL"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "POSR"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "SPDR"
+                        },
                     ],
                     "inputsInline": true,
                     "previousStatement": null,
@@ -329,6 +334,7 @@ KittenBot.prototype.getPrimitives = function() {
         'kittenbot_motorspeed': this.motorSpeed,
         'kittenbot_steppermove': this.stepperMove,
         'kittenbot_stepperturn': this.stepperTurn,
+        'kittenbot_stepperspeed': this.stepperSpeed,
         'kittenbot_stop': this.motorStop,
         'kittenbot_rgb': this.rgbPixels,
         'kittenbot_distance': this.distance,
@@ -346,6 +352,20 @@ KittenBot.prototype.stepperMove = function(argValues, util) {
     var exePromise = new Promise(function(resolve) {
         util.ioQuery('serial', 'sendMsg', cmd);
         util.ioQuery('serial', 'regResolve', {"slot":"M101", "resolve":resolve});
+    });
+    return exePromise;
+};
+
+KittenBot.prototype.stepperSpeed = function(argValues, util) {
+    var posL = Math.floor(argValues.POSL/360*KittenBot.PULSE_PER_ROUND);
+    var posR = Math.floor(argValues.POSR/360*KittenBot.PULSE_PER_ROUND);
+    var spdL = Math.floor(argValues.SPDL*KittenBot.PULSE_PER_ROUND/60); // change rpm to pulse per second
+    var spdR = Math.floor(argValues.SPDR*KittenBot.PULSE_PER_ROUND/60); // change rpm to pulse per second
+    var cmd = "M100 L"+posL+" R"+posR+" A"+spdL+" B"+spdR;
+    console.log("M100 "+cmd);
+    var exePromise = new Promise(function(resolve) {
+        util.ioQuery('serial', 'sendMsg', cmd);
+        util.ioQuery('serial', 'regResolve', {"slot":"M100", "resolve":resolve});
     });
     return exePromise;
 };
@@ -464,14 +484,24 @@ KittenBot.prototype.getToolbox = function () {
         '</value>'+
         '</block>'+
         '<block type="kittenbot_stepperspeed">'+
-        '<value name="SPEEDL">'+
+        '<value name="POSL">'+
         '<shadow type="math_number">'+
-        '<field name="NUM">200</field>'+
+        '<field name="NUM">360</field>'+
         '</shadow>'+
         '</value>'+
-        '<value name="SPEEDR">'+
+        '<value name="POSR">'+
         '<shadow type="math_number">'+
-        '<field name="NUM">200</field>'+
+        '<field name="NUM">-360</field>'+
+        '</shadow>'+
+        '</value>'+
+        '<value name="SPDL">'+
+        '<shadow type="math_number">'+
+        '<field name="NUM">11</field>'+
+        '</shadow>'+
+        '</value>'+
+        '<value name="SPDR">'+
+        '<shadow type="math_number">'+
+        '<field name="NUM">11</field>'+
         '</shadow>'+
         '</value>'+
         '</block>'+
