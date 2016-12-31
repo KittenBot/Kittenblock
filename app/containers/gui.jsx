@@ -34,7 +34,7 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
                         'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget',
-                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib','changeTitle','notify','updaterCallback']);
+                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib','changeTitle','notify','updaterCallback','updateKittenblock']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -267,6 +267,9 @@ class GUI extends React.Component {
     updaterCallback(obj){
         this.setState({updater:obj});
     }
+    updateKittenblock(){
+        console.log("do update"+this.state.updater.version);
+    }
     render () {
         let {
             backdropLibraryProps,
@@ -326,6 +329,7 @@ class GUI extends React.Component {
             updater: this.state.updater,
             selectPlugin: (plugin)=>this.selectPlugin(plugin),
             copyArduinoLib: ()=>this.copyArduinoLib(),
+            updateKittenblock: ()=>this.updateKittenblock(),
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
             toggleArduinoPanel: ()=>this.toggleArduinoPanel(),

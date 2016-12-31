@@ -25,7 +25,11 @@ class ArduinoPanelComponent extends React.Component {
         this.consoleSend();
         return false;
     }
-
+    componentDidUpdate(){
+        var logs = this.refs.arduinolog;
+        var lastLog = logs.childNodes[logs.childNodes.length-1];
+        lastLog.scrollIntoView();
+    }
     render() {
         const {
             code,
