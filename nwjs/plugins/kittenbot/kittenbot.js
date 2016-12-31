@@ -16,6 +16,19 @@ KittenBot.PULSE_PER_METER = 14124;
 KittenBot.BASE_WIDTH = 0.128;
 KittenBot.PULSE_PER_ROUND = 2048;
 
+var hexToRgb = function (hex) {
+    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+        return r + r + g + g + b + b;
+    });
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+};
+
 KittenBot.prototype.getBlocks = function () {
     var color = this.color;
     return {
@@ -411,7 +424,7 @@ KittenBot.prototype.rgbPixels = function(argValues, util) {
     var pin = argValues.PINNUM;
     var pix = argValues.PIXEL;
     var color = argValues.COLOR;
-    color = Color.hexToRgb(color);
+    color = hexToRgb(color);
     var cmd = "M9 "+pin+" "+pix+" "+color.r+" "+color.g+" "+color.b;
     util.ioQuery('serial', 'sendMsg', cmd);
 };
