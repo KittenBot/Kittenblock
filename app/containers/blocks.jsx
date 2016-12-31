@@ -28,17 +28,22 @@ class Blocks extends React.Component {
         this.loadPlugin();
         ScratchBlocks.Msg = Blockly.Msg;
         // todo: import generator in a ugly way, is there better method to use compressed generator from blockly?
-
-        var blocks = this.props.kb.plugin.getBlocks();
-        // insert into blocks
-        for(var key in blocks){
-            ScratchBlocks.Blocks[key] = blocks[key];
+        if(this.props.kb.plugin.getBlocks) {
+            var blocks = this.props.kb.plugin.getBlocks();
+            // insert into blocks
+            for (var key in blocks) {
+                ScratchBlocks.Blocks[key] = blocks[key];
+            }
         }
+
         var toolbox = this.props.kb.toolbox.getDefalutToolBox(ScratchBlocks.Msg);
-        var pluginToolbox =  this.props.kb.plugin.getToolbox();
-        // load plugin xml into toolbox
-        toolbox = toolbox.replace("</xml>", pluginToolbox+ "</xml>");
-        var toolboxconfig = {toolbox:toolbox};
+        if(this.props.kb.plugin.getToolbox) {
+            var pluginToolbox = this.props.kb.plugin.getToolbox();
+            // load plugin xml into toolbox
+            toolbox = toolbox.replace("</xml>", pluginToolbox + "</xml>");
+        }
+        var toolboxconfig = {toolbox: toolbox};
+
 
         const workspaceConfig = defaultsDeep({}, Blocks.defaultOptions, this.props.options,toolboxconfig);
         this.workspace = ScratchBlocks.inject(this.blocks, workspaceConfig);

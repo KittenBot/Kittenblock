@@ -28,7 +28,9 @@ class ArduinoPanelComponent extends React.Component {
     componentDidUpdate(){
         var logs = this.refs.arduinolog;
         var lastLog = logs.childNodes[logs.childNodes.length-1];
-        lastLog.scrollIntoView();
+        if(lastLog) {
+            lastLog.scrollIntoView();
+        }
     }
     render() {
         const {

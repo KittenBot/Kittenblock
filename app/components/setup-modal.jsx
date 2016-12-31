@@ -41,12 +41,13 @@ class SetupModalComponent extends React.Component {
     ...componentProps
         } = this.props;
         var plugins = [];
+
         for (var i = 0; i < pluginlist.length; i += 1) {
             var p = pluginlist[i];
             var src = "../plugins/"+p.name+"/"+p.name+".jpg";
             var filter = p.active==true?'none':'grayscale(100%) blur(3px)';
             plugins.push(
-                <div className="col-xs-4 col-md-3 text-center" key={p.name}>
+                <div className="col-xs-4 col-md-4 text-center" key={p.name}>
                     <img style={{width:150,WebkitFilter:filter}} src={src}
                     onClick={this.selectPlugin.bind(this,p.name)}
                     />
