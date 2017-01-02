@@ -9,7 +9,8 @@ var EB1 = function (runtime) {
         "secondary": "#FF4D6A",
         "tertiary": "#FF3355"
     };
-
+    this.boards = [{'name':'EB1','type':'SamuraiCircuits:avr:eb1'}],
+    this.uploadPort = null; // use usb defined in platform
 };
 
 EB1.prototype.getPrimitives = function() {
