@@ -1,0 +1,11 @@
+##############################################################
+eb1.name=Samurai Circuits EB1
+eb1.upload.tool=avrdude
+eb1.upload.protocol=usbtiny-eb1
+eb1.upload.maximum_size=5310
+eb1.build.mcu=attiny85
+eb1.build.f_cpu=8000000L
+eb1.build.core=arduino:arduino
+eb1.build.board=EB1
+eb1.build.variant=tiny8
+##############################################################

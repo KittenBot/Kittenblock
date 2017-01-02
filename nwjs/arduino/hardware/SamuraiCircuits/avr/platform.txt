@@ -1,0 +1,18 @@
+# Samurai Circuits Boards
+# ------------------------------
+#
+# Currently supports the EB1
+#
+
+name=Samurai Circuits Boards
+version=1.0.0
+
+# AVR Uploader/Programmers tools
+# ------------------------------
+tools.avrdude.path={runtime.tools.avrdude.path}
+tools.avrdude.cmd.path={path}/bin/avrdude
+tools.avrdude.config.path={runtime.platform.path}/tools/avrdude.conf
+
+tools.avrdude.upload.params.verbose=-v -v -v
+tools.avrdude.upload.params.quiet=-q -q
+tools.avrdude.upload.pattern="{cmd.path}" "-C{config.path}" {upload.verbose} -p{build.mcu} -c{upload.protocol} "-Uflash:w:{build.path}/{build.project_name}.hex:i"
