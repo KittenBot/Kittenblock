@@ -33,8 +33,8 @@ class GUI extends React.Component {
         super(props);
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
-                        'openLoadProjectDialog','loadProject','openSetArduinoPathDialog','setArduinoPath','selectLanguage','applyConfig','selectTarget',
-                        'consoleSend','consoleClear','translateCode','saveProject','copyArduinoLib','changeTitle','notify','updaterCallback','updateKittenblock']);
+                        'openLoadProjectDialog','loadProject','selectLanguage','applyConfig','selectTarget',
+                        'consoleSend','consoleClear','translateCode','saveProject','changeTitle','notify','updaterCallback','updateKittenblock']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -45,7 +45,6 @@ class GUI extends React.Component {
             showStage: true,
             consoleMsg: this.consoleMsgBuff,
             editorCode: '#include <Arduino.h>\n\nvoid setup(){\n}\n\nvoid loop(){\n}\n\n',
-            arduinoPath: this.props.kb.config.arduino.path,
             language: this.props.kb.config.language,
             pluginlist: this.props.kb.pluginlist,
             projectName: "",
@@ -95,7 +94,6 @@ class GUI extends React.Component {
     }
     componentDidMount () {
         // add nwdirectory tag to input file
-        this.setArduinoDialog.nwdirectory = true;
         this.vmManager.attachKeyboardEvents();
         this.props.vm.loadProject(this.props.projectData);
         // kittenblock link hardware
@@ -164,9 +162,6 @@ class GUI extends React.Component {
     openSaveProjectDialog(){
         this.saveProjDialog.click();
     }
-    openSetArduinoPathDialog(){
-        this.setArduinoDialog.click();
-    }
     loadProject(){
         var file = this.loadProjDialog.value;
         var extName = path.extname(file);
@@ -187,11 +182,6 @@ class GUI extends React.Component {
         var xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
         //console.log("save proj "+file+" "+xml );
         this.props.kb.saveKb(file,xml);
-    }
-    setArduinoPath(){
-        var temppath = this.setArduinoDialog.value;
-        this.props.kb.config.arduino.path = temppath;
-        this.setState({arduinoPath: temppath})
     }
     selectLanguage(lang){
         var langobj={"name":'',"file":''}
@@ -234,9 +224,6 @@ class GUI extends React.Component {
         console.log("select plugin "+plugin);
         var ret = this.props.kb.selectPlugin(plugin);
         this.setState({pluginlist:ret});
-    }
-    copyArduinoLib(){
-        this.props.kb.copyArduinoLibrary();
     }
     changeTitle(e){
         this.setState({projectName:e});
@@ -320,15 +307,12 @@ class GUI extends React.Component {
         setupModalProps = defaultsDeep({},setupModalProps, {
             visible: this.state.currentModal === 'setup-modal',
             onRequestClose: this.closeModal,
-            openSetArduinoPathDialog: ()=>this.openSetArduinoPathDialog(),
-            arduinoPath: this.state.arduinoPath,
             language: this.state.language,
             selectLanguage: this.selectLanguage,
             applyconfig: this.applyConfig,
             pluginlist: this.state.pluginlist,
             updater: this.state.updater,
             selectPlugin: (plugin)=>this.selectPlugin(plugin),
-            copyArduinoLib: ()=>this.copyArduinoLib(),
             updateKittenblock: ()=>this.updateKittenblock(),
         });
         headerBarProps = defaultsDeep({},headerBarProps,{
@@ -381,7 +365,6 @@ class GUI extends React.Component {
                 <SetupModal kb={kb} {...setupModalProps}/>
                 <input type="file" style={{display:'none'}} ref={(ref) => this.loadProjDialog = ref} onChange={this.loadProject} accept=".sb2,.kb"/>
                 <input type="file" style={{display:'none'}} ref={(ref) => this.saveProjDialog = ref} onChange={this.saveProject} accept=".kb"/>
-                <input type="file" style={{display:'none'}} ref={(ref) => this.setArduinoDialog = ref} onChange={this.setArduinoPath} />
                 <AlertList
                     position='top-left'
                     alerts={this.state.alerts}

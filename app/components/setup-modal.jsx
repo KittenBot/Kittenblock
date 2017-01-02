@@ -30,12 +30,9 @@ class SetupModalComponent extends React.Component {
     render() {
         const {
             version,
-            openSetArduinoPathDialog,
-            arduinoPath,
             language,
             applyconfig,
             pluginlist,
-            copyArduinoLib,
             updateKittenblock,
             updater,
     ...componentProps
@@ -73,20 +70,6 @@ class SetupModalComponent extends React.Component {
                     style={{display:updater.version>version?'inline-box':'none'}}
                     onClick={updateKittenblock}
                     >Update to {updater.version}</Button>
-                </div>
-                <div className="setup-items">
-                    <label>Arduino Path</label>
-                    <br/>
-                    <FormControl
-                        type="text"
-                        placeholder="Arduino Path"
-                        value={arduinoPath}
-                    />
-                    <br/>
-                    <ButtonToolbar>
-                        <Button bsStyle="default" onClick={openSetArduinoPathDialog}>{Blockly.Msg.SET}</Button>
-                        <Button bsStyle="default" onClick={copyArduinoLib}>Copy Arduino Library</Button>
-                    </ButtonToolbar>
                 </div>
                 <div className="setup-items">
                     <label>{Blockly.Msg.LANGUAGE}</label>

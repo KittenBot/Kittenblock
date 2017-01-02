@@ -20,14 +20,11 @@ class SetupModal  extends React.Component {
                 version={this.props.kb.config.version}
                 updater={this.props.updater}
                 updateKittenblock={this.props.updateKittenblock}
-                openSetArduinoPathDialog={this.props.openSetArduinoPathDialog}
-                arduinoPath={this.props.arduinoPath}
                 language={this.props.language}
                 selectLanguage={this.props.selectLanguage}
                 applyconfig={this.props.applyconfig}
                 pluginlist={this.props.pluginlist}
                 selectPlugin={this.props.selectPlugin}
-                copyArduinoLib={this.props.copyArduinoLib}
             />
         );
     }
