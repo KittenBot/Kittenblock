@@ -12,7 +12,6 @@ class HeaderBarComponent extends React.Component {
     }
     handleTitle(e){
         var title = e.target.value;
-        //console.log("handle "+e.target.value);
         this.props.changeTitle(title);
     }
     render() {

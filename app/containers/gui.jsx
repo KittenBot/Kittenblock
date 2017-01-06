@@ -206,8 +206,9 @@ class GUI extends React.Component {
         this.setState({language:langobj});
         this.props.kb.config.language = langobj;
     }
-    selectTarget(id){
-        this.props.vm.setEditingTarget(id);
+    selectTarget(obj){
+        var targetid = obj.target.id;
+        this.props.vm.setEditingTarget(targetid);
     }
     consoleSend(txt){
         this.sendCommonData(txt);

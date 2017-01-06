@@ -7,7 +7,6 @@ class SpriteSelectorComponent extends React.Component {
         bindAll(this, [
         ]);
     }
-
     render() {
         const {
             onChange,
@@ -21,39 +20,65 @@ class SpriteSelectorComponent extends React.Component {
             ...componentProps
         } = this.props;
         var spriteList=[];
+        var backdrops=[];
         var targetList = this.props.sprites.targetList;
-        spriteList = targetList.map(sprite => (
-            <img className="sprite img-thumbnail"
-                 alt={sprite.name}
-                 value={sprite.name}
-                 key={sprite.id}
-                 src={this.props.kb.resourcemng.getSpriteSkin(sprite.id)}
-                 style={{width:70,height:70,border:this.props.sprites.editingTarget==sprite.id?'2px solid #179FD7':'none'}}
-                 onClick={() => selectTarget(sprite.id)}
-            />
-        ));
-
+        for (var i = 0; i < targetList.length; i += 1) {
+            var sprite = targetList[i];
+            if(sprite.name=='Stage' || sprite.name=='Background'){
+                backdrops.push(<img className="sprite img-thumbnail"
+                                     alt={sprite.name}
+                                     value={sprite.name}
+                                     id={sprite.id}
+                                     key={sprite.id}
+                                     src={this.props.kb.resourcemng.getSpriteSkin(sprite.id)}
+                                     style={{width:70,height:70,border:this.props.sprites.editingTarget==sprite.id?'2px solid #179FD7':'none'}}
+                                     onClick={selectTarget}
+                />)
+            }else{
+                spriteList.push(<img className="sprite img-thumbnail"
+                                     alt={sprite.name}
+                                     value={sprite.name}
+                                     id={sprite.id}
+                                     key={sprite.id}
+                                     src={this.props.kb.resourcemng.getSpriteSkin(sprite.id)}
+                                     style={{width:70,height:70,border:this.props.sprites.editingTarget==sprite.id?'2px solid #179FD7':'none'}}
+                                     onClick={selectTarget}
+                />)
+            }
+        };
         return (
+            <div>
+            <div style={{
+                position: 'absolute',
+                top: 450,
+                left: 10,
+                width: 100,
+                height: 450,
+                backgroundColor: "#F9F9F9",
+                borderRadius: 10
+            }}>
+                {backdrops}
+            </div>
             <div
                 style={{
                     position: 'absolute',
                     top: 450,
-                    left: 10,
-                    width: 480,
+                    left: 115,
+                    width: 375,
                     height: 450,
                     backgroundColor: "#F9F9F9",
                     borderRadius: 10
                 }}
                 {...componentProps}
             >
+                <p>
+                    <button onClick={openNewSprite}>New sprite</button>
+                    <button onClick={openNewBackdrop}>New backdrop</button>
+                </p>
                 <div>
                     {spriteList}
                 </div>
-                <p>
-                    <button onClick={openNewSprite}>New sprite</button>
-                    <button onClick={openNewCostume}>New costume</button>
-                    <button onClick={openNewBackdrop}>New backdrop</button>
-                </p>
+            </div>
             </div>
         );
     }
