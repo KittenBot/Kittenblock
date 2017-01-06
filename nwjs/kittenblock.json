@@ -1,1 +1,1 @@
-{"version":"1.10","language":{"name":"中文","file":"zh-hans.js"},"arduino":{"board":"uno","lastserial":"COM3","baudrate":115200,"debug":false},"autotrans":true,"enabledPlugin":"eb1"}
+{"version":"1.10","language":{"name":"english","file":"en.js"},"arduino":{"board":"SamuraiCircuits:avr:eb1","lastserial":"COM3","baudrate":115200,"debug":false,"path":"F:\\KittenbotGui\\nwjs\\arduino"},"autotrans":true,"enabledPlugin":"kittenbot"}

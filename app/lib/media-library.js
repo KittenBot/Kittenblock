@@ -1,14 +1,15 @@
 const xhr = require('xhr');
 
-const LIBRARY_PREFIX = 'https://cdn.scratch.mit.edu/scratchr2/static/' +
-    '__8d9c95eb5aa1272a311775ca32568417__/medialibraries/';
+//const LIBRARY_PREFIX = 'https://cdn.scratch.mit.edu/scratchr2/static/__8d9c95eb5aa1272a311775ca32568417__/medialibraries/';
+const LIBRARY_PREFIX = 'http://localhost:9234/medialibraries/';
 const LIBRARY_URL = {
     sprite: `${LIBRARY_PREFIX}spriteLibrary.json`,
     costume: `${LIBRARY_PREFIX}costumeLibrary.json`,
     backdrop: `${LIBRARY_PREFIX}backdropLibrary.json`
 };
-const SPRITE_OBJECT_PREFIX = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/';
-const SPRITE_OBJECT_SUFFIX = '/get/';
+//const SPRITE_OBJECT_PREFIX = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/';
+//const SPRITE_OBJECT_SUFFIX = '/get/';
+const SPRITE_OBJECT_PREFIX = 'http://localhost:9234/medialibraries/';
 
 class MediaLibrary {
     constructor () {
@@ -65,7 +66,8 @@ class MediaLibrary {
         } else {
             xhr.get({
                 useXDR: true,
-                url: SPRITE_OBJECT_PREFIX + url + SPRITE_OBJECT_SUFFIX
+                //url: SPRITE_OBJECT_PREFIX + url + SPRITE_OBJECT_SUFFIX
+                url: SPRITE_OBJECT_PREFIX + url
             }, (err, response, body) => {
                 if (!err) {
                     const data = JSON.parse(body);

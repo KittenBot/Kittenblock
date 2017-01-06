@@ -35,8 +35,11 @@ class LibraryComponent extends React.Component {
                 <h1>{this.props.title}</h1>
                 <div style={scrollGridStyle}>
                     {this.props.data.map((dataItem, itemId) => {
+                        //const scratchURL = dataItem.md5 ?
+                        //    `https://cdn.assets.scratch.mit.edu/internalapi/asset/${dataItem.md5}/get/` :
+                        //    dataItem.rawURL;
                         const scratchURL = dataItem.md5 ?
-                            `https://cdn.assets.scratch.mit.edu/internalapi/asset/${dataItem.md5}/get/` :
+                            `http://localhost:9234/medialibraries/${dataItem.md5}` :
                             dataItem.rawURL;
                         return (
                             <LibraryItem
