@@ -28,7 +28,7 @@ app: 基于Scratch-gui改造而来,使用react开发
 
 在pc上运行还需要kittenbot-pc相关依赖[http://git.oschina.net/Kittenbot/kittenblock-pc](http://git.oschina.net/Kittenbot/kittenblock-pc)
 
-	https://git.oschina.net/Kittenbot/kittenblock-pc.git
+	git clone https://git.oschina.net/Kittenbot/kittenblock-pc.git
 
 进入kitteblock-pc包下:
 	
