@@ -1,50 +1,68 @@
 # This is the source code of KittenBlock
-![](http://git.oschina.net/uploads/images/2016/1226/212757_19ab1d69_76038.png)
-Kittenblock基于最新Scratch3.0代码开发, 主要有三个部分的代码:
+![](https://cloud.githubusercontent.com/assets/3390845/21489461/e95cd10e-cc25-11e6-8c7b-77d492bfe2e8.png)
 
-scratch-vm: Scratch3.0的虚拟机, 代码块的运行环境, 连接render和blocks的核心.
+Kittenblock is based on the latest code-base of Scratch 3.0, it includes 3 major parts:
 
-scratch-blocks: Scratch3.0的模块代码,基于blockly改造而来.
+scratch-vm: the major running environment of Scratch blocks (Scratch 3.0), joint point of Scratch-blocks and Scratch-render.
 
-scratch-render: Scratch3.0的舞台前端
+scratch-blocks: blocks front-end with modified from blockly.
 
-app: 基于Scratch-gui改造而来,使用react开发
+scratch-render: the stage of scratch3.0
 
-以上三块代码已经全部包含到仓库中,不需要从scratch官方github重新下载,目前我们对vm和blocks做了部分修改,每周都会与官方代码进行同步.
+app: based on scratch-gui, developed in react
 
+All these three parts already included in this repo, I have modified some of the code in Scratch VM and Scratch Blocks.
 
-## 部署方法:
-先将仓库克隆到本地
+Basically I sync to official scratch code base every week.
 
-    git clone https://git.oschina.net/Kittenbot/KittenbotGui.git
+## For KittenBlock Users:
+Please download the Windows application here:
+http://kittenbot.cc/kittenblock/download/
 
-进入仓库目录
+## Deploy:
+clone this repo
+
+    git clone https://github.com/KittenBot/Kittenblock.git
+
+enter the root directory of repo
 
 	cd KittenbotGui
 
-安装相关依赖包
+install packages
 
 	npm install
 
-在pc上运行还需要kittenbot-pc相关依赖[http://git.oschina.net/Kittenbot/kittenblock-pc](http://git.oschina.net/Kittenbot/kittenblock-pc)
+to make kittenblock run offline locally you still need kittenblock-pc depends [http://git.oschina.net/Kittenbot/kittenblock-pc](http://git.oschina.net/Kittenbot/kittenblock-pc)
 
-	git clone https://git.oschina.net/Kittenbot/kittenblock-pc.git
+	https://git.oschina.net/Kittenbot/kittenblock-pc.git
 
-进入kitteblock-pc包下:
+go into kitteblock-pc:
 	
 	cd kittenbot-pc
 	npm install
 
-并且webpack打包源代码
+pack the source code of kittenblock-pc
 
 	node_modules\bin\wepback
 
-回到仓库根目录打包scratch3.0的代码
+back to root repos and pack everything else
 
 	cd ..
 	node_modules\bin\wepback
 
-所有需要的源代码文件都被打包放到了nwjs目录下
-之后只需要从[nwjs](http://nwjs.io/)下载最新的可执行包放到nwjs目录下就行了
+all the source code need for will locate in nwjs folder
+the next thing is get [nwjs](http://nwjs.io/) and unzip to nwjs folder, have fun.
 
+## Specially Thanks to:
+
+Spanish translate contributor: Jose Carlos
+
+French translate contributor: Michel FREARD
+
+## PS:
+
+Due to Github blocked by GFW from time to time, my major dev repo is [https://git.oschina.net/Kittenbot/KittenbotGui.git
+](https://git.oschina.net/Kittenbot/KittenbotGui.git) .
+
+And this is my first JavaScript and react project, pardon me for not doing everything in best practice. And we need your contributition to make it move forward.
 
