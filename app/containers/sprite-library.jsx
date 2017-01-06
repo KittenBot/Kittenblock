@@ -29,7 +29,11 @@ class SpriteLibrary extends React.Component {
     }
     handleItemSelect (item) {
         const spriteData = JSON.stringify(this.state.spriteData[item.json]);
-        this.props.vm.addSprite2(spriteData);
+        // copy resource file to dest
+        this.props.kb.copyResourceToWorkspace(item.md5,function () {
+            this.props.vm.addSprite2(spriteData);
+        });
+
     }
     render () {
         return (
