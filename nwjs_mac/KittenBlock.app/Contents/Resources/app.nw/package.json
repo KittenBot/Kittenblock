@@ -1,0 +1,19 @@
+﻿{
+  "name": "Kitten-Blocks",
+  "description": "Kittenbot Scratch Blocks",
+  "version": "0.99",
+  "main": "app/index.html",
+  "window": {
+	"title": "Kitten-Blocks",
+	"icon": "KittenBotLogo.png",
+    "show": true,
+    "toolbar": true,
+    "frame": true,
+    "position": "center",
+	"fullscreen": false,
+    "width": 1400,
+    "height": 900,
+    "min_width": 200,
+    "min_height": 200
+  }
+}

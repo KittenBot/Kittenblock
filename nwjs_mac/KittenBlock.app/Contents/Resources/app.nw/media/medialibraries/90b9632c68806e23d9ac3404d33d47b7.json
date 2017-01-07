@@ -1,0 +1,30 @@
+{
+	"objName": "Vest",
+	"sounds": [{
+			"soundName": "pop",
+			"soundID": -1,
+			"md5": "83a9787d4cb6f3b7632b4ddfebf74367.wav",
+			"sampleCount": 258,
+			"rate": 11025,
+			"format": ""
+		}],
+	"costumes": [{
+			"costumeName": "vest",
+			"baseLayerID": -1,
+			"baseLayerMD5": "89a5f7bce8560de393ee12618ee424e8.svg",
+			"bitmapResolution": 1,
+			"rotationCenterX": 18,
+			"rotationCenterY": 62
+		}],
+	"currentCostumeIndex": 0,
+	"scratchX": 0,
+	"scratchY": 0,
+	"scale": 1,
+	"direction": 90,
+	"rotationStyle": "normal",
+	"isDraggable": true,
+	"indexInLibrary": 100000,
+	"visible": true,
+	"spriteInfo": {
+	}
+}
