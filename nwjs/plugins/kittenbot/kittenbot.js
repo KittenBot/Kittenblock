@@ -74,10 +74,10 @@ KittenBot.prototype.getBlocks = function () {
                                 "type": "field_dropdown",
                                 "name": "KITTENBOT_DCMOTOR_OPTION",
                                 "options": [
-                                    ['1', '1'],
-                                    ['2', '2'],
-                                    ['3', '3'],
-                                    ['4', '4'],
+                                    ['A', 'A'],
+                                    ['B', 'B'],
+                                    ['C', 'C'],
+                                    ['D', 'D'],
                                 ]
                             }
                         ],
@@ -352,8 +352,7 @@ KittenBot.prototype.getBlocks = function () {
 
 KittenBot.prototype.getPrimitives = function() {
     return {
-        'kittenbot_motorturn': this.motorTurn,
-        'kittenbot_motorspeed': this.motorSpeed,
+        'kittenbot_motor_dc': this.motorDc,
         'kittenbot_steppermove': this.stepperMove,
         'kittenbot_stepperturn': this.stepperTurn,
         'kittenbot_stepperspeed': this.stepperSpeed,
@@ -403,15 +402,10 @@ KittenBot.prototype.stepperTurn = function(argValues, util) {
 };
 
 
-KittenBot.prototype.motorTurn = function(argValues, util) {
+KittenBot.prototype.motorDc = function(argValues, util) {
     var spd = argValues.SPEED;
-    var cmd = "M200 L"+spd+" R"+spd;
-    util.ioQuery('serial', 'sendMsg', cmd);
-};
-
-KittenBot.prototype.motorSpeed = function(argValues, util) {
-    var spd = argValues.SPEED;
-    var cmd = "M200 L"+spd+" R"+(-spd);
+    var idx = argValues.KITTENBOT_DCMOTOR_OPTION;
+    var cmd = "M200 "+idx+spd;
     util.ioQuery('serial', 'sendMsg', cmd);
 };
 
@@ -479,7 +473,7 @@ KittenBot.prototype.getToolbox = function () {
         '<block type="kittenbot_motor_dc">'+
         '<value name="KITTENBOT_DCMOTOR_OPTION">' +
         '<shadow type="kittenbot_dcmotor_option">' +
-        '<field name="KITTENBOT_DCMOTOR_OPTION">1</field>' +
+        '<field name="KITTENBOT_DCMOTOR_OPTION">A</field>' +
         '</shadow>' +
         '</value>' +
         '<value name="SPEED">'+

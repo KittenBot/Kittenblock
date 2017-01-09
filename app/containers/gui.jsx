@@ -34,7 +34,8 @@ class GUI extends React.Component {
         bindAll(this, ['closeModal','toggleArduinoPanel','toggelStage','sendCommonData','portReadLine','deviceQuery','clearConsole',
                         'stopProject','restoreFirmware','openIno','updateEditorInstance','uploadProject','appendLog',
                         'openLoadProjectDialog','loadProject','selectLanguage','applyConfig','selectTarget',
-                        'consoleSend','consoleClear','translateCode','saveProject','changeTitle','notify','updaterCallback','updateKittenblock']);
+                        'consoleSend','consoleClear','translateCode','saveProject','changeTitle','notify',
+                        'updaterCallback','updateKittenblock','updateProgress','updateDone']);
         this.vmManager = new VMManager(this.props.vm);
         this.mediaLibrary = new MediaLibrary();
         this.consoleMsgBuff=[{msg: "Hello KittenBlock", color: "green"}];
@@ -48,10 +49,11 @@ class GUI extends React.Component {
             language: this.props.kb.config.language,
             pluginlist: this.props.kb.pluginlist,
             projectName: "",
-            firmwares: [{name:'arduino','path':null}],
-            alerts:[],
-            alertTimeout:5000,
-            updater: {'version':0,'path':''},
+            firmwares: [{name: 'arduino', 'path': null}],
+            alerts: [],
+            alertTimeout: 5000,
+            updater: {'version': 0, 'path': ''},
+            updateProgress: 0,
         };
         require("../language/"+this.props.kb.config.language.file);
     }
@@ -255,8 +257,18 @@ class GUI extends React.Component {
     updaterCallback(obj){
         this.setState({updater:obj});
     }
+    updateProgress(percent){
+        console.log(percent);
+        this.setState({updateProgress:percent})
+    }
+    updateDone(ret){
+        if(ret==0){
+            this.props.kb.reloadApp();
+        }
+    }
     updateKittenblock(){
         console.log("do update"+this.state.updater.version);
+        this.props.kb.doUpdate(this.state.updater,this.updateDone,this.updateProgress);
     }
     render () {
         let {
@@ -313,6 +325,7 @@ class GUI extends React.Component {
             applyconfig: this.applyConfig,
             pluginlist: this.state.pluginlist,
             updater: this.state.updater,
+            updateProgress: this.state.updateProgress,
             selectPlugin: (plugin)=>this.selectPlugin(plugin),
             updateKittenblock: ()=>this.updateKittenblock(),
         });

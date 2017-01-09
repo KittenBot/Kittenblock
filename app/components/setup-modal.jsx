@@ -1,7 +1,7 @@
 const bindAll = require('lodash.bindall');
 const React = require('react');
 
-import { ButtonGroup,Button,DropdownButton,FormControl,ButtonToolbar,MenuItem} from 'react-bootstrap';
+import { ButtonGroup,Button,DropdownButton,FormControl,ButtonToolbar,MenuItem,ProgressBar} from 'react-bootstrap';
 
 
 import {
@@ -35,6 +35,7 @@ class SetupModalComponent extends React.Component {
             pluginlist,
             updateKittenblock,
             updater,
+            updateProgress,
     ...componentProps
         } = this.props;
         var plugins = [];
@@ -52,6 +53,13 @@ class SetupModalComponent extends React.Component {
                 </div>
             );
         };
+        var shouldUpdate = updater.version>version;
+        var updaterStyle={};
+        if(shouldUpdate){
+            updaterStyle = {display:'block'};
+        }else{
+            updaterStyle = {display:'none'};
+        }
 
         return (
             <Modal
@@ -67,9 +75,11 @@ class SetupModalComponent extends React.Component {
                     <label id="versionNum">KittenBlock {version}</label>
                     <br/>
                     <Button bsStyle="success"
-                    style={{display:updater.version>version?'inline-box':'none'}}
+                    style={updaterStyle}
                     onClick={updateKittenblock}
                     >Update to {updater.version}</Button>
+                    <br/>
+                    <ProgressBar striped bsStyle="success" now={updateProgress} label={`${updateProgress}%`} style={updaterStyle}/>
                 </div>
                 <div className="setup-items">
                     <label>{Blockly.Msg.LANGUAGE}</label>

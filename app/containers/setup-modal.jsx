@@ -20,6 +20,7 @@ class SetupModal  extends React.Component {
                 version={this.props.kb.config.version}
                 updater={this.props.updater}
                 updateKittenblock={this.props.updateKittenblock}
+                updateProgress={this.props.updateProgress}
                 language={this.props.language}
                 selectLanguage={this.props.selectLanguage}
                 applyconfig={this.props.applyconfig}
