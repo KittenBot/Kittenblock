@@ -103,7 +103,7 @@ class HeaderBarComponent extends React.Component {
                     <NavItem>
                         <FormControl
                             type="text"
-                            placeholder="Porject Title"
+                            placeholder="Project Title"
                             style={{
                                 width: '200px',
                                 backgroundColor: '#0b6684',
