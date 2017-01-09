@@ -1,6 +1,6 @@
 // This file was automatically generated.  Do not modify.
 
-'use strict';
+Blockly = {Msg:{}};
 
 Blockly.Msg.PROJECT = "项目";
 Blockly.Msg.ADD_COMMENT = "添加注释";

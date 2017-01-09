@@ -56,7 +56,8 @@ module.exports = {
             filename: 'lib.min.js'
         }),
         new HtmlWebpackPlugin({
-            title: 'KittenBlock'
+            title: 'KittenBlock',
+            template: 'index.html'
         }),
         new CopyWebpackPlugin([{
             from: 'scratch-blocks/media',

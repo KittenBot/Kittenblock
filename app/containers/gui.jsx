@@ -55,7 +55,6 @@ class GUI extends React.Component {
             updater: {'version': 0, 'path': ''},
             updateProgress: 0,
         };
-        require("../language/"+this.props.kb.config.language.file);
     }
     clearConsole(){
         this.consoleMsgBuff = [];

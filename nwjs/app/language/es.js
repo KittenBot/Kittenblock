@@ -1,10 +1,6 @@
 // This file was automatically generated.  Do not modify.;
 
-'use strict';
-
-goog.provide('Blockly.Msg.es');
-
-goog.require('Blockly.Msg');
+Blockly = {Msg:{}};
 
 Blockly.Msg.ADD_COMMENT = "Añadir comentario";
 Blockly.Msg.ARDUINO = "Arduino";
