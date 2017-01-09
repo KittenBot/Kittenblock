@@ -1,0 +1,38 @@
+{
+	"objName": "Shirt Collar",
+	"sounds": [{
+			"soundName": "pop",
+			"soundID": -1,
+			"md5": "83a9787d4cb6f3b7632b4ddfebf74367.wav",
+			"sampleCount": 258,
+			"rate": 11025,
+			"format": ""
+		}],
+	"costumes": [{
+			"costumeName": "shirt collar-a",
+			"baseLayerID": -1,
+			"baseLayerMD5": "883ce1c5b25aa457ebd89e594e60ae7b.svg",
+			"bitmapResolution": 1,
+			"rotationCenterX": 30,
+			"rotationCenterY": 57
+		},
+		{
+			"costumeName": "shirt collar-b",
+			"baseLayerID": -1,
+			"baseLayerMD5": "2a701919ad9ece43a8b09236aa4f7da5.svg",
+			"bitmapResolution": 1,
+			"rotationCenterX": 30,
+			"rotationCenterY": 57
+		}],
+	"currentCostumeIndex": 0,
+	"scratchX": 0,
+	"scratchY": 0,
+	"scale": 1,
+	"direction": 90,
+	"rotationStyle": "normal",
+	"isDraggable": true,
+	"indexInLibrary": 100000,
+	"visible": true,
+	"spriteInfo": {
+	}
+}
