@@ -32,16 +32,20 @@ var hexToRgb = function (hex) {
 KittenBot.prototype.getBlocks = function () {
     var color = this.color;
     return {
-        "kittenbot_motorspeed":{
+        "kittenbot_motor_dc":{
             /**
              * Block to set motor speed
              * @this Blockly.Block
              */
             init: function() {
                 this.jsonInit({
-                    "id": "kittenbot_motorspeed",
-                    "message0": "motor at speed %1",
+                    "id": "kittenbot_motor_dc",
+                    "message0": "DC motor %1 speed %2",
                     "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "KITTENBOT_DCMOTOR_OPTION"
+                        },
                         {
                             "type": "input_value",
                             "name": "SPEED"
@@ -56,28 +60,33 @@ KittenBot.prototype.getBlocks = function () {
                 });
             }
         },
-        'kittenbot_motorturn':{
+        'kittenbot_dcmotor_option':{
             /**
-             * Block to turn
+             * kittenbot_direction_menu
              * @this Blockly.Block
              */
             init: function() {
-                this.jsonInit({
-                    "id": "kittenbot_motorturn",
-                    "message0": "motor turn speed %1",
-                    "args0": [
-                        {
-                            "type": "input_value",
-                            "name": "SPEED"
-                        }
-                    ],
-                    "inputsInline": true,
-                    "previousStatement": null,
-                    "nextStatement": null,
-                    "colour": color.primary,
-                    "colourSecondary": color.secondary,
-                    "colourTertiary": color.primary
-                });
+                this.jsonInit(
+                    {
+                        "message0": "%1",
+                        "args0": [
+                            {
+                                "type": "field_dropdown",
+                                "name": "KITTENBOT_DCMOTOR_OPTION",
+                                "options": [
+                                    ['1', '1'],
+                                    ['2', '2'],
+                                    ['3', '3'],
+                                    ['4', '4'],
+                                ]
+                            }
+                        ],
+                        "inputsInline": true,
+                        "output": "String",
+                        "colour": color.secondary,
+                        "colourSecondary": color.secondary,
+                        "colourTertiary": color.tertiary
+                    });
             }
         },
         'kittenbot_direction_option':{
@@ -94,8 +103,8 @@ KittenBot.prototype.getBlocks = function () {
                                 "type": "field_dropdown",
                                 "name": "KITTENBOT_DIRECTION_OPTION",
                                 "options": [
-                                    ['forward', 'FORWARD'],
-                                    ['backward', 'BACKWARD']
+                                    ['syntropy', 'SYNTROPY'],
+                                    ['reversal', 'REVERSAL']
                                 ]
                             }
                         ],
@@ -142,7 +151,7 @@ KittenBot.prototype.getBlocks = function () {
             init: function() {
                 this.jsonInit({
                     "id": "kittenbot_steppermove",
-                    "message0": "car move %1 cm",
+                    "message0": "stepper car move %1 cm",
                     "args0": [
                         {
                             "type": "input_value",
@@ -166,7 +175,7 @@ KittenBot.prototype.getBlocks = function () {
             init: function() {
                 this.jsonInit({
                     "id": "kittenbot_stepperturn",
-                    "message0": "car turn %1 degrees",
+                    "message0": "stepper car turn %1 degrees",
                     "args0": [
                         {
                             "type": "input_value",
@@ -467,14 +476,12 @@ KittenBot.prototype.kittenbot_direction_option = function(argValues, util) {
 
 KittenBot.prototype.getToolbox = function () {
     return '<category name="KittenBot" colour="#FF6680" secondaryColour="#FF3355">'+
-        '<block type="kittenbot_motorspeed">'+
-        '<value name="SPEED">'+
-        '<shadow type="math_number">'+
-        '<field name="NUM">150</field>'+
-        '</shadow>'+
-        '</value>'+
-        '</block>'+
-        '<block type="kittenbot_motorturn">'+
+        '<block type="kittenbot_motor_dc">'+
+        '<value name="KITTENBOT_DCMOTOR_OPTION">' +
+        '<shadow type="kittenbot_dcmotor_option">' +
+        '<field name="KITTENBOT_DCMOTOR_OPTION">1</field>' +
+        '</shadow>' +
+        '</value>' +
         '<value name="SPEED">'+
         '<shadow type="math_number">'+
         '<field name="NUM">100</field>'+
