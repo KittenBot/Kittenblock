@@ -89,6 +89,33 @@ KittenBot.prototype.getBlocks = function () {
                     });
             }
         },
+        'kittenbot_stepper_option':{
+            /**
+             * kittenbot_direction_menu
+             * @this Blockly.Block
+             */
+            init: function() {
+                this.jsonInit(
+                    {
+                        "message0": "%1",
+                        "args0": [
+                            {
+                                "type": "field_dropdown",
+                                "name": "KITTENBOT_STEPPER_OPTION",
+                                "options": [
+                                    ['A', 'A'],
+                                    ['B', 'B'],
+                                ]
+                            }
+                        ],
+                        "inputsInline": true,
+                        "output": "String",
+                        "colour": color.secondary,
+                        "colourSecondary": color.secondary,
+                        "colourTertiary": color.tertiary
+                    });
+            }
+        },
         'kittenbot_direction_option':{
             /**
              * kittenbot_direction_menu
@@ -191,7 +218,7 @@ KittenBot.prototype.getBlocks = function () {
                 });
             }
         },
-        'kittenbot_stepperspeed':{
+        'kittenbot_stepperspeed_dual':{
             init: function() {
                 this.jsonInit({
                     "id": "kittenbot_stepperspeed",
@@ -213,6 +240,34 @@ KittenBot.prototype.getBlocks = function () {
                             "type": "input_value",
                             "name": "SPDR"
                         },
+                    ],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color.primary,
+                    "colourSecondary": color.secondary,
+                    "colourTertiary": color.tertiary
+                });
+            }
+        },
+        'kittenbot_stepperspeed_single':{
+            init: function() {
+                this.jsonInit({
+                    "id": "kittenbot_stepperspeed_single",
+                    "message0": "stepper %1 %2 degree %3 rpm",
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "KITTENBOT_STEPPER_OPTION"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "POS"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "SPEED"
+                        }
                     ],
                     "inputsInline": true,
                     "previousStatement": null,
@@ -482,22 +537,24 @@ KittenBot.prototype.getToolbox = function () {
         '</shadow>'+
         '</value>'+
         '</block>'+
-        '<sep></sep>'+
-        '<block type="kittenbot_steppermove">'+
-        '<value name="LENGTH">'+
+        '<block type="kittenbot_stepperspeed_single">'+
+        '<value name="KITTENBOT_STEPPER_OPTION">' +
+        '<shadow type="kittenbot_stepper_option">' +
+        '<field name="KITTENBOT_STEPPER_OPTION">A</field>' +
+        '</shadow>' +
+        '</value>' +
+        '<value name="POS">'+
         '<shadow type="math_number">'+
-        '<field name="NUM">100</field>'+
+        '<field name="NUM">360</field>'+
+        '</shadow>'+
+        '</value>'+
+        '<value name="SPEED">'+
+        '<shadow type="math_number">'+
+        '<field name="NUM">11</field>'+
         '</shadow>'+
         '</value>'+
         '</block>'+
-        '<block type="kittenbot_stepperturn">'+
-        '<value name="DEGREE">'+
-        '<shadow type="math_number">'+
-        '<field name="NUM">90</field>'+
-        '</shadow>'+
-        '</value>'+
-        '</block>'+
-        '<block type="kittenbot_stepperspeed">'+
+        '<block type="kittenbot_stepperspeed_dual">'+
         '<value name="POSL">'+
         '<shadow type="math_number">'+
         '<field name="NUM">360</field>'+
@@ -516,6 +573,20 @@ KittenBot.prototype.getToolbox = function () {
         '<value name="SPDR">'+
         '<shadow type="math_number">'+
         '<field name="NUM">11</field>'+
+        '</shadow>'+
+        '</value>'+
+        '</block>'+
+        '<block type="kittenbot_steppermove">'+
+        '<value name="LENGTH">'+
+        '<shadow type="math_number">'+
+        '<field name="NUM">100</field>'+
+        '</shadow>'+
+        '</value>'+
+        '</block>'+
+        '<block type="kittenbot_stepperturn">'+
+        '<value name="DEGREE">'+
+        '<shadow type="math_number">'+
+        '<field name="NUM">90</field>'+
         '</shadow>'+
         '</value>'+
         '</block>'+
