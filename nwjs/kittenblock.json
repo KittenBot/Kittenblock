@@ -1,1 +1,1 @@
-{"version":"1.10","language":{"name":"english","file":"en.js"},"arduino":{"board":"arduino:avr:uno","baudrate":115200,"debug":false,"path":"F:\\KittenbotGui\\nwjs\\arduino","lastSerialPort":"COM5"},"autotrans":true,"enabledPlugin":"kittenbot"}
+{"version":"1.11","language":{"name":"english","file":"en.js"},"arduino":{"board":"arduino:avr:uno","baudrate":115200,"debug":false,"path":"F:\\KittenbotGui\\nwjs\\arduino","lastSerialPort":"COM5"},"autotrans":true,"enabledPlugin":"kittenbot"}
