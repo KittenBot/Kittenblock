@@ -42,7 +42,7 @@
   "_requiredBy": [
     "#DEV:/"
   ],
-  "_resolved": "https://registry.npm.taobao.org/scratch-blocks/download/scratch-blocks-0.1.0-prerelease.1478651044.tgz",
+  "_resolved": "https://registry.npmmirror.com/scratch-blocks/download/scratch-blocks-0.1.0-prerelease.1478651044.tgz",
   "_shasum": "7000f985c4bd4b50082b213f30a30bb13cc46080",
   "_shrinkwrap": null,
   "_spec": "scratch-blocks@latest",
@@ -69,7 +69,7 @@
     "shasum": "7000f985c4bd4b50082b213f30a30bb13cc46080",
     "size": 1195384,
     "noattachment": false,
-    "tarball": "http://registry.npm.taobao.org/scratch-blocks/download/scratch-blocks-0.1.0-prerelease.1478651044.tgz"
+    "tarball": "https://registry.npmmirror.com/scratch-blocks/download/scratch-blocks-0.1.0-prerelease.1478651044.tgz"
   },
   "gitHead": "2182eb225e5552d63c60577d1f8502b5f2b198b6",
   "homepage": "https://github.com/LLK/scratch-blocks#readme",

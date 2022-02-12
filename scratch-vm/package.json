@@ -42,7 +42,7 @@
   "_requiredBy": [
     "#DEV:/"
   ],
-  "_resolved": "https://registry.npm.taobao.org/scratch-vm/download/scratch-vm-0.1.0-prerelease.1478716997.tgz",
+  "_resolved": "https://registry.npmmirror.com/scratch-vm/download/scratch-vm-0.1.0-prerelease.1478716997.tgz",
   "_shasum": "9781ab803a2687b7416f526a39f64254805b8ba6",
   "_shrinkwrap": null,
   "_spec": "scratch-vm@latest",
@@ -83,7 +83,7 @@
     "shasum": "9781ab803a2687b7416f526a39f64254805b8ba6",
     "size": 1209131,
     "noattachment": false,
-    "tarball": "http://registry.npm.taobao.org/scratch-vm/download/scratch-vm-0.1.0-prerelease.1478716997.tgz"
+    "tarball": "https://registry.npmmirror.com/scratch-vm/download/scratch-vm-0.1.0-prerelease.1478716997.tgz"
   },
   "gitHead": "084148e353637d13a128efaea28788259e3d0061",
   "homepage": "https://github.com/LLK/scratch-vm#readme",
